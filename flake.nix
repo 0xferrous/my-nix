@@ -30,12 +30,21 @@
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    frs-nvim = {
+      url = "path:./pkgs/frs-nvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     inputs@{
       self,
       nixpkgs,
+      frs-nvim,
       ...
-    }: { };
+    }:
+    {
+      packages = frs-nvim.packages;
+      apps = frs-nvim.apps;
+    };
 }
