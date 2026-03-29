@@ -1,6 +1,6 @@
-# agent-box image
+# image builder for agent-box environments
 
-This directory contains the agent-box image builder for this repo.
+This directory contains the image builder used to create environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box).
 
 ## Flake API
 
@@ -18,7 +18,7 @@ From the repository root, this builder is re-exported as:
 
 ## What it builds
 
-`mkAgentBoxImage` returns an agent-box image artifact using the inputs from this repo plus local helpers such as `pkgs/git-hunk.nix`.
+`mkAgentBoxImage` returns an image artifact for use with [`agent-box`](https://github.com/0xferrous/agent-box), using this repo's shared inputs plus local helpers such as `pkgs/git-hunk.nix`.
 
 The builder is parameterized by:
 

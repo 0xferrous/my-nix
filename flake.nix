@@ -35,7 +35,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     agent-box-image = {
-      url = "path:./images/agent-box";
+      url = "path:./images/agent-box-rt";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.llm-agents.follows = "llm-agents";
       inputs.nix-index-database.follows = "nix-index-database";
