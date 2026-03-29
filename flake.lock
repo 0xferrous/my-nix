@@ -44,11 +44,11 @@
         ]
       },
       "locked": {
-        "path": "./images/agent-box",
+        "path": "./images/agent-box-rt",
         "type": "path"
       },
       "original": {
-        "path": "./images/agent-box",
+        "path": "./images/agent-box-rt",
         "type": "path"
       },
       "parent": []
