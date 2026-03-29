@@ -1,5 +1,5 @@
 {
-  description = "Public Nix building blocks";
+  description = "Agent box image";
 
   nixConfig = {
     extra-substituters = [ "https://numtide.cachix.org" ];
@@ -30,30 +30,15 @@
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    frs-nvim = {
-      url = "path:./pkgs/frs-nvim";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    agent-box-image = {
-      url = "path:./images/agent-box";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.llm-agents.follows = "llm-agents";
-      inputs.nix-index-database.follows = "nix-index-database";
-      inputs.agent-box.follows = "agent-box";
-      inputs.foundry.follows = "foundry";
-      inputs.agent-images.follows = "agent-images";
-    };
   };
 
   outputs =
-    inputs@{
-      frs-nvim,
-      agent-box-image,
-      ...
-    }:
+    inputs@{ ... }:
     {
-      packages = frs-nvim.packages;
-      apps = frs-nvim.apps;
-      lib.mkAgentBoxImage = agent-box-image.lib.mkAgentBoxImage;
+      lib.mkAgentBoxImage =
+        system:
+        import ./default.nix {
+          inherit inputs system;
+        };
     };
 }

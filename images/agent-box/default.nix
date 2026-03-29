@@ -27,7 +27,7 @@ let
   mkAgentImage = inputs.agent-images.lib.mkAgentImage {
     inherit pkgs lib;
   };
-  gitHunk = import ./pkgs/git-hunk.nix {
+  gitHunk = import ../../pkgs/git-hunk.nix {
     inherit pkgs lib;
   };
   slimYazi = pkgs.yazi.override {
