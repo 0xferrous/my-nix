@@ -2,7 +2,17 @@ name: frs-nvim CI
 
 on:
   push:
+    paths:
+      - ".github/workflows/frs-nvim-ci.yml"
+      - "flake.nix"
+      - "flake.lock"
+      - "pkgs/frs-nvim/**"
   pull_request:
+    paths:
+      - ".github/workflows/frs-nvim-ci.yml"
+      - "flake.nix"
+      - "flake.lock"
+      - "pkgs/frs-nvim/**"
 
 jobs:
   smoke-tests:
