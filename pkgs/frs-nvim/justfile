@@ -1,0 +1,27 @@
+uid := `id -u`
+gid := `id -g`
+
+test:
+	mkdir -p /tmp/frs-nvim
+	touch /tmp/frs-nvim/messages.log
+	chmod 666 /tmp/frs-nvim/messages.log
+	podman run \
+		--userns=host \
+		--user {{uid}}:{{gid}} \
+		-e NIX_REMOTE=daemon \
+		-v ./:/frs-nvim:ro \
+		-v /nix/store:/nix/store:ro \
+		-v /nix/var/nix/daemon-socket:/nix/var/nix/daemon-socket \
+		-v /etc/nix/nix.conf:/etc/nix/nix.conf:ro \
+		-v ~/.config/nix/nix.conf:/home/agent/.config/nix/nix.conf:ro \
+		-v /tmp/frs-nvim/messages.log:/tmp/frs-nvim/messages.log \
+		-w /tmp \
+		-ti --rm \
+		localhost/agent-box:latest \
+		sh -lc 'mkdir -p /tmp/work-nvim && (cd /frs-nvim && tar --exclude=.jj -cf - .) | (cd /tmp/work-nvim && tar -xf -) && nix --extra-experimental-features nix-command --extra-experimental-features flakes run path:/tmp/work-nvim'
+
+smoke-lsp:
+	nix run .#smoke-lsp
+
+smoke-commands:
+	nix run .#smoke-commands

@@ -1,0 +1,28 @@
+--- a/lua/fff/picker_ui.lua
++++ b/lua/fff/picker_ui.lua
+@@ -1338,22 +1338,11 @@
+ end
+ 
+ local function format_file_display(item, max_width)
+-  local filename = item.name
+-  local dir_path = item.directory or ''
++  local display_path = item.relative_path or item.name
+ 
+-  if dir_path == '' and item.relative_path then
+-    local parent_dir = vim.fn.fnamemodify(item.relative_path, ':h')
+-    if parent_dir ~= '.' and parent_dir ~= '' then dir_path = parent_dir end
+-  end
++  if not display_path or display_path == '' then display_path = item.name end
+ 
+-  local filename_width = vim.fn.strdisplaywidth(filename)
+-  local base_width = filename_width + 1 -- filename + " "
+-  local path_max_width = math.max(max_width - base_width, 0)
+-
+-  if dir_path == '' or path_max_width == 0 then return filename, '' end
+-  local display_path = shrink_path(dir_path, path_max_width)
+-
+-  return filename, display_path
++  return display_path, ''
+ end
+ 
+ --- Adjust scroll for bottom prompt to eliminate gaps.

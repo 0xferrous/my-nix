@@ -1,0 +1,74 @@
+--- a/lua/gitlinker/hosts.lua
++++ b/lua/gitlinker/hosts.lua
+@@ -163,6 +163,31 @@
+   return url
+ end
+ 
++local resolved_host_cache = {}
++
++local function resolve_ssh_host(alias)
++  if resolved_host_cache[alias] ~= nil then
++    return resolved_host_cache[alias]
++  end
++
++  local output = vim.fn.systemlist({ "ssh", "-G", alias })
++  if vim.v.shell_error ~= 0 then
++    resolved_host_cache[alias] = false
++    return nil
++  end
++
++  for _, line in ipairs(output) do
++    local key, value = line:match("^(%S+)%s+(.+)$")
++    if key == "hostname" and value and value ~= "" then
++      resolved_host_cache[alias] = value
++      return value
++    end
++  end
++
++  resolved_host_cache[alias] = false
++  return nil
++end
++
+ --- Gets a matching callback for a given host
+ --
+ -- @param target_host the host to get the matching callback from.
+@@ -170,19 +195,34 @@
+ --
+ -- @returns the host's callback
+ function M.get_matching_callback(target_host)
+-  local matching_callback
+-  for host, callback in pairs(M.callbacks) do
+-    if target_host == host or target_host:match(host) then
+-      matching_callback = callback
+-      break
++  local function find_callback(hostname)
++    for host, callback in pairs(M.callbacks) do
++      if hostname == host or hostname:match(host) then
++        return callback
++      end
+     end
+   end
++
++  local matching_callback = find_callback(target_host)
+   if not matching_callback then
++    local resolved_host = resolve_ssh_host(target_host)
++    if resolved_host and resolved_host ~= target_host then
++      local resolved_callback = find_callback(resolved_host)
++      if resolved_callback then
++        return function(url_data)
++          url_data.host = resolved_host
++          return resolved_callback(url_data)
++        end
++      end
++    end
++
+     vim.notify(
+       string.format("No host callback defined for host '%s'", target_host),
+       vim.log.levels.ERROR
+     )
++    return nil
+   end
++
+   return matching_callback
+ end
+ 
