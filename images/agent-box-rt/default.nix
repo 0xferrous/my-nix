@@ -93,6 +93,11 @@ let
     fd
     jujutsu
     gnumake
+    gcc
+    cmake
+    pkg-config
+    binutils
+    patchelf
     tokei
     file
     dua
@@ -172,6 +177,7 @@ mkAgentImage {
     basePackages
     ;
   withNix = true;
+  withNixLd = true;
   extraPackages = [ ];
   extraEnv = env // extraEnv;
 

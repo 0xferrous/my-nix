@@ -30,6 +30,10 @@
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # agent-images = {
+    #   url = "github:0xferrous/agent-images/feat/nix-ld";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     frs-nvim = {
       url = "path:./pkgs/frs-nvim";
       inputs.nixpkgs.follows = "nixpkgs";
