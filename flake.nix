@@ -10,6 +10,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,6 +30,11 @@
     agent-images = {
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    ghmd = {
+      url = "github:0xferrous/ghmd";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
     # agent-images = {
     #   url = "github:0xferrous/agent-images/feat/nix-ld";
@@ -53,11 +59,20 @@
     inputs@{
       frs-nvim,
       agent-box-image,
+      ghmd,
       ...
     }:
     {
       packages = frs-nvim.packages;
       apps = frs-nvim.apps;
       lib.mkAgentBoxImage = agent-box-image.lib.mkAgentBoxImage;
+      homeManagerModules = {
+        default = import ./modules/home/public.nix;
+        public = import ./modules/home/public.nix;
+      };
+      nixosModules = {
+        default = import ./modules/nixos/public.nix { inherit ghmd; };
+        public = import ./modules/nixos/public.nix { inherit ghmd; };
+      };
     };
 }
