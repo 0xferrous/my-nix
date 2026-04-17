@@ -62,6 +62,10 @@
       url = "github:llllvvuu/neotest-foundry";
       flake = false;
     };
+    plugin-diffie-nvim = {
+      url = "path:/home/dmnt/dev/fr/diffie.nvim";
+      flake = false;
+    };
   };
 
   outputs =
@@ -119,6 +123,7 @@
             stickybuf-nvim = mkPluginFromInput "stickybuf.nvim" "plugin-stickybuf-nvim";
             floating-help-nvim = mkPluginFromInput "floating-help.nvim" "plugin-floating-help";
             neotest-foundry-nvim = mkPluginFromInput "neotest-foundry" "plugin-neotest-foundry";
+            diffie-nvim = mkPluginFromInput "diffie.nvim" "plugin-diffie-nvim";
           };
 
           supermavenMeta =
