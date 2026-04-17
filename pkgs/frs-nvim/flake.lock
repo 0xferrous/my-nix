@@ -85,6 +85,19 @@
         "type": "github"
       }
     },
+    "plugin-diffie-nvim": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1775184545,
+        "narHash": "sha256-vA9rarQnlRWzhWicO2ymTFEz0RjCF4o/NBRbp3Ss99w=",
+        "path": "/home/dmnt/dev/fr/diffie.nvim",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/dmnt/dev/fr/diffie.nvim",
+        "type": "path"
+      }
+    },
     "plugin-eth-nvim": {
       "flake": false,
       "locked": {
@@ -289,6 +302,7 @@
         "nix-wrapper-modules": "nix-wrapper-modules",
         "nixpkgs": "nixpkgs",
         "plugin-ansi-nvim": "plugin-ansi-nvim",
+        "plugin-diffie-nvim": "plugin-diffie-nvim",
         "plugin-eth-nvim": "plugin-eth-nvim",
         "plugin-feed-nvim": "plugin-feed-nvim",
         "plugin-fff-nvim": "plugin-fff-nvim",

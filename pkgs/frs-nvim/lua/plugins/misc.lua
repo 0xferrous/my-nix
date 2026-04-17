@@ -13,6 +13,12 @@ return {
     lazy = true,
     opts = {},
   },
+  {
+    "0xferrous/diffie.nvim",
+    opts = {
+      theme = "gruvbox_dark_hard",
+    },
+  },
   { "elkowar/yuck.vim", ft = "yuck" },
   { "iden3/vim-circom-syntax", ft = "circom" },
   {
