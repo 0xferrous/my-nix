@@ -31,6 +31,10 @@
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     ghmd = {
       url = "github:0xferrous/ghmd";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -59,6 +63,7 @@
     inputs@{
       frs-nvim,
       agent-box-image,
+      fenix,
       ghmd,
       ...
     }:
@@ -71,8 +76,13 @@
         public = import ./modules/home/public.nix;
       };
       nixosModules = {
-        default = import ./modules/nixos/public.nix { inherit ghmd; };
-        public = import ./modules/nixos/public.nix { inherit ghmd; };
+        default = import ./modules/nixos/public.nix {
+          inherit fenix ghmd;
+        };
+        public = import ./modules/nixos/public.nix {
+          inherit fenix ghmd;
+        };
+        k3sMicrovm = import ./modules/nixos/k3s-microvm.nix;
       };
     };
 }
