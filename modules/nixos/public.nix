@@ -1,4 +1,4 @@
-{ ghmd }:
+{ fenix, ghmd }:
 {
   config,
   lib,
@@ -8,6 +8,12 @@
 let
   cfg = config.fr.public;
   homeDir = if cfg.homeDir != null then cfg.homeDir else "/home/${cfg.user}";
+  localhostHosts = [ "rustdoc.localhost" ] ++ lib.optionals cfg.ghmd.caddy.enable [ cfg.ghmd.domain ];
+  caddyListenAddresses = [ "127.0.0.1" "::1" ];
+  caddyLogFormat = ''
+    output stderr
+    format console
+  '';
 in
 {
   imports = [ ghmd.nixosModules.default ];
@@ -45,8 +51,8 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.homeDir != null || cfg.user != "";
-        message = "Set fr.public.user or fr.public.homeDir when fr.public.enable = true.";
+        assertion = cfg.user != "";
+        message = "Set fr.public.user when fr.public.enable = true.";
       }
     ];
 
@@ -64,15 +70,46 @@ in
       rootDir = lib.mkDefault homeDir;
     };
 
-    services.caddy = lib.mkIf cfg.ghmd.caddy.enable {
-      enable = true;
-      virtualHosts."http://${cfg.ghmd.domain}".extraConfig = ''
-        reverse_proxy ${config.services.ghmd.host}:${toString config.services.ghmd.port}
-      '';
+    systemd.services.ghmd = lib.mkIf cfg.ghmd.enable {
+      serviceConfig = {
+        DynamicUser = lib.mkForce false;
+        User = lib.mkDefault cfg.user;
+        ProtectHome = lib.mkForce false;
+      };
     };
 
-    networking.hosts = lib.mkIf cfg.ghmd.caddy.enable {
-      "127.0.0.1" = [ cfg.ghmd.domain ];
+    services.caddy = {
+      enable = true;
+      virtualHosts = {
+        "http://${cfg.ghmd.domain}" = lib.mkIf cfg.ghmd.caddy.enable {
+          listenAddresses = caddyListenAddresses;
+          logFormat = caddyLogFormat;
+          extraConfig = ''
+            header X-Caddy-Vhost ghmd
+            handle_path /__caddy_probe {
+              respond "ghmd" 200
+            }
+            reverse_proxy ${config.services.ghmd.host}:${toString config.services.ghmd.port}
+          '';
+        };
+        "http://rustdoc.localhost" = {
+          listenAddresses = caddyListenAddresses;
+          logFormat = caddyLogFormat;
+          extraConfig = ''
+            header X-Caddy-Vhost rustdoc
+            handle_path /__caddy_probe {
+              respond "rustdoc" 200
+            }
+            root * ${fenix.packages.${pkgs.system}.complete.rust-docs}/share/doc/rust/html/
+            file_server
+          '';
+        };
+      };
+    };
+
+    networking.hosts = {
+      "127.0.0.1" = localhostHosts;
+      "::1" = localhostHosts;
     };
   };
 }

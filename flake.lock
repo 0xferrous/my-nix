@@ -237,6 +237,27 @@
         "type": "github"
       }
     },
+    "fenix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-analyzer-src": "rust-analyzer-src"
+      },
+      "locked": {
+        "lastModified": 1776326782,
+        "narHash": "sha256-QzTHb5vhPVensbkL7+WhemxFYXINcdZB1SQ5EMjG2AU=",
+        "owner": "nix-community",
+        "repo": "fenix",
+        "rev": "47ece0146691d625f10a3d2ec4a2c04fca29a35b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "fenix",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -445,11 +466,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776410062,
-        "narHash": "sha256-J7SqYGoI3VRZ71F11TH6d+BoCj3LCv+Tbp7WciWMAgw=",
+        "lastModified": 1776411921,
+        "narHash": "sha256-xWJOTXmjv/rJBKpGydliPG8TiYc9tbamFSBqJLiwgNQ=",
         "owner": "0xferrous",
         "repo": "ghmd",
-        "rev": "42ed83ae3aa8e116e07e1511eefc3606ee640551",
+        "rev": "3e7ca3e29b03f6bc2c0628da68b7588bbfdeaa3a",
         "type": "github"
       },
       "original": {
@@ -923,6 +944,7 @@
         "agent-box": "agent-box",
         "agent-box-image": "agent-box-image",
         "agent-images": "agent-images",
+        "fenix": "fenix",
         "flake-utils": "flake-utils_3",
         "foundry": "foundry",
         "frs-nvim": "frs-nvim",
@@ -930,6 +952,23 @@
         "llm-agents": "llm-agents_2",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_5"
+      }
+    },
+    "rust-analyzer-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776280158,
+        "narHash": "sha256-0uGgwgFVPQ28cVx7onaB1iTCHGi20MNx54e6KZbYnMs=",
+        "owner": "rust-lang",
+        "repo": "rust-analyzer",
+        "rev": "94c2f68935467a6381a4f3504ae6c709b5fd3c61",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "ref": "nightly",
+        "repo": "rust-analyzer",
+        "type": "github"
       }
     },
     "rust-overlay": {
