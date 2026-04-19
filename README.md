@@ -21,7 +21,8 @@ Current baseline:
 - imports upstream `ghmd.nixosModules.default`
 - enables upstream `services.ghmd`
 - enables a Caddy vhost for `http://ghmd.localhost`
-- maps `ghmd.localhost` to `127.0.0.1` with `networking.hosts`
+- serves Rust docs at `http://rustdoc.localhost`
+- maps `ghmd.localhost` and `rustdoc.localhost` to `127.0.0.1` with `networking.hosts`
 - sets opinionated defaults on upstream `services.ghmd`:
   - `host = "127.0.0.1"`
   - `port = 9000`
@@ -70,4 +71,4 @@ Notes:
 - `ghmd.localhost` resolution comes from `networking.hosts`, not Caddy alone
 - ghmd service itself comes from upstream `ghmd` flake NixOS module
 - default ghmd content root is `/home/<fr.public.user>` unless `fr.public.homeDir` or `services.ghmd.rootDir` overrides it
-- default public URL is `http://ghmd.localhost`
+- default public URLs are `http://ghmd.localhost` and `http://rustdoc.localhost`
