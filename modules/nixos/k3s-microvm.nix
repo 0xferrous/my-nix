@@ -42,6 +42,12 @@ in
 
         cpu = "host";
 
+        # Use QEMU user-mode networking (SLIRP): the guest is behind QEMU NAT,
+        # not bridged onto the host LAN. Outbound guest traffic works normally;
+        # from inside the guest the host is reachable at 10.0.2.2. Inbound host
+        # access only exists for explicit forwards below, and because they bind
+        # to 127.0.0.1 they are reachable only from the host itself, not from
+        # other LAN machines.
         interfaces = [
           {
             type = "user";
@@ -50,6 +56,10 @@ in
           }
         ];
 
+        # Host -> guest access through the SLIRP NAT:
+        #   127.0.0.1:16443 -> guest :6443 (k3s API)
+        # If you also want SSH from the host, add another forward such as
+        # 127.0.0.1:2223 -> guest :22.
         forwardPorts = [
           {
             from = "host";
@@ -69,6 +79,8 @@ in
           }
         ];
 
+        # 9p share used by the guest to write state back to the host, notably
+        # the kubeconfig at `${kubeconfigPath}`.
         shares = [
           {
             proto = "9p";
