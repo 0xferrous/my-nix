@@ -6,16 +6,35 @@ Current public building blocks include:
 
 - [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md): portable Neovim wrapper config exposed via this repo's flake `packages` and `apps`
 - [`images/agent-box-rt`](./images/agent-box-rt/README.md): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
-- `homeManagerModules.public` / `homeManagerModules.default`: public Home Manager baseline module intended to be imported from a private configuration
-- `nixosModules.public` / `nixosModules.default`: public NixOS baseline module intended to be imported from a private configuration
+- `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module
+- `homeConfigs.fr`: public `fr` Home Manager config intended to be imported from a private configuration
+- `nixosConfigs.fr`: public `fr` NixOS config intended to be imported from a private configuration
 
-## Public module pattern
+## Layout pattern
 
-This repo can export reusable Home Manager and NixOS modules consumed from a private flake.
+This repo separates generic reusable modules from public `fr` config:
 
-Current baseline:
+- `modules/home/*`: generic reusable Home Manager modules. These should be broadly useful and contain no personal identity/private host config.
+- `modules/nixos/*`: generic reusable NixOS modules.
+- `config/fr/home.nix`: public `fr` Home Manager config consumed by private configs.
+- `config/fr/nixos.nix`: public `fr` NixOS config consumed by private configs.
 
-- gates public modules behind `fr.public.enable`
+Root flake exports them separately:
+
+- `homeManagerModules.vcs` exports `modules/home/vcs.nix`
+- `nixosModules.k3sMicrovm` exports `modules/nixos/k3s-microvm.nix`
+- `homeConfigs.fr` exports `config/fr/home.nix`
+- `nixosConfigs.fr` exports `config/fr/nixos.nix`
+
+Public `fr` config should be gated behind `fr.public.enable` and use `lib.mkDefault` for values that a private repo may override. Generic modules should expose narrowly-scoped options and let users configure upstream Home Manager/NixOS modules directly where possible.
+
+## Public `fr` config pattern
+
+This repo can export public Home Manager and NixOS config consumed from a private flake.
+
+Current NixOS baseline:
+
+- gates public config behind `fr.public.enable`
 - keeps Home Manager baseline minimal for user-level config
 - puts `ghmd` in NixOS, not Home Manager
 - imports upstream `ghmd.nixosModules.default`
@@ -39,10 +58,9 @@ Example private usage:
     nixosConfigurations.machine = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        my-nix.nixosModules.default
+        my-nix.nixosConfigs.fr
         {
           fr.public.enable = true;
-
           fr.public.user = "dmnt";
 
           # optional private overrides
@@ -55,7 +73,7 @@ Example private usage:
     homeConfigurations.me = home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs { system = "x86_64-linux"; };
       modules = [
-        my-nix.homeManagerModules.default
+        my-nix.homeConfigs.fr
         {
           fr.public.enable = true;
         }
