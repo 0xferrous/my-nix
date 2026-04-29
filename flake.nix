@@ -72,17 +72,18 @@
       apps = frs-nvim.apps;
       lib.mkAgentBoxImage = agent-box-image.lib.mkAgentBoxImage;
       homeManagerModules = {
-        default = import ./modules/home/public.nix;
-        public = import ./modules/home/public.nix;
+        vcs = import ./modules/home/vcs.nix;
       };
       nixosModules = {
-        default = import ./modules/nixos/public.nix {
-          inherit fenix ghmd;
-        };
-        public = import ./modules/nixos/public.nix {
-          inherit fenix ghmd;
-        };
         k3sMicrovm = import ./modules/nixos/k3s-microvm.nix;
+      };
+      homeConfigs = {
+        fr = import ./config/fr/home.nix;
+      };
+      nixosConfigs = {
+        fr = import ./config/fr/nixos.nix {
+          inherit fenix ghmd;
+        };
       };
     };
 }

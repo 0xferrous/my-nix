@@ -9,7 +9,10 @@ let
   cfg = config.fr.public;
   homeDir = if cfg.homeDir != null then cfg.homeDir else "/home/${cfg.user}";
   localhostHosts = [ "rustdoc.localhost" ] ++ lib.optionals cfg.ghmd.caddy.enable [ cfg.ghmd.domain ];
-  caddyListenAddresses = [ "127.0.0.1" "::1" ];
+  caddyListenAddresses = [
+    "127.0.0.1"
+    "::1"
+  ];
   caddyLogFormat = ''
     output stderr
     format console
