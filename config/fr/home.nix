@@ -12,6 +12,9 @@ in
   imports = [
     ../../modules/home/vcs.nix
     ../../modules/home/programs/foundry.nix
+    ./alacritty.nix
+    ./editorconfig.nix
+    ./fonts.nix
   ];
 
   options.fr.public.enable = lib.mkEnableOption "public Home Manager baseline";
