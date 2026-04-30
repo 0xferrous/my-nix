@@ -13,8 +13,14 @@ in
     ../../modules/home/vcs.nix
     ../../modules/home/programs/foundry.nix
     ./alacritty.nix
+    ./atuin.nix
     ./editorconfig.nix
+    ./enables.nix
     ./fonts.nix
+    ./gtk.nix
+    ./helix.nix
+    ./misc.nix
+    ./neovim.nix
   ];
 
   options.fr.public.enable = lib.mkEnableOption "public Home Manager baseline";
