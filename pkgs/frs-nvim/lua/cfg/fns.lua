@@ -666,7 +666,6 @@ function M.setup_nix_plugins()
     "plugins.colorschemes",
     "plugins.conform",
     "plugins.feed",
-    "plugins.fff",
     "plugins.gitsigns",
     "plugins.harpoon",
     "plugins.lsp",

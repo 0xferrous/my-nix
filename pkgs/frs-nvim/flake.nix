@@ -30,10 +30,7 @@
       url = "github:neo451/feed.nvim";
       flake = false;
     };
-    plugin-fff-nvim = {
-      url = "github:dmtrKovalenko/fff.nvim";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+
     plugin-nightsky-vim = {
       url = "github:nvimdev/nightsky.vim";
       flake = false;
@@ -106,11 +103,7 @@
             vim-circom-syntax = mkPluginFromInput "vim-circom-syntax" "plugin-vim-circom-syntax";
             flote-nvim = mkPluginFromInput "flote.nvim" "plugin-flote";
             feed-nvim = mkPluginFromInput "feed.nvim" "plugin-feed-nvim";
-            fff-nvim = inputs.plugin-fff-nvim.packages.${system}.fff-nvim.overrideAttrs (old: {
-              patches = (old.patches or [ ]) ++ [
-                ./patches/fff-full-relative-path-display.patch
-              ];
-            });
+
             gitlinker-nvim = pkgs.vimPlugins.gitlinker-nvim.overrideAttrs (old: {
               patches = (old.patches or [ ]) ++ [
                 ./patches/gitlinker-ssh-alias-host-resolution.patch
@@ -263,6 +256,7 @@
                         fidget-nvim
                         firenvim
                         friendly-snippets
+                        fzf-lua
                         vim-fugitive
                         customVimPlugins.gitlinker-nvim
                         gitsigns-nvim
@@ -366,7 +360,8 @@
               ];
             in
             # Home Manager's Neovim module expects package.lua (like neovim-unwrapped.lua).
-            wrappedNvimBase // {
+            wrappedNvimBase
+            // {
               lua = pkgs.neovim-unwrapped.lua;
             }
           );
@@ -422,7 +417,13 @@
             export XDG_DATA_HOME="''${XDG_DATA_HOME:-$tmp/data}"
             mkdir -p "$HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME"
 
-            export PATH="${lib.makeBinPath [ pkgs.git pkgs.fd pkgs.ripgrep ]}:$PATH"
+            export PATH="${
+              lib.makeBinPath [
+                pkgs.git
+                pkgs.fd
+                pkgs.ripgrep
+              ]
+            }:$PATH"
             export NVIM_LIVE_CONFIG_ROOT="$root"
 
             cat > "$tmp/init.lua" <<'EOF'

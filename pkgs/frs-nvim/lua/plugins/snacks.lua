@@ -1,19 +1,5 @@
 local bigfile = require("cfg.bigfile")
 
-local function fff_find_files(opts)
-  return function() require("fff").find_files(opts) end
-end
-
-local function fff_live_grep(opts)
-  return function()
-    local resolved_opts = opts
-    if type(opts) == "function" then
-      resolved_opts = opts()
-    end
-    require("fff").live_grep(resolved_opts)
-  end
-end
-
 local eevee = [[
 ⠀⠀⠀⠀⠀⠀⣀⣠⣤⡔⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡴⣧
 ⠀⠀⣀⣤⣶⣿⣿⣿⣿⣏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡾⠁⣼
@@ -41,7 +27,7 @@ local dashboard_opts = {
         icon = " ",
         key = "f",
         desc = "Find File",
-        action = ":lua require('fff').find_files()",
+        action = ":lua require('fzf-lua').files()",
       },
       {
         icon = " ",
@@ -53,7 +39,7 @@ local dashboard_opts = {
         icon = " ",
         key = "g",
         desc = "Find Text",
-        action = ":lua require('fff').live_grep()",
+        action = ":lua require('fzf-lua').live_grep()"
       },
       {
         icon = " ",
@@ -65,7 +51,7 @@ local dashboard_opts = {
         icon = " ",
         key = "c",
         desc = "Config",
-        action = ":lua require('fff').find_files({ cwd = vim.fn.stdpath('config'), title = 'Config Files' })",
+        action = ":lua require('fzf-lua').files({ cwd = vim.fn.stdpath('config'), prompt = 'Config Files> ' })"
       },
       {
         icon = " ",
@@ -96,6 +82,55 @@ local dashboard_opts = {
 }
 
 return {
+  {
+    "ibhagwan/fzf-lua",
+    event = "VimEnter",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      "default-title",
+      winopts = {
+        preview = {
+          layout = "flex",
+        },
+      },
+      files = {
+        fd_opts = "--color=never --type f --hidden --follow --exclude .git",
+      },
+      grep = {
+        rg_opts = "--column --line-number --no-heading --color=always --smart-case --hidden --glob '!.git'",
+        rg_glob = true,
+        glob_flag = "--iglob",
+        glob_separator = "%s%-%-",
+        winopts = {
+          preview = {
+            layout = "vertical",
+            vertical = "down:60%",
+          },
+        },
+      },
+    },
+    config = function(spec)
+      local fzf = require("fzf-lua")
+      fzf.setup(spec.opts)
+
+      vim.keymap.set("n", "<leader>sh", fzf.help_tags, { desc = "[S]earch [H]elp" })
+      vim.keymap.set("n", "<leader>sk", fzf.keymaps, { desc = "[S]earch [K]eymaps" })
+      vim.keymap.set("n", "<leader>sf", fzf.files, { desc = "[S]earch [F]iles" })
+      vim.keymap.set("n", "<leader>ss", fzf.builtin, { desc = "[S]earch [S]elect pickers" })
+      vim.keymap.set("n", "<leader>sw", fzf.grep_cword, { desc = "[S]earch current [W]ord" })
+      vim.keymap.set("n", "<leader>sg", fzf.live_grep, { desc = "[S]earch by [G]rep with globs" })
+      vim.keymap.set("n", "<leader>sd", fzf.diagnostics_workspace, { desc = "[S]earch [D]iagnostics" })
+      vim.keymap.set("n", "<leader>sr", fzf.resume, { desc = "[S]earch [R]esume" })
+      vim.keymap.set("n", "<leader>s.", fzf.oldfiles, { desc = "[S]earch Recent Files (\".\" for repeat)" })
+      vim.keymap.set("n", "<leader>gf", fzf.git_files, { desc = "Search [G]it [F]iles" })
+      vim.keymap.set("n", "<leader><space>", fzf.buffers, { desc = "[ ] Find existing buffers" })
+      vim.keymap.set("n", "<leader>/", fzf.blines, { desc = "[/] Fuzzily search in current buffer" })
+      vim.keymap.set("n", "<leader>s/", fzf.grep_curbuf, { desc = "[S]earch [/] in Open Files" })
+      vim.keymap.set("n", "<leader>sn", function()
+        fzf.files({ cwd = vim.fn.stdpath("config"), prompt = "Config Files> " })
+      end, { desc = "[S]earch [N]eovim files" })
+    end,
+  },
   {
     "folke/snacks.nvim",
     priority = 1000,
@@ -131,22 +166,6 @@ return {
         snacks.notifier.show_history()
       end, { desc = "Show notifications history", force = true })
 
-      vim.keymap.set("n", "<leader>sh", "<cmd>lua Snacks.picker.help()<cr>", { desc = "[S]earch [H]elp" })
-      vim.keymap.set("n", "<leader>sk", "<cmd>lua Snacks.picker.keymaps()<cr>", { desc = "[S]earch [K]eymaps" })
-      vim.keymap.set("n", "<leader>sf", fff_find_files(), { desc = "[S]earch [F]iles" })
-      vim.keymap.set("n", "<leader>ss", "<cmd>lua Snacks.picker.pickers()<cr>", { desc = "[S]earch [S]elect pickers" })
-      vim.keymap.set("n", "<leader>sw", fff_live_grep(function()
-        return { query = vim.fn.expand("<cword>") }
-      end), { desc = "[S]earch current [W]ord" })
-      vim.keymap.set("n", "<leader>sg", fff_live_grep(), { desc = "[S]earch by [G]rep" }) -- sde ; sdw
-      vim.keymap.set("n", "<leader>sd", "<cmd>lua Snacks.picker.diagnostics()<cr>", { desc = "[S]earch [D]iagnostics" })
-      vim.keymap.set("n", "<leader>sr", "<cmd>lua Snacks.picker.resume()<cr>", { desc = "[S]earch [R]esume" })
-      vim.keymap.set("n", "<leader>s.", "<cmd>lua Snacks.picker.recent()<cr>", { desc = "[S]earch Recent Files (\".\" for repeat)" })
-      vim.keymap.set("n", "<leader>gf", "<cmd>lua Snacks.picker.git_files()<cr>", { desc = "Search [G]it [F]iles" })
-      vim.keymap.set("n", "<leader><space>", "<cmd>lua Snacks.picker.buffers({ filter = { cwd = true } })<cr>", { desc = "[ ] Find existing buffers" })
-      vim.keymap.set("n", "<leader>/", "<cmd>lua Snacks.picker.lines()<cr>", { desc = "[/] Fuzzily search in current buffer" })
-      vim.keymap.set("n", "<leader>s/", "<cmd>lua Snacks.picker.grep_buffers()<cr>", { desc = "[S]earch [/] in Open Files" })
-      vim.keymap.set("n", "<leader>sn", fff_find_files({ cwd = vim.fn.stdpath("config"), title = "Config Files" }), { desc = "[S]earch [N]eovim files" })
       vim.keymap.set("n", "<leader>un", "<cmd>lua Snacks.notifier.show_history()<cr>", { desc = "Show [N]otification history" })
     end,
   },
