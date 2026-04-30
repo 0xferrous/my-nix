@@ -9,7 +9,10 @@ let
   };
 in
 {
-  imports = [ ../../modules/home/vcs.nix ];
+  imports = [
+    ../../modules/home/vcs.nix
+    ../../modules/home/programs/foundry.nix
+  ];
 
   options.fr.public.enable = lib.mkEnableOption "public Home Manager baseline";
 

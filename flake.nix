@@ -23,8 +23,12 @@
       url = "github:0xferrous/agent-box";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    foundry = {
+    foundry-stable = {
       url = "github:shazow/foundry.nix/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    foundry-nightly = {
+      url = "github:shazow/foundry.nix/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     agent-images = {
@@ -54,7 +58,7 @@
       inputs.llm-agents.follows = "llm-agents";
       inputs.nix-index-database.follows = "nix-index-database";
       inputs.agent-box.follows = "agent-box";
-      inputs.foundry.follows = "foundry";
+      inputs.foundry.follows = "foundry-stable";
       inputs.agent-images.follows = "agent-images";
     };
   };
@@ -71,12 +75,8 @@
       packages = frs-nvim.packages;
       apps = frs-nvim.apps;
       lib.mkAgentBoxImage = agent-box-image.lib.mkAgentBoxImage;
-      homeManagerModules = {
-        vcs = import ./modules/home/vcs.nix;
-      };
-      nixosModules = {
-        k3sMicrovm = import ./modules/nixos/k3s-microvm.nix;
-      };
+      homeManagerModules = import ./modules/home;
+      nixosModules = import ./modules/nixos;
       homeConfigs = {
         fr = import ./config/fr/home.nix;
       };
