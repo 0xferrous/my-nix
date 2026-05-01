@@ -1,6 +1,6 @@
-{ pkgs, inputs, ... }:
+{ pkgs, myNixInputs, ... }:
 let
-  nvimPkg = inputs.frs-nvim.packages.${pkgs.system}.default;
+  nvimPkg = myNixInputs.frs-nvim.packages.${pkgs.system}.default;
 in
 {
   # Use pre-wrapped Neovim package from frs-nvim directly.

@@ -1,12 +1,12 @@
 {
   lib,
   pkgs,
-  inputs,
+  myNixInputs,
   ...
 }:
 let
-  foundry-stable = inputs.foundry-stable.defaultPackage.${pkgs.system};
-  foundry-nightly = inputs.foundry-nightly.defaultPackage.${pkgs.system};
+  foundry-stable = myNixInputs.foundry-stable.defaultPackage.${pkgs.system};
+  foundry-nightly = myNixInputs.foundry-nightly.defaultPackage.${pkgs.system};
   components = [
     "cast"
     "forge"
