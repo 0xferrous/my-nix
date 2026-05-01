@@ -33,7 +33,7 @@ jobs:
 
       - name: Build image archive
         run: |
-          nix build --accept-flake-config --impure --print-out-paths --expr 'let flake = builtins.getFlake (toString ./.); in flake.lib.mkAgentBoxImage "x86_64-linux" { uid = 1000; gid = 100; uname = "dmnt"; gname = "users"; }' > image-path.txt
+          nix build --accept-flake-config --impure --print-out-paths --expr 'let flake = builtins.getFlake (toString ./.); inputs = flake.inputs // { foundry = flake.inputs.foundry-stable; }; in import ./images/agent-box-rt/default.nix { inherit inputs; system = "x86_64-linux"; uid = 1000; gid = 100; uname = "dmnt"; gname = "users"; }' > image-path.txt
           cp "$(cat image-path.txt)" agent-box.tar.gz
           gunzip --stdout agent-box.tar.gz > agent-box.tar
 
