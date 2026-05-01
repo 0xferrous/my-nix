@@ -78,7 +78,10 @@
       homeManagerModules = import ./modules/home;
       nixosModules = import ./modules/nixos;
       homeConfigs = {
-        fr = import ./config/fr/home.nix;
+        fr = { ... }: {
+          imports = [ ./config/fr/home.nix ];
+          _module.args.myNixInputs = inputs;
+        };
       };
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
