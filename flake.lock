@@ -779,15 +779,16 @@
     "plugin-feed-nvim": {
       "flake": false,
       "locked": {
-        "lastModified": 1775008438,
-        "narHash": "sha256-pJYr1h7+0Exl0a5DYLeIAjBzOo5KbxxLtMqwDNc+GUg=",
+        "lastModified": 1765821067,
+        "narHash": "sha256-6dry0pD4MXKSHi80LDxktjXQrPkWu3RnZ0SzXp9Gymg=",
         "owner": "neo451",
         "repo": "feed.nvim",
-        "rev": "4e0903343c47b13aa5355ed267dbd58300bff8be",
+        "rev": "d1f8cee9df8ea4c7e319db701fb0ece0eca9a005",
         "type": "github"
       },
       "original": {
         "owner": "neo451",
+        "ref": "v2.19.2",
         "repo": "feed.nvim",
         "type": "github"
       }
