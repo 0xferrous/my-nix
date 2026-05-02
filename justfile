@@ -6,3 +6,7 @@ load-agent-image: build-agent-image
 
 load-agent-image-podman: build-agent-image
   podman load -i result
+
+flake-update-frs-nvim:
+  nix flake update --flake ./pkgs/frs-nvim
+  nix flake update frs-nvim
