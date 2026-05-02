@@ -15,6 +15,7 @@
       clean.enable = true;
       clean.dates = "weekly";
     };
+    starship.enable = true;
     # nix-index.enable = true;
     nix-your-shell = {
       enable = true;
