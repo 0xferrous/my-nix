@@ -60,7 +60,8 @@
       flake = false;
     };
     plugin-diffie-nvim = {
-      url = "path:/home/dmnt/dev/fr/diffie.nvim";
+      # url = "path:/home/dmnt/dev/fr/diffie.nvim";
+      url = "github:0xferrous/diffie.nvim";
       flake = false;
     };
   };
