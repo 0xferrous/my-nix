@@ -10,15 +10,15 @@ in
   imports = [
     ../../modules/home/vcs.nix
     ../../modules/home/programs/foundry.nix
-    ./alacritty.nix
-    ./atuin.nix
-    ./editorconfig.nix
-    ./enables.nix
-    ./fonts.nix
-    ./gtk.nix
-    ./helix.nix
-    ./misc.nix
-    ./neovim.nix
+    ./home/alacritty.nix
+    ./home/atuin.nix
+    ./home/editorconfig.nix
+    ./home/enables.nix
+    ./home/fonts.nix
+    ./home/gtk.nix
+    ./home/helix.nix
+    ./home/misc.nix
+    ./home/neovim.nix
   ];
 
   config = {
