@@ -1,7 +1,5 @@
 { config, lib, ... }:
 let
-  cfg = config.fr.public;
-
   frIdentity = {
     name = "0xferrous";
     email = "0xferrous@proton.me";
@@ -23,9 +21,7 @@ in
     ./neovim.nix
   ];
 
-  options.fr.public.enable = lib.mkEnableOption "public Home Manager baseline";
-
-  config = lib.mkIf cfg.enable {
+  config = {
     fr.vcs.conditionalIdentities = lib.mkAfter [
       (frIdentity // { repo = "~/dev/fr/"; })
       (frIdentity // { repo = "~/dev/git/0xferrous/"; })
