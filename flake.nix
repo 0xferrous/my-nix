@@ -79,7 +79,10 @@
       nixosModules = import ./modules/nixos;
       homeConfigs = {
         fr = { ... }: {
-          imports = [ ./config/fr/home.nix ];
+          imports = [
+            inputs.agent-box.homeManagerModules.default
+            ./config/fr/home.nix
+          ];
           _module.args.myNixInputs = inputs;
         };
       };

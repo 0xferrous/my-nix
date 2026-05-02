@@ -1,0 +1,46 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "vim_mode": true,
+  "telemetry": {
+    "metrics": false,
+    "diagnostics": false,
+  },
+  "buffer_font_family": "RecMonoCasual Nerd Font Mono",
+  "ui_font_family": "Rec Mono Casual",
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "light",
+    "light": "Gruvbox Dark Hard",
+    "dark": "Gruvbox Dark Hard",
+  },
+  "inlay_hints": {
+    "enabled": true,
+  },
+  "lsp": {
+    "rust-analyzer": {
+      "binary": {
+        "path": "/home/dmnt/.nix-profile/bin/rust-analyzer",
+      },
+    },
+    "ty": {
+      "binary": {
+        "path": "/home/dmnt/.nix-profile/bin/ty",
+      },
+    },
+  },
+  "terminal": {
+    "shell": {
+      "program": "nu",
+    },
+  },
+  "load_direnv": "direct",
+  "autosave": "on_window_change",
+}
