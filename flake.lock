@@ -223,21 +223,6 @@
         "type": "github"
       }
     },
-    "crane": {
-      "locked": {
-        "lastModified": 1773857772,
-        "narHash": "sha256-5xsK26KRHf0WytBtsBnQYC/lTWDhQuT57HJ7SzuqZcM=",
-        "owner": "ipetkov",
-        "repo": "crane",
-        "rev": "b556d7bbae5ff86e378451511873dfd07e4504cd",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ipetkov",
-        "repo": "crane",
-        "type": "github"
-      }
-    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -402,24 +387,6 @@
         "type": "github"
       }
     },
-    "flake-utils_6": {
-      "inputs": {
-        "systems": "systems_6"
-      },
-      "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
     "foundry-nightly": {
       "inputs": {
         "flake-utils": "flake-utils_4",
@@ -471,9 +438,9 @@
           "nixpkgs"
         ],
         "plugin-ansi-nvim": "plugin-ansi-nvim",
+        "plugin-diffie-nvim": "plugin-diffie-nvim",
         "plugin-eth-nvim": "plugin-eth-nvim",
         "plugin-feed-nvim": "plugin-feed-nvim",
-        "plugin-fff-nvim": "plugin-fff-nvim",
         "plugin-floating-help": "plugin-floating-help",
         "plugin-flote": "plugin-flote",
         "plugin-logger-nvim": "plugin-logger-nvim",
@@ -623,7 +590,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_7",
+        "systems": "systems_6",
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
@@ -668,11 +635,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771192657,
-        "narHash": "sha256-Ibv5WEXiwr6gIEOajD4QE93TYpXUhEYv1VZV8sdU3IQ=",
+        "lastModified": 1777671051,
+        "narHash": "sha256-h215lfBUcT4/HlY7v56hjS90rjAbhKgRGxT6tuq5icc=",
         "owner": "BirdeeHub",
         "repo": "nix-wrapper-modules",
-        "rev": "8ba8703b62c2cc7e642f58ff03bd14a2f836e07a",
+        "rev": "5eeeb153ad8869f584e949541e858f3be76e761a",
         "type": "github"
       },
       "original": {
@@ -764,16 +731,32 @@
     "plugin-ansi-nvim": {
       "flake": false,
       "locked": {
-        "lastModified": 1774680759,
-        "narHash": "sha256-N1WynUiKNycLPH6dKY2JlOou2HYPrk4JGgdLqj4QVbo=",
+        "lastModified": 1775672651,
+        "narHash": "sha256-BIf3gXwVwtNFSZdGjdLqboKCwzviKJefe3zjwvUn5GA=",
         "owner": "0xferrous",
         "repo": "ansi.nvim",
-        "rev": "cac384dcd28f40ab9dc9354c4233bc126e3bd46e",
+        "rev": "95de464c315ecbe9d7ca3d9a203ef85def0cf6aa",
         "type": "github"
       },
       "original": {
         "owner": "0xferrous",
         "repo": "ansi.nvim",
+        "type": "github"
+      }
+    },
+    "plugin-diffie-nvim": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1775183812,
+        "narHash": "sha256-2fR9Rg3D5ygDis7TmFFXb7mhajRVFt4cFce566YiOCY=",
+        "owner": "0xferrous",
+        "repo": "diffie.nvim",
+        "rev": "c09b85706cfc7eeb1c1d09f7a395acb012452c93",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xferrous",
+        "repo": "diffie.nvim",
         "type": "github"
       }
     },
@@ -796,40 +779,16 @@
     "plugin-feed-nvim": {
       "flake": false,
       "locked": {
-        "lastModified": 1765821067,
-        "narHash": "sha256-6dry0pD4MXKSHi80LDxktjXQrPkWu3RnZ0SzXp9Gymg=",
+        "lastModified": 1775008438,
+        "narHash": "sha256-pJYr1h7+0Exl0a5DYLeIAjBzOo5KbxxLtMqwDNc+GUg=",
         "owner": "neo451",
         "repo": "feed.nvim",
-        "rev": "d1f8cee9df8ea4c7e319db701fb0ece0eca9a005",
+        "rev": "4e0903343c47b13aa5355ed267dbd58300bff8be",
         "type": "github"
       },
       "original": {
         "owner": "neo451",
         "repo": "feed.nvim",
-        "type": "github"
-      }
-    },
-    "plugin-fff-nvim": {
-      "inputs": {
-        "crane": "crane",
-        "flake-utils": "flake-utils_6",
-        "nixpkgs": [
-          "frs-nvim",
-          "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay_3"
-      },
-      "locked": {
-        "lastModified": 1774023521,
-        "narHash": "sha256-F9fnjCwBEJfuK0TuRr7XjMcacMep5K0SuzGft2IFXtQ=",
-        "owner": "dmtrKovalenko",
-        "repo": "fff.nvim",
-        "rev": "dd56a3a8a8a5a85522badaf6485f28c8f7a7c840",
-        "type": "github"
-      },
-      "original": {
-        "owner": "dmtrKovalenko",
-        "repo": "fff.nvim",
         "type": "github"
       }
     },
@@ -1046,28 +1005,6 @@
         "type": "github"
       }
     },
-    "rust-overlay_3": {
-      "inputs": {
-        "nixpkgs": [
-          "frs-nvim",
-          "plugin-fff-nvim",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1773803479,
-        "narHash": "sha256-GD6i1F2vrSxbsmbS92+8+x3DbHOJ+yrS78Pm4xigW4M=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "f17186f52e82ec5cf40920b58eac63b78692ac7c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
     "systems": {
       "locked": {
         "lastModified": 1681028828,
@@ -1144,21 +1081,6 @@
       }
     },
     "systems_6": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
-    "systems_7": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
