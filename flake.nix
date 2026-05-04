@@ -2,9 +2,13 @@
   description = "Public Nix building blocks";
 
   nixConfig = {
-    extra-substituters = [ "https://numtide.cachix.org" ];
+    extra-substituters = [
+      "https://numtide.cachix.org"
+      "https://cache.numtide.com"
+    ];
     extra-trusted-public-keys = [
       "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
   };
 
@@ -13,7 +17,6 @@
     flake-utils.url = "github:numtide/flake-utils";
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
@@ -52,21 +55,12 @@
       url = "path:./pkgs/frs-nvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agent-box-image = {
-      url = "path:./images/agent-box-rt";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.llm-agents.follows = "llm-agents";
-      inputs.nix-index-database.follows = "nix-index-database";
-      inputs.agent-box.follows = "agent-box";
-      inputs.foundry.follows = "foundry-stable";
-      inputs.agent-images.follows = "agent-images";
-    };
+
   };
 
   outputs =
     inputs@{
       frs-nvim,
-      agent-box-image,
       fenix,
       ghmd,
       ...
@@ -74,7 +68,13 @@
     {
       packages = frs-nvim.packages;
       apps = frs-nvim.apps;
-      lib.mkAgentBoxImage = agent-box-image.lib.mkAgentBoxImage;
+      lib.mkAgentBoxImage = args:
+        import ./lib/mkAgentBoxImage.nix (
+          args
+          // {
+            inputs = inputs // { foundry = inputs.foundry-stable; };
+          }
+        );
       homeManagerModules = import ./modules/home;
       nixosModules = import ./modules/nixos;
       homeConfigs = {
