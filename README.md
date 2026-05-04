@@ -5,7 +5,7 @@ Public Nix files extracted from my larger setup.
 Current public building blocks include:
 
 - [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md): portable Neovim wrapper config exposed via this repo's flake `packages` and `apps`
-- [`images/agent-box-rt`](./images/agent-box-rt/README.md): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
+- [`lib/mkAgentBoxImage.nix`](./lib/mkAgentBoxImage.nix): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
 - `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module
 - `homeConfigs.fr`: public `fr` Home Manager config intended to be imported from a private configuration
 - `nixosConfigs.fr`: public `fr` NixOS config intended to be imported from a private configuration

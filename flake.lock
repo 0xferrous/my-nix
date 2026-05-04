@@ -22,37 +22,6 @@
         "type": "github"
       }
     },
-    "agent-box-image": {
-      "inputs": {
-        "agent-box": [
-          "agent-box"
-        ],
-        "agent-images": [
-          "agent-images"
-        ],
-        "foundry": [
-          "foundry-stable"
-        ],
-        "llm-agents": [
-          "llm-agents"
-        ],
-        "nix-index-database": [
-          "nix-index-database"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "path": "./images/agent-box-rt",
-        "type": "path"
-      },
-      "original": {
-        "path": "./images/agent-box-rt",
-        "type": "path"
-      },
-      "parent": []
-    },
     "agent-box_2": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -587,9 +556,7 @@
         "blueprint": "blueprint_2",
         "bun2nix": "bun2nix_2",
         "flake-parts": "flake-parts_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
+        "nixpkgs": "nixpkgs_5",
         "systems": "systems_6",
         "treefmt-nix": "treefmt-nix_3"
       },
@@ -713,6 +680,22 @@
       }
     },
     "nixpkgs_5": {
+      "locked": {
+        "lastModified": 1777826146,
+        "narHash": "sha256-wQ/iN5Zp5VIa3ebBibijPnLyKhor+xEbDy4d0goa9Zs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "73c703c22422b8951895a960959dbbaca7296492",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1774386573,
         "narHash": "sha256-4hAV26quOxdC6iyG7kYaZcM3VOskcPUrdCQd/nx8obc=",
@@ -940,7 +923,6 @@
     "root": {
       "inputs": {
         "agent-box": "agent-box",
-        "agent-box-image": "agent-box-image",
         "agent-images": "agent-images",
         "fenix": "fenix",
         "flake-utils": "flake-utils_3",
@@ -950,7 +932,7 @@
         "ghmd": "ghmd",
         "llm-agents": "llm-agents_2",
         "nix-index-database": "nix-index-database",
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       }
     },
     "rust-analyzer-src": {
