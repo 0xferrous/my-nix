@@ -104,6 +104,7 @@ let
     direnv
     nix-search-tv
     gitHunk
+    devenv
   ];
 
   debugPackages = with pkgs; [
