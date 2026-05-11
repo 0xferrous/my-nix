@@ -13,6 +13,7 @@ in
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/pass.nix
     ../../modules/home/programs/ssh.nix
+    ../../modules/home/programs/direnv.nix
     ./home/alacritty.nix
     ./home/atuin.nix
     ./home/editorconfig.nix
