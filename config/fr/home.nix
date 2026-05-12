@@ -44,6 +44,16 @@ in
       ];
     };
 
+    fr.direnv = {
+      enable = true;
+      layoutDir = {
+        enable = true;
+        baseDir = "${config.home.homeDirectory}/.cache/direnv/layouts";
+      };
+      devenv.enable = true;
+      poetry.enable = true;
+    };
+
     fr.termfilechooser = {
       enable = true;
       desktop = "niri";
