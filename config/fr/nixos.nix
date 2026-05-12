@@ -19,7 +19,10 @@ let
   '';
 in
 {
-  imports = [ ghmd.nixosModules.default ];
+  imports = [
+    ghmd.nixosModules.default
+    ../../modules/nixos/desktop-portal.nix
+  ];
 
   options.fr.public = {
     enable = lib.mkEnableOption "public NixOS baseline";
@@ -52,6 +55,20 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    fr.desktopPortal = {
+      enable = lib.mkDefault true;
+      desktopName = lib.mkDefault "niri";
+      portals = lib.mkDefault (with pkgs; [
+        xdg-desktop-portal-gtk
+        xdg-desktop-portal-gnome
+      ]);
+      defaultPortal = lib.mkDefault "gtk";
+      interfaceOverrides = lib.mkDefault {
+        "org.freedesktop.impl.portal.ScreenCast" = "gnome";
+        "org.freedesktop.impl.portal.Screenshot" = "gnome";
+      };
+    };
+
     assertions = [
       {
         assertion = cfg.user != "";

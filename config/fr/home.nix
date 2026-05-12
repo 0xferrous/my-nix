@@ -10,6 +10,7 @@ in
   imports = [
     ../../modules/home/symlinks.nix
     ../../modules/home/vcs.nix
+    ../../modules/home/termfilechooser.nix
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/pass.nix
     ../../modules/home/programs/ssh.nix
@@ -23,7 +24,6 @@ in
     ./home/gtk.nix
     ./home/desktop-entries.nix
     ./home/helix.nix
-    ./home/kitty-portal.nix
     ./home/misc.nix
     ./home/neovim.nix
     ./home/service-misc.nix
@@ -41,6 +41,17 @@ in
           name = "fr";
           store_dir = "${config.home.homeDirectory}/dev/fr/pass";
         }
+      ];
+    };
+
+    fr.termfilechooser = {
+      enable = true;
+      desktop = "niri";
+      tui.program = "superfile";
+      terminal.command = [
+        "kitty"
+        "--title"
+        "termfilechooser"
       ];
     };
 
