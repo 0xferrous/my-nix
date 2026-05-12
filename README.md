@@ -7,6 +7,7 @@ Current public building blocks include:
 - [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md): portable Neovim wrapper config exposed via this repo's flake `packages` and `apps`
 - [`lib/mkAgentBoxImage.nix`](./lib/mkAgentBoxImage.nix): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
 - `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module
+- `homeManagerModules.termfilechooser`: reusable Home Manager module for `xdg-desktop-portal-termfilechooser`
 - `homeConfigs.fr`: public `fr` Home Manager config intended to be imported from a private configuration
 - `nixosConfigs.fr`: public `fr` NixOS config intended to be imported from a private configuration
 
@@ -22,6 +23,7 @@ This repo separates generic reusable modules from public `fr` config:
 Root flake exports them separately:
 
 - `homeManagerModules.vcs` exports `modules/home/vcs.nix`
+- `homeManagerModules.termfilechooser` exports `modules/home/termfilechooser.nix`
 - `nixosModules.k3sMicrovm` exports `modules/nixos/k3s-microvm.nix`
 - `homeConfigs.fr` exports `config/fr/home.nix`
 - `nixosConfigs.fr` exports `config/fr/nixos.nix`
