@@ -13,8 +13,8 @@ in
     ../../modules/home/termfilechooser.nix
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/pass.nix
-    ../../modules/home/programs/ssh.nix
     ../../modules/home/programs/direnv.nix
+    ../../modules/home/programs/ssh.nix
     ./home/alacritty.nix
     ./home/atuin.nix
     ./home/editorconfig.nix
