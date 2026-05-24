@@ -83,15 +83,24 @@
         piPackage = basePiPackage;
         agentStuffSrc = inputs."agent-stuff";
       };
-      agentVms = import ./config/fr/agent-vm.nix {
+      agentVmModule = import ./config/fr/agent-vm.nix {
         inherit pkgs lib;
         uname = "dmnt";
         mkExecSSH = agentspace.lib.mkExecSSH;
         piPackage = piPackage;
       };
+      agentVms = agentVmModule.fr.agentspace.vms;
       allVms = lib.mapAttrs (_name: vmConfig: {
         type = "app";
-        program = agentspace.lib.mkLaunch (agentspace.lib.mkSandbox vmConfig);
+        program = agentspace.lib.mkLaunch (
+          agentspace.lib.mkSandbox (
+            builtins.removeAttrs vmConfig [
+              "enable"
+              "packageName"
+              "socketActivation"
+            ]
+          )
+        );
       }) agentVms;
     in
     {
@@ -127,6 +136,7 @@
           {
             imports = [
               inputs.agent-box.homeManagerModules.default
+              agentVmModule
               ./config/fr/home.nix
             ];
             _module.args.myNixInputs = inputs;
