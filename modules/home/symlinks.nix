@@ -28,10 +28,12 @@ let
     };
   };
 
-  mkFileAttrs = lib.mapAttrs (_: file: {
-    source = config.lib.file.mkOutOfStoreSymlink "${cfg.root}/${file.target}";
-    inherit (file) recursive onChange;
-  });
+  mkFileAttrs = lib.mapAttrs (
+    _: file: {
+      source = config.lib.file.mkOutOfStoreSymlink "${cfg.root}/${file.target}";
+      inherit (file) recursive onChange;
+    }
+  );
 in
 {
   options.fr.symlinks = {

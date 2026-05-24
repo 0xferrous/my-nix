@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.fr.direnv;
 in
@@ -29,8 +34,7 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages =
-      lib.optionals cfg.devenv.enable [ pkgs.devenv ]
-      ++ lib.optionals cfg.poetry.enable [ pkgs.poetry ];
+      lib.optionals cfg.devenv.enable [ pkgs.devenv ] ++ lib.optionals cfg.poetry.enable [ pkgs.poetry ];
 
     programs.direnv.stdlib = lib.concatStringsSep "\n\n" (
       lib.optional cfg.layoutDir.enable ''
