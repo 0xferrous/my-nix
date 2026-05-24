@@ -1,8 +1,18 @@
 { mkExecSSH, uname, llmAgentsNixPkgs, ... }: 
 let
   homeDir = "/home/${uname}";
-  nixosConfig = {...}: {
+  nixosConfig = { lib, ... }: {
+    nix.settings = {
+      substituters = [
+        "http://10.0.2.2:5000?priority=30"
+        "https://cache.nixos.org"
+      ];
+      trusted-public-keys = [
+        "nixos-1:TpdALX3FryCxN1I/WG+lhTeme19H/Ka035MJchdsYH4="
+      ];
+    };
 
+    environment.sessionVariables.HARMONIA_CACHE_URL = "http://10.0.2.2:5000";
   };
   homeConfig = {...}: {
     home.packages = with llmAgentsNixPkgs; [
