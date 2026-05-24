@@ -1,29 +1,27 @@
 { pkgs, lib ? pkgs.lib }:
 
-pkgs.rustPlatform.buildRustPackage rec {
-  pname = "opensrc";
+let
   version = "0.7.2";
+in
+pkgs.stdenvNoCC.mkDerivation {
+  pname = "opensrc";
+  inherit version;
 
-  src = pkgs.fetchFromGitHub {
-    owner = "vercel-labs";
-    repo = pname;
-    rev = "v${version}";
-    hash = "sha256-yqdCkpehNPknUAWkJy7QKtpf4v3px1Xztg3djIUx0N4=";
+  src = pkgs.fetchurl {
+    url = "https://github.com/vercel-labs/opensrc/releases/download/v${version}/opensrc-linux-x64";
+    hash = "sha256-YGTm6ksC/Kix6g2qPAq4y5xZcvjYODxhdMahfWzgx9A=";
   };
 
-  cargoLock = {
-    lockFile = "${src}/packages/opensrc/cli/Cargo.lock";
-  };
-
-  cargoHash = lib.fakeHash;
-
-  sourceRoot = "${src.name}/packages/opensrc/cli";
+  dontUnpack = true;
+  installPhase = ''
+    install -Dm755 "$src" "$out/bin/opensrc"
+  '';
 
   meta = with lib; {
     description = "Fetch and cache source code for packages and repos";
     homepage = "https://github.com/vercel-labs/opensrc";
     license = licenses.asl20;
     mainProgram = "opensrc";
-    platforms = platforms.linux ++ platforms.darwin;
+    platforms = [ "x86_64-linux" ];
   };
 }
