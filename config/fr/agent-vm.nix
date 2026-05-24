@@ -1,4 +1,5 @@
 {
+  lib,
   mkExecSSH,
   uname,
   piPackage,
@@ -30,7 +31,7 @@ let
     };
   mkVm =
     vmName: vmConfig:
-    {
+    lib.recursiveUpdate {
       ssh.authorizedKeys = [
         "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJrIZYaoh6XQrI7ZMjSTa50PtK7neCGDOpOXCa+6i0J9KZKWRKJEhNqpbnn6ivzl7/pW9W9afN9NQB2EQdzpANE="
       ];
@@ -40,7 +41,7 @@ let
       };
       persistence.baseDir = "${homeDir}/vms/${vmName}";
       workspace.enable = true;
-      workspace.addCurrentDir = true;
+      workspace.addCurrentDir = false;
       writeFiles."/home/agent/.pi/agent/auth.json" = {
         path = "${homeDir}/.pi/agent/auth.json";
         mode = "0600";
@@ -53,8 +54,7 @@ let
       extraModules = [
         nixosConfig
       ];
-    }
-    // vmConfig;
+    } vmConfig;
 in
 {
   imports = [
