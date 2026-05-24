@@ -65,10 +65,7 @@ in
     enable = true;
 
     vms.agentspace = mkVm "agentspace" {
-      socketActivation = {
-        enable = true;
-        identityFile = "~/.ssh/ferrous.pub";
-      };
+      sshConnect.identityFile = "~/.ssh/ferrous.pub";
       workspace.spaces.agentspace = "${homeDir}/dev/fr/open-source/agentspace";
     };
   };
