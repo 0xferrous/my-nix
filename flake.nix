@@ -38,6 +38,10 @@
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    agentspace = {
+      url = "github:shazow/agentspace";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -63,11 +67,30 @@
       frs-nvim,
       fenix,
       ghmd,
+      agentspace,
       ...
     }:
+    let
+      system = "x86_64-linux";
+      pkgs = inputs.nixpkgs.legacyPackages.${system};
+      lib = pkgs.lib;
+      agentVms = import ./config/fr/agent-vm.nix {
+        inherit pkgs lib;
+        uname = "dmnt";
+        mkExecSSH = agentspace.lib.mkExecSSH;
+        llmAgentsNixPkgs = inputs.llm-agents.packages.${system};
+      };
+      allVms = lib.mapAttrs (_name: vmConfig: {
+        type = "app";
+        program = agentspace.lib.mkLaunch (agentspace.lib.mkSandbox vmConfig);
+      }) agentVms;
+    in
     {
       packages = frs-nvim.packages;
-      apps = frs-nvim.apps;
+      apps = lib.recursiveUpdate frs-nvim.apps {
+        ${system} = allVms;
+      };
+
       lib.mkAgentBoxImage = args:
         import ./lib/mkAgentBoxImage.nix (
           args
