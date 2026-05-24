@@ -13,7 +13,7 @@ let
   wrapperOptionNames = [
     "enable"
     "packageName"
-    "socketActivation"
+    "sshConnect"
   ];
 
   vmType = lib.types.submodule (
@@ -34,25 +34,23 @@ let
           description = "Name of the generated Home Manager package/bin for this VM.";
         };
 
-        socketActivation = {
-          enable = lib.mkEnableOption "SSH-triggered agentspace VM startup";
-
-          sshHost = lib.mkOption {
-            type = lib.types.str;
-            default = name;
-            description = "SSH host alias that should activate/connect to this VM.";
+        sshConnect = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to add an SSH host that starts this VM when needed.";
           };
 
-          socketPath = lib.mkOption {
+          host = lib.mkOption {
             type = lib.types.str;
-            default = "%t/agentspace-${name}.sock";
-            description = "User systemd socket path used as the activation trigger.";
+            default = name;
+            description = "SSH host alias that starts/connects to this VM.";
           };
 
           identityFile = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
-            description = "Optional SSH identity file used by the generated SSH host alias for this VM.";
+            description = "Optional SSH identity file for this VM host alias.";
           };
         };
       };
@@ -74,9 +72,9 @@ let
     '';
 
   enabledVms = lib.filterAttrs (_: vm: vm.enable) cfg.vms;
-  socketVms = lib.filterAttrs (_: vm: vm.enable && vm.socketActivation.enable) cfg.vms;
+  sshVms = lib.filterAttrs (_: vm: vm.enable && vm.sshConnect.enable) cfg.vms;
 
-  mkSocketUnitName = name: "agentspace-${name}-activate";
+  mkServiceUnitName = name: "agentspace-${name}";
 
   mkStateDir =
     name: vmCfg:
@@ -105,15 +103,13 @@ let
     let
       stateDir = mkStateDir name vmCfg;
       hostName = mkHostName name vmCfg;
-      socketUnit = "${mkSocketUnitName name}.socket";
-      serviceUnit = "${mkSocketUnitName name}.service";
+      serviceUnit = "${mkServiceUnitName name}.service";
     in
     pkgs.writeShellScript "agentspace-${name}-ssh-proxy" ''
       set -euo pipefail
 
       state_dir=${lib.escapeShellArg stateDir}
       host_name=${lib.escapeShellArg hostName}
-      socket_unit=${lib.escapeShellArg socketUnit}
       service_unit=${lib.escapeShellArg serviceUnit}
 
       find_running_cid() {
@@ -129,8 +125,6 @@ let
             *[!0-9]*) continue ;;
           esac
 
-          # virtie leaves lock files behind, but holds an flock while the VM is
-          # running. If we can take the lock, it is stale and not a running VM.
           if ${pkgs.util-linux}/bin/flock -n "$lock" true; then
             ${pkgs.coreutils}/bin/rm -f "$lock"
             continue
@@ -142,14 +136,10 @@ let
         return 1
       }
 
-      ${pkgs.systemd}/bin/systemctl --user reset-failed "$socket_unit" "$service_unit" >/dev/null 2>&1 || true
-      ${pkgs.systemd}/bin/systemctl --user start "$socket_unit" >/dev/null
+      ${pkgs.systemd}/bin/systemctl --user reset-failed "$service_unit" >/dev/null 2>&1 || true
 
       cid=""
       if ! cid="$(find_running_cid)"; then
-        # No locked virtie CID file means no currently-running VM for this
-        # sandbox. Start the long-running virtie service.
-        cid=""
         ${pkgs.systemd}/bin/systemctl --user start "$service_unit" >/dev/null
       fi
 
@@ -172,9 +162,6 @@ let
         exit 1
       fi
 
-      # At this point either an existing VM is running, or we started it above.
-      # SSH may still be coming up, so retry the final fd-passing proxy until it
-      # can hand OpenSSH a connected socket.
       for _ in $(${pkgs.coreutils}/bin/seq 1 240); do
         if ${pkgs.systemd}/lib/systemd/systemd-ssh-proxy "vsock/$cid" 22; then
           exit 0
@@ -185,13 +172,6 @@ let
       echo "agentspace: timed out waiting for $host_name SSH on vsock/$cid" >&2
       exit 1
     '';
-
-  socketPackages = lib.mapAttrsToList (
-    name: vmCfg:
-    pkgs.writeShellScriptBin "ssh-${vmCfg.socketActivation.sshHost}" ''
-      exec ${pkgs.openssh}/bin/ssh ${lib.escapeShellArg vmCfg.socketActivation.sshHost} "$@"
-    ''
-  ) socketVms;
 in
 {
   options.fr.agentspace = {
@@ -214,10 +194,7 @@ in
             machine.memory = 8192;
             ssh.authorizedKeys = [ "ssh-ed25519 ..." ];
             workspace.guestDir = "/home/agent/workspace";
-            socketActivation = {
-              enable = true;
-              identityFile = "~/.ssh/agentspace";
-            };
+            sshConnect.identityFile = "~/.ssh/agentspace";
           };
         }
       '';
@@ -237,22 +214,10 @@ in
       }
     ];
 
-    home.packages = (lib.mapAttrsToList mkVmPackage enabledVms) ++ socketPackages;
-
-    systemd.user.sockets = lib.mapAttrs' (name: vmCfg: {
-      name = mkSocketUnitName name;
-      value = {
-        Unit.Description = "agentspace ${name} SSH activation socket";
-        Socket = {
-          ListenStream = vmCfg.socketActivation.socketPath;
-          RemoveOnStop = true;
-        };
-        Install.WantedBy = [ "sockets.target" ];
-      };
-    }) socketVms;
+    home.packages = lib.mapAttrsToList mkVmPackage enabledVms;
 
     systemd.user.services = lib.mapAttrs' (name: vmCfg: {
-      name = mkSocketUnitName name;
+      name = mkServiceUnitName name;
       value = {
         Unit.Description = "agentspace ${name} VM";
         Service = {
@@ -260,18 +225,16 @@ in
           Restart = "no";
         };
       };
-    }) socketVms;
+    }) sshVms;
 
-    programs.ssh = lib.mkIf (socketVms != { }) {
+    programs.ssh = lib.mkIf (sshVms != { }) {
       enable = true;
       matchBlocks = lib.mapAttrs' (name: vmCfg: {
-        name = vmCfg.socketActivation.sshHost;
+        name = vmCfg.sshConnect.host;
         value = {
           user = (sandboxConfigOf vmCfg).user or "agent";
           proxyCommand = "${mkProxyCommand name vmCfg}";
-          identityFile = lib.optional (
-            vmCfg.socketActivation.identityFile != null
-          ) vmCfg.socketActivation.identityFile;
+          identityFile = lib.optional (vmCfg.sshConnect.identityFile != null) vmCfg.sshConnect.identityFile;
           extraOptions = {
             ProxyUseFdpass = "yes";
             PubkeyAuthentication = "yes";
@@ -281,7 +244,7 @@ in
             GlobalKnownHostsFile = "/dev/null";
           };
         };
-      }) socketVms;
+      }) sshVms;
     };
   };
 }
