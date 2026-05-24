@@ -26,7 +26,8 @@ let
     exec pass "$@"
   '';
 
-  mkStoreWrapper = store:
+  mkStoreWrapper =
+    store:
     pkgs.writeShellApplication {
       name = "pass-${store.name}";
       text = scriptText;

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.fr.termfilechooser;
 
@@ -73,7 +78,15 @@ in
 
       command = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = if cfg.terminal.package != null then [ (lib.getExe cfg.terminal.package) "--title" "termfilechooser" ] else [ ];
+        default =
+          if cfg.terminal.package != null then
+            [
+              (lib.getExe cfg.terminal.package)
+              "--title"
+              "termfilechooser"
+            ]
+          else
+            [ ];
         example = [ "${lib.getExe pkgs.foot}" ];
         description = "Command argv used to launch the terminal emulator for the file chooser.";
       };
@@ -106,14 +119,17 @@ in
       extraPortals = [
         cfg.package
       ];
-      config.${cfg.desktop}."org.freedesktop.impl.portal.FileChooser" = lib.mkDefault [ "termfilechooser" ];
+      config.${cfg.desktop}."org.freedesktop.impl.portal.FileChooser" = lib.mkDefault [
+        "termfilechooser"
+      ];
     };
 
     home.packages = [
       cfg.package
       spfAlias
       cfg.tui.package
-    ] ++ lib.optional (cfg.terminal.package != null) cfg.terminal.package;
+    ]
+    ++ lib.optional (cfg.terminal.package != null) cfg.terminal.package;
 
     xdg.configFile."xdg-desktop-portal-termfilechooser/config".text = lib.generators.toINI { } {
       filechooser = cfg.settings // {

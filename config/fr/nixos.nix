@@ -58,10 +58,13 @@ in
     fr.desktopPortal = {
       enable = lib.mkDefault true;
       desktopName = lib.mkDefault "niri";
-      portals = lib.mkDefault (with pkgs; [
-        xdg-desktop-portal-gtk
-        xdg-desktop-portal-gnome
-      ]);
+      portals = lib.mkDefault (
+        with pkgs;
+        [
+          xdg-desktop-portal-gtk
+          xdg-desktop-portal-gnome
+        ]
+      );
       defaultPortal = lib.mkDefault "gtk";
       interfaceOverrides = lib.mkDefault {
         "org.freedesktop.impl.portal.ScreenCast" = "gnome";

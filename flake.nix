@@ -91,23 +91,30 @@
         ${system} = allVms;
       };
 
-      lib.mkAgentBoxImage = args:
+      formatter.${system} = pkgs.nixfmt-tree;
+
+      lib.mkAgentBoxImage =
+        args:
         import ./lib/mkAgentBoxImage.nix (
           args
           // {
-            inputs = inputs // { foundry = inputs.foundry-stable; };
+            inputs = inputs // {
+              foundry = inputs.foundry-stable;
+            };
           }
         );
       homeManagerModules = import ./modules/home;
       nixosModules = import ./modules/nixos;
       homeConfigs = {
-        fr = { ... }: {
-          imports = [
-            inputs.agent-box.homeManagerModules.default
-            ./config/fr/home.nix
-          ];
-          _module.args.myNixInputs = inputs;
-        };
+        fr =
+          { ... }:
+          {
+            imports = [
+              inputs.agent-box.homeManagerModules.default
+              ./config/fr/home.nix
+            ];
+            _module.args.myNixInputs = inputs;
+          };
       };
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {

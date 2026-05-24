@@ -1,4 +1,7 @@
-{ pkgs, lib ? pkgs.lib }:
+{
+  pkgs,
+  lib ? pkgs.lib,
+}:
 
 pkgs.rustPlatform.buildRustPackage rec {
   pname = "git-hunk";
