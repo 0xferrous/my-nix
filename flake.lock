@@ -67,6 +67,22 @@
         "type": "github"
       }
     },
+    "agent-stuff": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776846223,
+        "narHash": "sha256-OeVS9NSTZbMDUObfnaTaJioQtnE2nbdhwD2IwLnBSJo=",
+        "owner": "0xferrous",
+        "repo": "agent-stuff",
+        "rev": "6f4c819eaaad22c9dd86b5e0cf920952e39de6a1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xferrous",
+        "repo": "agent-stuff",
+        "type": "github"
+      }
+    },
     "agentspace": {
       "inputs": {
         "home-manager": "home-manager",
@@ -972,6 +988,7 @@
       "inputs": {
         "agent-box": "agent-box",
         "agent-images": "agent-images",
+        "agent-stuff": "agent-stuff",
         "agentspace": "agentspace",
         "fenix": "fenix",
         "flake-utils": "flake-utils_3",

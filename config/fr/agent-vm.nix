@@ -1,7 +1,7 @@
 {
   mkExecSSH,
   uname,
-  llmAgentsNixPkgs,
+  piPackage,
   ...
 }:
 let
@@ -24,8 +24,8 @@ let
   homeConfig =
     { ... }:
     {
-      home.packages = with llmAgentsNixPkgs; [
-        pi
+      home.packages = [
+        piPackage
       ];
     };
   mkVm =

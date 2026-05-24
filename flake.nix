@@ -42,6 +42,10 @@
       url = "github:shazow/agentspace";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    agent-stuff = {
+      url = "github:0xferrous/agent-stuff";
+      flake = false;
+    };
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -59,7 +63,6 @@
       url = "path:./pkgs/frs-nvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
   };
 
   outputs =
@@ -74,11 +77,17 @@
       system = "x86_64-linux";
       pkgs = inputs.nixpkgs.legacyPackages.${system};
       lib = pkgs.lib;
+      basePiPackage = inputs.llm-agents.packages.${system}.pi;
+      piPackage = import ./pkgs/pi.nix {
+        inherit pkgs;
+        piPackage = basePiPackage;
+        agentStuffSrc = inputs."agent-stuff";
+      };
       agentVms = import ./config/fr/agent-vm.nix {
         inherit pkgs lib;
         uname = "dmnt";
         mkExecSSH = agentspace.lib.mkExecSSH;
-        llmAgentsNixPkgs = inputs.llm-agents.packages.${system};
+        piPackage = piPackage;
       };
       allVms = lib.mapAttrs (_name: vmConfig: {
         type = "app";
@@ -86,9 +95,16 @@
       }) agentVms;
     in
     {
-      packages = frs-nvim.packages;
+      packages = lib.recursiveUpdate frs-nvim.packages {
+        ${system}.pi = piPackage;
+      };
       apps = lib.recursiveUpdate frs-nvim.apps {
-        ${system} = allVms;
+        ${system} = allVms // {
+          pi = {
+            type = "app";
+            program = "${piPackage}/bin/pi";
+          };
+        };
       };
 
       formatter.${system} = pkgs.nixfmt-tree;
