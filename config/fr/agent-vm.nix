@@ -57,7 +57,19 @@ let
     // vmConfig;
 in
 {
-  agentspace = mkVm "agentspace" {
-    workspace.spaces.agentspace = "${homeDir}/dev/fr/open-source/agentspace";
+  imports = [
+    ../../modules/home/agentspace.nix
+  ];
+
+  fr.agentspace = {
+    enable = true;
+
+    vms.agentspace = mkVm "agentspace" {
+      socketActivation = {
+        enable = true;
+        identityFile = "~/.ssh/ferrous.pub";
+      };
+      workspace.spaces.agentspace = "${homeDir}/dev/fr/open-source/agentspace";
+    };
   };
 }
