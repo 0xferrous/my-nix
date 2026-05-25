@@ -11,6 +11,7 @@ in
     ../../modules/home/symlinks.nix
     ../../modules/home/vcs.nix
     ../../modules/home/termfilechooser.nix
+    ../../modules/home/speech-to-text.nix
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/pass.nix
     ../../modules/home/programs/direnv.nix
@@ -53,6 +54,8 @@ in
       devenv.enable = true;
       poetry.enable = true;
     };
+
+    fr.speechToText.enable = true;
 
     fr.termfilechooser = {
       enable = true;
