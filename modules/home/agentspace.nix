@@ -9,11 +9,13 @@ let
   cfg = config.fr.agentspace;
 
   agentspaceInput = cfg.input;
+  impermanenceInput = cfg.impermanence.input;
 
   wrapperOptionNames = [
     "enable"
     "packageName"
     "sshConnect"
+    "impermanence"
   ];
 
   vmType = lib.types.submodule (
@@ -53,6 +55,50 @@ let
             description = "Optional SSH identity file for this VM host alias.";
           };
         };
+
+        impermanence = {
+          enable = lib.mkOption {
+            type = lib.types.nullOr lib.types.bool;
+            default = null;
+            description = "Whether to enable impermanence for this VM. Null inherits fr.agentspace.impermanence.enable.";
+          };
+
+          persistRoot = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Per-VM persistent root mount path. Null inherits fr.agentspace.impermanence.persistRoot.";
+          };
+
+          imageName = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Per-VM persistent disk image name. Null inherits fr.agentspace.impermanence.imageName.";
+          };
+
+          size = lib.mkOption {
+            type = lib.types.nullOr lib.types.ints.positive;
+            default = null;
+            description = "Per-VM persistent disk image size in MiB. Null inherits fr.agentspace.impermanence.size.";
+          };
+
+          hideMounts = lib.mkOption {
+            type = lib.types.nullOr lib.types.bool;
+            default = null;
+            description = "Per-VM impermanence hideMounts override. Null inherits fr.agentspace.impermanence.hideMounts.";
+          };
+
+          directories = lib.mkOption {
+            type = lib.types.listOf lib.types.raw;
+            default = [ ];
+            description = "Additional guest directories persisted for this VM.";
+          };
+
+          files = lib.mkOption {
+            type = lib.types.listOf lib.types.raw;
+            default = [ ];
+            description = "Additional guest files persisted for this VM.";
+          };
+        };
       };
     }
   );
@@ -61,9 +107,39 @@ let
     name: vmCfg:
     let
       vmSandboxConfig = builtins.removeAttrs vmCfg wrapperOptionNames;
+      vmImpermanence = vmCfg.impermanence;
+      impermanenceEnabled =
+        if vmImpermanence.enable != null then vmImpermanence.enable else cfg.impermanence.enable;
+      inheritVmOrGlobal = value: global: if value != null then value else global;
+      impermanencePersistRoot = inheritVmOrGlobal vmImpermanence.persistRoot cfg.impermanence.persistRoot;
+      impermanenceImageName = inheritVmOrGlobal vmImpermanence.imageName cfg.impermanence.imageName;
+      impermanenceSize = inheritVmOrGlobal vmImpermanence.size cfg.impermanence.size;
+      impermanenceHideMounts = inheritVmOrGlobal vmImpermanence.hideMounts cfg.impermanence.hideMounts;
       defaultExtraModules = [
         {
           environment.enableAllTerminfo = true;
+        }
+      ]
+      ++ lib.optionals impermanenceEnabled [
+        impermanenceInput.nixosModules.impermanence
+        {
+          environment.persistence.${impermanencePersistRoot} = {
+            hideMounts = impermanenceHideMounts;
+            directories = [ "/var/lib/nixos" ] ++ cfg.impermanence.directories ++ vmImpermanence.directories;
+            files = cfg.impermanence.files ++ vmImpermanence.files;
+          };
+
+          fileSystems.${impermanencePersistRoot}.neededForBoot = true;
+
+          microvm.volumes = [
+            {
+              image = "${cfg.baseDir}/${name}/${impermanenceImageName}";
+              mountPoint = impermanencePersistRoot;
+              fsType = "ext4";
+              size = impermanenceSize;
+              autoCreate = true;
+            }
+          ];
         }
       ];
       mergedConfig = lib.recursiveUpdate {
@@ -227,6 +303,54 @@ in
       '';
     };
 
+    impermanence = {
+      enable = lib.mkEnableOption "impermanence persistence for agentspace VMs";
+
+      input = lib.mkOption {
+        type = lib.types.raw;
+        default = myNixInputs.impermanence or null;
+        defaultText = lib.literalExpression "myNixInputs.impermanence";
+        description = "impermanence flake input providing nixosModules.impermanence.";
+      };
+
+      persistRoot = lib.mkOption {
+        type = lib.types.str;
+        default = "/persist";
+        description = "Guest path used as the impermanence persistent root.";
+      };
+
+      hideMounts = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether impermanence bind mounts should be hidden from tools like findmnt.";
+      };
+
+      imageName = lib.mkOption {
+        type = lib.types.str;
+        default = "persist.img";
+        description = "Disk image name, stored under each VM's persistence base directory, for the impermanence persistent root.";
+      };
+
+      size = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 4096;
+        description = "Size of the impermanence persistent root disk image in MiB.";
+      };
+
+      directories = lib.mkOption {
+        type = lib.types.listOf lib.types.raw;
+        default = [ ];
+        example = [ "/var/lib/tailscale" ];
+        description = "Guest directories persisted for every agentspace VM.";
+      };
+
+      files = lib.mkOption {
+        type = lib.types.listOf lib.types.raw;
+        default = [ ];
+        description = "Guest files persisted for every agentspace VM.";
+      };
+    };
+
     commonHomeModules = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
       default = [ ];
@@ -265,6 +389,10 @@ in
       {
         assertion = agentspaceInput != null;
         message = "fr.agentspace.input must be set, or pass flake inputs as _module.args.myNixInputs.";
+      }
+      {
+        assertion = !cfg.impermanence.enable || impermanenceInput != null;
+        message = "fr.agentspace.impermanence.input must be set, or pass flake inputs as _module.args.myNixInputs.";
       }
     ];
 
