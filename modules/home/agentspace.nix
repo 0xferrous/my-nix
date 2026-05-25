@@ -54,6 +54,26 @@ let
             default = null;
             description = "Optional SSH identity file for this VM host alias.";
           };
+
+          gpgAgentForwarding = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether to forward the host GnuPG agent socket into this VM over SSH.";
+            };
+
+            localSocket = lib.mkOption {
+              type = lib.types.str;
+              default = "/run/user/1000/gnupg/S.gpg-agent.extra";
+              description = "Host GnuPG extra-agent socket path exposed to the VM.";
+            };
+
+            remoteSocket = lib.mkOption {
+              type = lib.types.str;
+              default = "~/.gnupg/S.gpg-agent";
+              description = "Guest socket path created by SSH RemoteForward for the forwarded GnuPG agent.";
+            };
+          };
         };
 
         impermanence = {
@@ -151,8 +171,15 @@ let
     mergedConfig
     // {
       extraModules =
-        defaultExtraModules ++ cfg.commonNixosModules ++ (vmSandboxConfig.extraModules or [ ]);
-      homeModules = cfg.commonHomeModules ++ (vmSandboxConfig.homeModules or [ ]);
+        defaultExtraModules
+        ++ [ cfg.defaultNixosModule ]
+        ++ cfg.commonNixosModules
+        ++ (vmSandboxConfig.extraModules or [ ]);
+      homeModules = [
+        cfg.defaultHmModule
+      ]
+      ++ cfg.commonHomeModules
+      ++ (vmSandboxConfig.homeModules or [ ]);
     };
 
   mkLaunchProgram =
@@ -351,16 +378,44 @@ in
       };
     };
 
+    defaultHmModule = lib.mkOption {
+      type = lib.types.raw;
+      default = {
+        programs.gpg.enable = lib.mkDefault true;
+        services.gpg-agent.enable = lib.mkDefault false;
+      };
+      description = "Default Home Manager module added to every agentspace VM before commonHomeModules and per-VM homeModules.";
+    };
+
+    defaultNixosModule = lib.mkOption {
+      type = lib.types.raw;
+      default = {
+        services.openssh.settings = {
+          AllowStreamLocalForwarding = lib.mkDefault "yes";
+          AllowTcpForwarding = lib.mkDefault "yes";
+          DisableForwarding = lib.mkDefault false;
+          StreamLocalBindUnlink = lib.mkDefault "yes";
+        };
+
+        systemd.tmpfiles.rules = [
+          "d /run/user/1000 0700 agent users - -"
+          "d /run/user/1000/gnupg 0700 agent users - -"
+          "r /run/user/1000/gnupg/S.gpg-agent - - - - -"
+        ];
+      };
+      description = "Default NixOS module added to every agentspace VM after built-in defaults and before commonNixosModules/per-VM extraModules.";
+    };
+
     commonHomeModules = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
       default = [ ];
-      description = "Home Manager modules added to every agentspace VM declared by this module.";
+      description = "Home Manager modules added to every agentspace VM declared by this module after defaultHmModule.";
     };
 
     commonNixosModules = lib.mkOption {
       type = lib.types.listOf lib.types.raw;
       default = [ ];
-      description = "NixOS modules added to every agentspace VM declared by this module.";
+      description = "NixOS modules added to every agentspace VM declared by this module after defaultNixosModule.";
     };
 
     vms = lib.mkOption {
@@ -426,6 +481,12 @@ in
             StrictHostKeyChecking = "no";
             UserKnownHostsFile = "/dev/null";
             GlobalKnownHostsFile = "/dev/null";
+          }
+          // lib.optionalAttrs vmCfg.sshConnect.gpgAgentForwarding.enable {
+            # TODO: Consider native socket sharing via VM mounts instead of SSH
+            # RemoteForward if agentspace/microvm supports that cleanly.
+            StreamLocalBindUnlink = "yes";
+            RemoteForward = "${vmCfg.sshConnect.gpgAgentForwarding.remoteSocket} ${vmCfg.sshConnect.gpgAgentForwarding.localSocket}";
           };
         };
       }) sshVms;
