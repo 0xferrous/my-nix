@@ -13,3 +13,4 @@ Repo-wide instructions:
 - export public `fr` NixOS config from the root `flake.nix` as `nixosConfigs.fr`
 - public/private split pattern: keep public defaults here, import them from the private config, gate them behind a short namespaced enable option (prefer `fr.public.enable` for the umbrella public module), and prefer `lib.mkDefault` for settings that private config may override
 - when public config modules need this flake's inputs, pass them via `_module.args.myNixInputs = inputs` from the exported config wrapper; modules should accept `myNixInputs` rather than `inputs` to avoid colliding with consuming flakes. Remember `_module.args` is shared across the whole module evaluation, not private to only the modules imported by the module that sets it
+- always run `nix fmt` for formatting the code
