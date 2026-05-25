@@ -57,15 +57,42 @@ let
     }
   );
 
-  sandboxConfigOf = vmCfg: builtins.removeAttrs vmCfg wrapperOptionNames;
+  sandboxConfigOf =
+    name: vmCfg:
+    let
+      vmSandboxConfig = builtins.removeAttrs vmCfg wrapperOptionNames;
+      defaultExtraModules = [
+        {
+          environment.enableAllTerminfo = true;
+        }
+      ];
+      mergedConfig = lib.recursiveUpdate {
+        hostName = name;
+        persistence.baseDir = "${cfg.baseDir}/${name}";
+        workspace.addCurrentDir = false;
+      } vmSandboxConfig;
+    in
+    mergedConfig
+    // {
+      extraModules =
+        defaultExtraModules ++ cfg.commonNixosModules ++ (vmSandboxConfig.extraModules or [ ]);
+      homeModules = cfg.commonHomeModules ++ (vmSandboxConfig.homeModules or [ ]);
+    };
 
   mkLaunchProgram =
     sandboxConfig: agentspaceInput.lib.mkLaunch (agentspaceInput.lib.mkSandbox sandboxConfig);
 
+  mkVmLaunchProgram = name: vmCfg: mkLaunchProgram (sandboxConfigOf name vmCfg);
+
+  mkVmApp = name: vmCfg: {
+    type = "app";
+    program = mkVmLaunchProgram name vmCfg;
+  };
+
   mkVmPackage =
     name: vmCfg:
     let
-      launchProgram = mkLaunchProgram (sandboxConfigOf vmCfg);
+      launchProgram = mkVmLaunchProgram name vmCfg;
     in
     pkgs.writeShellScriptBin vmCfg.packageName ''
       exec ${lib.escapeShellArg launchProgram} "$@"
@@ -79,21 +106,21 @@ let
   mkStateDir =
     name: vmCfg:
     let
-      sandboxConfig = sandboxConfigOf vmCfg;
+      sandboxConfig = sandboxConfigOf name vmCfg;
     in
     sandboxConfig.persistence.baseDir or ".agentspace";
 
   mkHostName =
     name: vmCfg:
     let
-      sandboxConfig = sandboxConfigOf vmCfg;
+      sandboxConfig = sandboxConfigOf name vmCfg;
     in
-    sandboxConfig.hostName or "agent-sandbox";
+    sandboxConfig.hostName;
 
   mkDaemonProgram =
-    _name: vmCfg:
+    name: vmCfg:
     mkLaunchProgram (
-      lib.recursiveUpdate (sandboxConfigOf vmCfg) {
+      lib.recursiveUpdate (sandboxConfigOf name vmCfg) {
         ssh.autoconnect = false;
       }
     );
@@ -184,13 +211,40 @@ in
       description = "agentspace flake input providing lib.mkSandbox and lib.mkLaunch.";
     };
 
+    baseDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${config.home.homeDirectory}/vms";
+      defaultText = lib.literalExpression "${config.home.homeDirectory}/vms";
+      description = "Base directory for agentspace VM persistence state.";
+    };
+
+    apps = lib.mkOption {
+      type = lib.types.attrsOf lib.types.raw;
+      default = { };
+      description = ''
+        Flake app definitions for enabled agentspace VMs, suitable for exposing
+        from a consuming flake's `apps.<system>` output.
+      '';
+    };
+
+    commonHomeModules = lib.mkOption {
+      type = lib.types.listOf lib.types.raw;
+      default = [ ];
+      description = "Home Manager modules added to every agentspace VM declared by this module.";
+    };
+
+    commonNixosModules = lib.mkOption {
+      type = lib.types.listOf lib.types.raw;
+      default = [ ];
+      description = "NixOS modules added to every agentspace VM declared by this module.";
+    };
+
     vms = lib.mkOption {
       type = lib.types.attrsOf vmType;
       default = { };
       example = lib.literalExpression ''
         {
           default = {
-            persistence.baseDir = "~/.local/share/agentspace/default";
             machine.memory = 8192;
             ssh.authorizedKeys = [ "ssh-ed25519 ..." ];
             workspace.guestDir = "/home/agent/workspace";
@@ -214,6 +268,8 @@ in
       }
     ];
 
+    fr.agentspace.apps = lib.mapAttrs mkVmApp enabledVms;
+
     home.packages = lib.mapAttrsToList mkVmPackage enabledVms;
 
     systemd.user.services = lib.mapAttrs' (name: vmCfg: {
@@ -232,7 +288,7 @@ in
       matchBlocks = lib.mapAttrs' (name: vmCfg: {
         name = vmCfg.sshConnect.host;
         value = {
-          user = (sandboxConfigOf vmCfg).user or "agent";
+          user = (sandboxConfigOf name vmCfg).user or "agent";
           proxyCommand = "${mkProxyCommand name vmCfg}";
           identityFile = lib.optional (vmCfg.sshConnect.identityFile != null) vmCfg.sshConnect.identityFile;
           extraOptions = {
