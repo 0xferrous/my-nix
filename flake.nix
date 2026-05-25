@@ -42,6 +42,10 @@
       url = "github:shazow/agentspace";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impermanence = {
+      url = "github:nix-community/impermanence";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     agent-stuff = {
       url = "github:0xferrous/agent-stuff";
       flake = false;
