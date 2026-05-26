@@ -92,6 +92,7 @@
         uname = "dmnt";
         mkExecSSH = agentspace.lib.mkExecSSH;
         piPackage = piPackage;
+        frsNvimPackage = frs-nvim.packages.${system}.default;
       };
       agentVms = agentVmModule.fr.agentspace.vms;
       allVms = lib.mapAttrs (_name: vmConfig: {
