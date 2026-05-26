@@ -55,6 +55,12 @@ let
             description = "Optional SSH identity file for this VM host alias.";
           };
 
+          sshAgentForwarding = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Whether to forward the host SSH agent into this VM over SSH.";
+          };
+
           gpgAgentForwarding = {
             enable = lib.mkOption {
               type = lib.types.bool;
@@ -402,6 +408,16 @@ in
           "d /run/user/1000/gnupg 0700 agent users - -"
           "r /run/user/1000/gnupg/S.gpg-agent - - - - -"
         ];
+
+        systemd.services.agentspace-tmpfiles-create = {
+          description = "Create agentspace runtime tmpfiles";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "systemd-tmpfiles-setup.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "/run/current-system/systemd/bin/systemd-tmpfiles --create";
+          };
+        };
       };
       description = "Default NixOS module added to every agentspace VM after built-in defaults and before commonNixosModules/per-VM extraModules.";
     };
@@ -477,6 +493,7 @@ in
           extraOptions = {
             ProxyUseFdpass = "yes";
             PubkeyAuthentication = "yes";
+            ForwardAgent = if vmCfg.sshConnect.sshAgentForwarding then "yes" else "no";
             CheckHostIP = "no";
             StrictHostKeyChecking = "no";
             UserKnownHostsFile = "/dev/null";

@@ -3,6 +3,7 @@
   mkExecSSH,
   uname,
   piPackage,
+  frsNvimPackage,
   ...
 }:
 let
@@ -27,7 +28,18 @@ let
     {
       home.packages = [
         piPackage
+        frsNvimPackage
       ];
+
+      home.sessionVariables = {
+        EDITOR = "nvim";
+      };
+
+      home.shellAliases = {
+        vi = "nvim";
+        vim = "nvim";
+        vimdiff = "nvim -d";
+      };
     };
   mkVm =
     vmName: vmConfig:
