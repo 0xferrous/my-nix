@@ -79,6 +79,8 @@ in
     vms.agentspace = mkVm "agentspace" {
       sshConnect.identityFile = "~/.ssh/ferrous.pub";
       workspace.spaces.agentspace = "${homeDir}/dev/fr/open-source/agentspace";
+      workspace.spaces."my-nix" = "${homeDir}/dev/fr/my-nix";
+      workspace.spaces."agent-stuff" = "${homeDir}/dev/fr/agent-stuff";
     };
   };
 }
