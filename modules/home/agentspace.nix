@@ -193,10 +193,8 @@ let
 
   mkVmLaunchProgram = name: vmCfg: mkLaunchProgram (sandboxConfigOf name vmCfg);
 
-  mkVmApp = name: vmCfg: {
-    type = "app";
-    program = mkVmLaunchProgram name vmCfg;
-  };
+  mkVmSystems = import ../../lib/mkAgentspaceVmSystems.nix;
+  mkVmApps = import ../../lib/mkAgentspaceVmApps.nix;
 
   mkVmPackage =
     name: vmCfg:
@@ -467,7 +465,15 @@ in
       }
     ];
 
-    fr.agentspace.apps = lib.mapAttrs mkVmApp enabledVms;
+    fr.agentspace.apps = mkVmApps {
+      agentspace = agentspaceInput;
+      inherit lib;
+      systems = mkVmSystems {
+        agentspace = agentspaceInput;
+        inherit lib;
+        vms = enabledVms;
+      };
+    };
 
     home.packages = lib.mapAttrsToList mkVmPackage enabledVms;
 
