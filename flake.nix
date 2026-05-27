@@ -87,6 +87,9 @@
         piPackage = basePiPackage;
         agentStuffSrc = inputs."agent-stuff";
       };
+      keyboardBacklightPackage = import ./pkgs/keyboard-backlight.nix {
+        inherit pkgs;
+      };
       agentVmModule = import ./config/fr/agent-vm.nix {
         inherit pkgs lib;
         uname = "dmnt";
@@ -110,7 +113,10 @@
     in
     {
       packages = lib.recursiveUpdate frs-nvim.packages {
-        ${system}.pi = piPackage;
+        ${system} = {
+          fr-kbd-backlight = keyboardBacklightPackage;
+          pi = piPackage;
+        };
       };
       apps = lib.recursiveUpdate frs-nvim.apps {
         ${system} = allVms // {
