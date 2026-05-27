@@ -1,9 +1,19 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   frIdentity = {
     name = "0xferrous";
     email = "0xferrous@proton.me";
     signingKey = "9BD4D23DAEEA11D820751C505E0FDEF1192666A9";
+  };
+
+  keyboardBacklightDevice = "tpacpi::kbd_backlight";
+  keyboardBacklightPackage = pkgs.fr-kbd-backlight.override {
+    device = keyboardBacklightDevice;
   };
 in
 {
@@ -35,6 +45,8 @@ in
   ];
 
   config = {
+    home.packages = [ keyboardBacklightPackage ];
+
     fr.pass = {
       enable = true;
       stores = [
