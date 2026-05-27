@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  myNixInputs,
   pkgs,
   ...
 }:
@@ -45,7 +46,10 @@ in
   ];
 
   config = {
-    home.packages = [ keyboardBacklightPackage ];
+    home.packages = [
+      keyboardBacklightPackage
+      myNixInputs.agentspace.packages.${pkgs.system}.virtie
+    ];
 
     fr.pass = {
       enable = true;
