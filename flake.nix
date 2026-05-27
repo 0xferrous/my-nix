@@ -79,14 +79,8 @@
     }:
     let
       system = "x86_64-linux";
-      overlay = final: _prev: {
-        fr-kbd-backlight = final.callPackage ./pkgs/keyboard-backlight.nix { };
-        git-hunk = final.callPackage ./pkgs/git-hunk.nix { };
-        opensrc = final.callPackage ./pkgs/opensrc.nix { };
-        pi = final.callPackage ./pkgs/pi.nix {
-          piPackage = inputs.llm-agents.packages.${system}.pi;
-          agentStuffSrc = inputs."agent-stuff";
-        };
+      overlay = import ./pkgs/overlay.nix {
+        inherit inputs system;
       };
       pkgs = import inputs.nixpkgs {
         inherit system;
