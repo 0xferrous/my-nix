@@ -46,6 +46,13 @@ in
   ];
 
   config = {
+    nixpkgs.overlays = [
+      (import ../../pkgs/overlay.nix {
+        inputs = myNixInputs;
+        system = pkgs.system;
+      })
+    ];
+
     home.packages = [
       keyboardBacklightPackage
       myNixInputs.agentspace.packages.${pkgs.system}.virtie
