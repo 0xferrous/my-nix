@@ -79,22 +79,25 @@
     }:
     let
       system = "x86_64-linux";
-      pkgs = inputs.nixpkgs.legacyPackages.${system};
+      overlay = final: _prev: {
+        fr-kbd-backlight = final.callPackage ./pkgs/keyboard-backlight.nix { };
+        git-hunk = final.callPackage ./pkgs/git-hunk.nix { };
+        opensrc = final.callPackage ./pkgs/opensrc.nix { };
+        pi = final.callPackage ./pkgs/pi.nix {
+          piPackage = inputs.llm-agents.packages.${system}.pi;
+          agentStuffSrc = inputs."agent-stuff";
+        };
+      };
+      pkgs = import inputs.nixpkgs {
+        inherit system;
+        overlays = [ overlay ];
+      };
       lib = pkgs.lib;
-      basePiPackage = inputs.llm-agents.packages.${system}.pi;
-      piPackage = import ./pkgs/pi.nix {
-        inherit pkgs;
-        piPackage = basePiPackage;
-        agentStuffSrc = inputs."agent-stuff";
-      };
-      keyboardBacklightPackage = import ./pkgs/keyboard-backlight.nix {
-        inherit pkgs;
-      };
       agentVmModule = import ./config/fr/agent-vm.nix {
         inherit pkgs lib;
         uname = "dmnt";
         mkExecSSH = agentspace.lib.mkExecSSH;
-        piPackage = piPackage;
+        piPackage = pkgs.pi;
         frsNvimPackage = frs-nvim.packages.${system}.default;
       };
       agentVms = agentVmModule.fr.agentspace.vms;
@@ -112,17 +115,23 @@
       }) agentVms;
     in
     {
+      overlays.default = overlay;
+
       packages = lib.recursiveUpdate frs-nvim.packages {
         ${system} = {
-          fr-kbd-backlight = keyboardBacklightPackage;
-          pi = piPackage;
+          inherit (pkgs)
+            fr-kbd-backlight
+            git-hunk
+            opensrc
+            pi
+            ;
         };
       };
       apps = lib.recursiveUpdate frs-nvim.apps {
         ${system} = allVms // {
           pi = {
             type = "app";
-            program = "${piPackage}/bin/pi";
+            program = "${pkgs.pi}/bin/pi";
           };
         };
       };
