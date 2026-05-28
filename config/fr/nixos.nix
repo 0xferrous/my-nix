@@ -22,6 +22,7 @@ in
   imports = [
     ghmd.nixosModules.default
     ../../modules/nixos/desktop-portal.nix
+    ../../modules/nixos/virtiofsd-nix-store.nix
   ];
 
   options.fr.public = {
@@ -70,6 +71,10 @@ in
         "org.freedesktop.impl.portal.ScreenCast" = "gnome";
         "org.freedesktop.impl.portal.Screenshot" = "gnome";
       };
+    };
+
+    fr.virtiofs-nix-store = {
+      enable = lib.mkDefault true;
     };
 
     assertions = [

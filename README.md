@@ -9,6 +9,7 @@ Current public building blocks include:
 - [`lib/mkAgentBoxImage.nix`](./lib/mkAgentBoxImage.nix): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
 - [`lib/mkAgentspaceVmSystems.nix`](./lib/mkAgentspaceVmSystems.nix): helper for turning agentspace VM configs into evaluated NixOS system attrsets, exposed as `lib.mkAgentspaceVmSystems`
 - [`lib/mkAgentspaceVmApps.nix`](./lib/mkAgentspaceVmApps.nix): helper for turning evaluated agentspace systems into flake `apps` attrsets, exposed as `lib.mkAgentspaceVmApps`
+- `nixosModules.virtiofsdNixStore`: socket-activated read-only `/nix/store` sharing via `virtiofsd`
 - `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module
 - `homeManagerModules.direnv`: reusable Home Manager direnv module with configurable Poetry/devenv stdlib helpers
 - `homeManagerModules.termfilechooser`: reusable Home Manager module for `xdg-desktop-portal-termfilechooser`
