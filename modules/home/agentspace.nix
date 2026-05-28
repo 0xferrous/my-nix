@@ -134,6 +134,7 @@ let
     let
       vmSandboxConfig = builtins.removeAttrs vmCfg wrapperOptionNames;
       vmImpermanence = vmCfg.impermanence;
+      sharedNixStoreShareSocket = { nixStoreShareSocket = (import ../common.nix).nixStoreShareSocketPath; };
       impermanenceEnabled =
         if vmImpermanence.enable != null then vmImpermanence.enable else cfg.impermanence.enable;
       inheritVmOrGlobal = value: global: if value != null then value else global;
@@ -168,11 +169,14 @@ let
           ];
         }
       ];
-      mergedConfig = lib.recursiveUpdate {
-        hostName = name;
-        persistence.baseDir = "${cfg.baseDir}/${name}";
-        workspace.addCurrentDir = false;
-      } vmSandboxConfig;
+      mergedConfig = lib.recursiveUpdate (
+        {
+          hostName = name;
+          persistence.baseDir = "${cfg.baseDir}/${name}";
+          workspace.addCurrentDir = false;
+        }
+        // sharedNixStoreShareSocket
+      ) vmSandboxConfig;
     in
     mergedConfig
     // {
