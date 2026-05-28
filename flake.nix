@@ -87,28 +87,6 @@
         overlays = [ overlay ];
       };
       lib = pkgs.lib;
-      mkAgentspaceVmSystems = import ./lib/mkAgentspaceVmSystems.nix;
-      mkAgentspaceVmApps = import ./lib/mkAgentspaceVmApps.nix;
-      agentVmModule = import ./config/fr/agent-vm.nix {
-        inherit pkgs lib;
-        uname = "dmnt";
-        mkExecSSH = agentspace.lib.mkExecSSH;
-        piPackage = pkgs.pi;
-        frsNvimPackage = frs-nvim.packages.${system}.default;
-      };
-      agentVms = agentVmModule.fr.agentspace.vms;
-      agentVmSystems = mkAgentspaceVmSystems {
-        inherit lib agentspace;
-        vms = agentVms;
-      };
-      agentVmNixosConfigurations = lib.mapAttrs' (name: vmSystem: {
-        name = "agentspace-${name}";
-        value = vmSystem;
-      }) agentVmSystems;
-      allVms = mkAgentspaceVmApps {
-        inherit lib agentspace;
-        systems = agentVmSystems;
-      };
     in
     {
       overlays.default = overlay;
@@ -124,7 +102,7 @@
         };
       };
       apps = lib.recursiveUpdate frs-nvim.apps {
-        ${system} = allVms // {
+        ${system} = {
           pi = {
             type = "app";
             program = "${pkgs.pi}/bin/pi";
@@ -144,8 +122,8 @@
             };
           }
         );
-      lib.mkAgentspaceVmSystems = mkAgentspaceVmSystems;
-      lib.mkAgentspaceVmApps = mkAgentspaceVmApps;
+      lib.mkAgentspaceVmSystems = import ./lib/mkAgentspaceVmSystems.nix;
+      lib.mkAgentspaceVmApps = import ./mkAgentspaceVmApps.nix;
       homeManagerModules = import ./modules/home;
       nixosModules = import ./modules/nixos;
       homeConfigs = {
@@ -154,13 +132,11 @@
           {
             imports = [
               inputs.agent-box.homeManagerModules.default
-              agentVmModule
               ./config/fr/home.nix
             ];
             _module.args.myNixInputs = inputs;
           };
       };
-      nixosConfigurations = agentVmNixosConfigurations;
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
           inherit fenix ghmd;

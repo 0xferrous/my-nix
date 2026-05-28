@@ -134,7 +134,9 @@ let
     let
       vmSandboxConfig = builtins.removeAttrs vmCfg wrapperOptionNames;
       vmImpermanence = vmCfg.impermanence;
-      sharedNixStoreShareSocket = { nixStoreShareSocket = (import ../common.nix).nixStoreShareSocketPath; };
+      sharedNixStoreShareSocket = {
+        nixStoreShareSocket = (import ../common.nix).nixStoreShareSocketPath;
+      };
       impermanenceEnabled =
         if vmImpermanence.enable != null then vmImpermanence.enable else cfg.impermanence.enable;
       inheritVmOrGlobal = value: global: if value != null then value else global;
@@ -177,9 +179,13 @@ let
         }
         // sharedNixStoreShareSocket
       ) vmSandboxConfig;
+      vmAuthorizedKeys =
+        cfg.authorizedKeys ++ lib.attrByPath [ "ssh" "authorizedKeys" ] [ ] vmSandboxConfig;
+      vmWriteFiles = lib.recursiveUpdate cfg.commonWriteFiles (vmSandboxConfig.writeFiles or { });
     in
-    mergedConfig
-    // {
+    lib.recursiveUpdate mergedConfig {
+      ssh.authorizedKeys = vmAuthorizedKeys;
+      writeFiles = vmWriteFiles;
       extraModules =
         defaultExtraModules
         ++ [ cfg.defaultNixosModule ]
@@ -327,6 +333,19 @@ in
       default = "${config.home.homeDirectory}/vms";
       defaultText = lib.literalExpression "${config.home.homeDirectory}/vms";
       description = "Base directory for agentspace VM persistence state.";
+    };
+
+    authorizedKeys = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "ssh-ed25519 AAAA..." ];
+      description = "Common SSH authorized keys passed to every agentspace VM.";
+    };
+
+    commonWriteFiles = lib.mkOption {
+      type = lib.types.attrsOf lib.types.anything;
+      default = { };
+      description = "Common writeFiles entries merged into every agentspace VM.";
     };
 
     apps = lib.mkOption {
