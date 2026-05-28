@@ -10,4 +10,5 @@ final: _prev: {
     piPackage = inputs.llm-agents.packages.${system}.pi;
     agentStuffSrc = inputs."agent-stuff";
   };
+  frsNvimPackage = inputs.frs-nvim.packages.${system}.default;
 }

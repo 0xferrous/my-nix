@@ -43,6 +43,7 @@ in
     ./home/starship.nix
     ./home/wofi.nix
     ./home/zed.nix
+    ./agent-vm.nix
   ];
 
   config = {
