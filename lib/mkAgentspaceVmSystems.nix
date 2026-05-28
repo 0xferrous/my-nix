@@ -6,6 +6,8 @@
     "enable"
     "packageName"
     "socketActivation"
+    "sshConnect"
+    "impermanence"
   ],
 }:
 lib.mapAttrs (
