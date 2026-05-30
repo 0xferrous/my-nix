@@ -1,0 +1,300 @@
+-- This file exports a package record, so consumers can use:
+--
+--   let Types = ./Manifest.dhall
+--
+--   in  { ... } : Types.Manifest
+let ForwardProto = < tcp | udp >
+
+let ForwardFrom = < host | guest >
+
+let MountType = < virtiofs | `9p` >
+
+let NinePSecurityModel = < mapped | none | passthrough >
+
+let NinePCache = < auto | always | none >
+
+let NetworkType = < user >
+
+let HotplugNetBackend = < user >
+
+let MachineType = < microvm >
+
+let GraphicsBackend = < headless | gtk | cocoa >
+
+let KernelSerial = < off | print | console >
+
+let BlockFormat = < raw | qcow2 >
+
+let Filesystem = < ext4 >
+
+let Forward =
+      { -- proto options: tcp, udp
+        -- Default: tcp
+        proto : Optional ForwardProto
+      , from : Optional ForwardFrom
+      , host : Text
+      , guest : Text
+      }
+
+let Volume =
+      { -- Host disk image path.
+        image : Text
+      , size : Optional Natural
+      , fs : Optional Filesystem
+      , create : Optional Bool
+      , read_only : Optional Bool
+      , label : Optional Text
+      , direct : Optional Bool
+      }
+
+let Virtiofs =
+      { -- QEMU talks to virtiofsd through this socket.
+        -- Keeping the socket named lets virtie wait for readiness and place it
+        -- under state_dir.
+        --
+        -- For hotplugged virtiofs:
+        -- Default: "<id>.sock" / "<tag>.sock"
+        socket : Optional Text
+      , bin : Optional Text
+      , args : Optional (List Text)
+      }
+
+let NineP =
+      { -- Options: mapped, none, passthrough
+        -- Default: mapped
+        security_model : Optional NinePSecurityModel
+      , cache : Optional NinePCache
+      }
+
+let Mount =
+      { -- Options: virtiofs, 9p
+        -- Default: virtiofs
+        type : Optional MountType
+      , tag : Text
+      , source : Text
+      , target : Optional Text
+      , hotplugged : Optional Bool
+      , read_only : Optional Bool
+      , virtiofs : Optional Virtiofs
+      , `9p` : Optional NineP
+      }
+
+let HotplugVirtiofs =
+      { -- Stable hotplug id. Also used to derive defaults.
+        id : Text
+      , source : Text
+      , target : Optional Text
+      , socket : Optional Text
+      , bin : Optional Text
+      }
+
+let HotplugNet =
+      { -- Stable QEMU/device id.
+        id : Text
+      , backend : Optional HotplugNetBackend
+      , mac : Text
+      , forward : Optional (List Forward)
+      }
+
+let HotplugBlock =
+      { -- Stable block hotplug id.
+        id : Text
+      , image : Text
+      , format : Optional BlockFormat
+      , read_only : Optional Bool
+      , serial : Optional Text
+      }
+
+let RunVars =
+      { -- Additional template variable.
+        -- Example: "org.freedesktop.*"
+        -- Default/behavior: absent.
+        Namespace : Optional Text
+      , SocketDir : Optional Text
+      }
+
+let Run =
+      { -- Run commands are host-side processes managed for VM lifetime.
+        -- They start before QEMU and are stopped with the VM.
+        --
+        -- Template values include:
+        --   {{.Workspace.GuestPath}}, {{.Workspace.HostPath}},
+        --   {{.StateDir}}, {{.CID}}, vars entries, and {{.Env.USER}}.
+        --
+        -- Default/behavior: no additional template vars.
+        vars : Optional RunVars
+      , exec : List Text
+      }
+
+let Network =
+      { -- Stable QEMU network id.
+        id : Text
+      , mac : Text
+      , type : Optional NetworkType
+      , forward : Optional (List Forward)
+      }
+
+let BalloonController =
+      { -- MiB.
+        -- Default/behavior: not specified in manifest-full.toml.
+        min_actual : Optional Natural
+      , max_actual : Optional Natural
+      , grow_below_available : Optional Natural
+      , reclaim_above_available : Optional Natural
+      , step : Optional Natural
+      , poll_interval_seconds : Optional Natural
+      , reclaim_holdoff_seconds : Optional Natural
+      }
+
+let Balloon =
+      { -- Balloon device is optional because it adds a QEMU device and depends
+        -- on guest driver support.
+        --
+        -- Default: false.
+        enabled : Optional Bool
+      , deflate_on_oom : Optional Bool
+      , free_page_reporting : Optional Bool
+      , controller : Optional BalloonController
+      }
+
+let WriteFile =
+      < Text :
+          { -- Guest path to write.
+            guest_path : Text
+          , chown : Optional Text
+          , text : Text
+          , mode : Optional Text
+          , overwrite : Optional Bool
+          }
+      | Binary :
+          { -- Guest path to write.
+            guest_path : Text
+          , source : Text
+          , overwrite : Optional Bool
+          }
+      >
+
+let Manifest =
+      { -- Guest name. Also used to derive default lock/state names.
+        --
+        -- Default: "virtie"
+        host_name : Optional Text
+      , working_dir : Optional Text
+      , state_dir : Optional Text
+      , qemu :
+          { -- QEMU argv. Extra args are appended after generated args.
+            --
+            -- Template values include:
+            --   {{.HostName}}, {{.WorkingDir}}, {{.StateDir}},
+            --   {{.HostOS}}, {{.HostArch}}, {{.HostSystem}},
+            --   {{.Env.USER}}
+            --
+            -- Default: [ "qemu-system-$host_arch" ]
+            exec : Optional (List Text)
+          , fwd_tunnel_exec : Optional (List Text)
+          , user : Optional Text
+          , seccomp : Optional Bool
+          , machine_options : Optional { accel : Text, pcie : Text }
+          , qmp_socket : Optional Text
+          , guest_agent_socket : Optional Text
+          }
+      , machine :
+          { -- Backend-neutral VM shape.
+            --
+            -- Options: microvm
+            -- Default: microvm
+            type : Optional MachineType
+          , id : Optional Text
+          , memory : Optional Natural
+          , vcpu : Optional Natural
+          , cpu : Optional Text
+          , kvm : Optional Bool
+          }
+      , kernel :
+          { -- Guest kernel path. Required.
+            path : Text
+          , initrd_path : Text
+          , params : Optional (List Text)
+          , serial : Optional KernelSerial
+          }
+      , graphics :
+          Optional
+            { -- Options: headless, gtk, cocoa
+              -- Default: headless
+              backend : Optional GraphicsBackend
+            }
+      , ssh :
+          { -- Guest SSH user.
+            --
+            -- Default: "agent"
+            user : Optional Text
+          , exec : Optional (List Text)
+          , ready_socket : Optional Text
+          , retry_delay : Optional Double
+          , autoprovision : Optional Bool
+          }
+      , vsock :
+          Optional
+            { -- Runtime vsock CID allocation range.
+              --
+              -- Default: full allocatable CID range.
+              cid_range : Optional { min : Natural, max : Natural }
+            }
+      , volumes : Optional (List Volume)
+      , mounts : Optional (List Mount)
+      , hotplug :
+          Optional
+            { -- Explicit virtiofs hotplug entries.
+              --
+              -- Default: []
+              virtiofs : Optional (List HotplugVirtiofs)
+            , net : Optional (List HotplugNet)
+            , block : Optional (List HotplugBlock)
+            }
+      , run : Optional (List Run)
+      , networks : Optional (List Network)
+      , balloon : Optional Balloon
+      , write_files : Optional (List WriteFile)
+      , notifications :
+          Optional
+            { -- Host-side hook command for runtime state changes.
+              --
+              -- Template values include:
+              --   {{.State}}, {{.Message}}, {{.Env.USER}}
+              --
+              -- Hook processes also receive VIRTIE_NOTIFY_* env vars.
+              --
+              -- Default: absent / no notification hook.
+              exec : Optional (List Text)
+            , states : Optional (List Text)
+            }
+      }
+
+in  { ForwardProto
+    , ForwardFrom
+    , MountType
+    , NinePSecurityModel
+    , NinePCache
+    , NetworkType
+    , HotplugNetBackend
+    , MachineType
+    , GraphicsBackend
+    , KernelSerial
+    , BlockFormat
+    , Filesystem
+    , Forward
+    , Volume
+    , Virtiofs
+    , NineP
+    , Mount
+    , HotplugVirtiofs
+    , HotplugNet
+    , HotplugBlock
+    , RunVars
+    , Run
+    , Network
+    , BalloonController
+    , Balloon
+    , WriteFile
+    , Manifest
+    }
