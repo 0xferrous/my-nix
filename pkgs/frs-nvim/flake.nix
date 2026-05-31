@@ -243,8 +243,8 @@
                       data = with pkgs.vimPlugins; [
                         FixCursorHold-nvim
                         tabular
-                        aw-watcher-nvim
-                        aw-watcher-vim
+                        # aw-watcher-nvim
+                        # aw-watcher-vim
                         blink-cmp
                         blink-compat
                         catppuccin-nvim
@@ -304,7 +304,7 @@
                         snacks-nvim
                         supermaven-nvim
                         symbols-outline-nvim
-                        vim-table-mode
+                        # vim-table-mode
                         telescope-fzf-native-nvim
                         telescope-nvim
                         telescope-project-nvim
@@ -315,7 +315,7 @@
                         toggleterm-nvim
                         trouble-nvim
                         venn-nvim
-                        vim-be-good
+                        # vim-be-good
                         vim-eunuch
                         vim-illuminate
                         vim-matchup

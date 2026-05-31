@@ -19,6 +19,7 @@ local servers = {
   marksman = {},
   -- TODO: configure Solidity LSP
   zls = {},
+  dhall_lsp_server = {},
 }
 
 local function configure_lsp_servers(servers)
