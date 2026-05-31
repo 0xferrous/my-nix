@@ -157,5 +157,12 @@
           inherit fenix ghmd;
         };
       };
+
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          dhall
+          dhall-json
+        ];
+      };
     };
 }
