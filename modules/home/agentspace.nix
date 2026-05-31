@@ -146,7 +146,8 @@ let
       impermanenceHideMounts = inheritVmOrGlobal vmImpermanence.hideMounts cfg.impermanence.hideMounts;
       defaultExtraModules = [
         {
-          environment.enableAllTerminfo = true;
+          environment.enableAllTerminfo = false;
+          environment.systemPackages = cfg.terminfoPackages;
         }
       ]
       ++ lib.optionals impermanenceEnabled [
@@ -355,6 +356,14 @@ in
         Flake app definitions for enabled agentspace VMs, suitable for exposing
         from a consuming flake's `apps.<system>` output.
       '';
+    };
+
+    terminfoPackages = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [ pkgs.kitty.terminfo ];
+      defaultText = lib.literalExpression "[ pkgs.kitty.terminfo ]";
+      example = lib.literalExpression "[ pkgs.kitty.terminfo pkgs.ghostty.terminfo ]";
+      description = "Terminfo packages installed in every agentspace VM. Set to an empty list to install none.";
     };
 
     impermanence = {
