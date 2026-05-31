@@ -68,7 +68,14 @@ in
         }
       ''
       ++ lib.optional cfg.devenv.enable ''
-        eval "$(devenv direnvrc)"
+        use_devenv() {
+          local devenv_direnvrc
+          devenv_direnvrc="$(devenv direnvrc)" || return 1
+
+          unset -f use_devenv
+          eval "$devenv_direnvrc"
+          use_devenv "$@"
+        }
       ''
     );
   };
