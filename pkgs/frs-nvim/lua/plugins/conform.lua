@@ -13,6 +13,14 @@ return {
         fennel = { "fnlfmt" },
         rust = {},
         toml = { "taplo" },
+        dhall = { "dhall_format" },
+      },
+      formatters = {
+        dhall_format = {
+          command = "dhall",
+          args = { "format" },
+          stdin = true,
+        },
       },
       format_on_save = {},
       default_format_opts = { lsp_format = "prefer" },
