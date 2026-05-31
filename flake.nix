@@ -128,11 +128,26 @@
       nixosModules = import ./modules/nixos;
       homeConfigs = {
         fr =
-          { ... }:
+          {
+            config,
+            lib,
+            pkgs,
+            ...
+          }:
+          let
+            myNixInputs = inputs;
+          in
           {
             imports = [
               inputs.agent-box.homeManagerModules.default
-              ./config/fr/home.nix
+              (import ./config/fr/home.nix {
+                inherit
+                  config
+                  lib
+                  myNixInputs
+                  pkgs
+                  ;
+              })
             ];
             _module.args.myNixInputs = inputs;
           };

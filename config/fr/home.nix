@@ -44,6 +44,7 @@ in
     ./home/wofi.nix
     ./home/zed.nix
     ./agent-vm.nix
+    myNixInputs.nix-index-database.homeModules.default
   ];
 
   config = {
@@ -107,5 +108,7 @@ in
       (frIdentity // { repo = "~/dev/git/0xferrous/"; })
       (frIdentity // { repo = "~/dev/ag/0xferrous/"; })
     ];
+
+    programs.nix-index.enable = true;
   };
 }
