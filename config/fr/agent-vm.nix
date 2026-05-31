@@ -2,9 +2,11 @@
   lib,
   config,
   pkgs,
+  myNixInputs,
   ...
 }:
 let
+  system = pkgs.stdenv.hostPlatform.system;
   homeDir = config.home.homeDirectory;
   nixosConfig =
     { lib, ... }:
@@ -24,6 +26,10 @@ let
   homeConfig =
     { ... }:
     {
+      imports = [
+        myNixInputs.nix-index-database.homeModules.default
+      ];
+
       home.packages = with pkgs; [
         pi
         frsNvimPackage
@@ -38,6 +44,9 @@ let
         vim = "nvim";
         vimdiff = "nvim -d";
       };
+
+      programs.nix-index.enable = true;
+      programs.nix-index-database.comma.enable = true;
     };
 in
 {
