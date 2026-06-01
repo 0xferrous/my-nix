@@ -192,6 +192,7 @@
             zig = zig;
             ty = ty;
             nushell = nushell;
+            dhall-lsp-server = dhall-lsp-server;
             zk = zk;
           };
 
@@ -207,6 +208,7 @@
             "zig"
             "ty"
             "nushell"
+            "dhall-lsp-server"
             "zk"
           ];
 
