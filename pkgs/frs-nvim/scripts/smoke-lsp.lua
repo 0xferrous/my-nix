@@ -38,6 +38,7 @@ local function setup_workspace()
   write_file(join(root, "pyproject.toml"), { "[project]", "name = 'smoke'", "version = '0.1.0'" })
   write_file(join(root, "main.py"), { "x: int = 1" })
   write_file(join(root, "main.nu"), { "echo 'hi'" })
+  write_file(join(root, "main.dhall"), { "{ smoke = True }" })
   ensure_dir(join(root, ".zk"))
 
   return root
@@ -96,6 +97,7 @@ local fixtures = {
   zls = { path = "main.zig", filetype = "zig", extra_bins = { "zig" } },
   ty = { path = "main.py", filetype = "python" },
   nushell = { path = "main.nu", filetype = "nu" },
+  dhall_lsp_server = { path = "main.dhall", filetype = "dhall" },
   zk = { path = "README.md", filetype = "markdown" },
   noir = { path = "README.md", filetype = "markdown" },
 }
