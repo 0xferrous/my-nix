@@ -100,6 +100,7 @@
             pi
             ;
         };
+          "install-bin" = pkgs."install-bin";
       };
       apps = lib.recursiveUpdate frs-nvim.apps {
         ${system} = {
@@ -108,6 +109,10 @@
             program = "${pkgs.pi}/bin/pi";
           };
         };
+          "install-bin" = {
+            type = "app";
+            program = "${pkgs."install-bin"}/bin/install-bin";
+          };
       };
 
       formatter.${system} = pkgs.nixfmt-tree;

@@ -55,10 +55,13 @@ in
       })
     ];
 
-    home.packages = [
+    home.packages = with pkgs; [
       keyboardBacklightPackage
       myNixInputs.agentspace.packages.${pkgs.system}.virtie
+      install-bin
     ];
+
+    home.sessionPath = [ "${config.home.homeDirectory}/bin" ];
 
     fr.pass = {
       enable = true;
