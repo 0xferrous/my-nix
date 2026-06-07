@@ -66,14 +66,10 @@ jobs:
         run: |
           IMAGE_TAG="$(git rev-parse HEAD)"
 
-          nix shell nixpkgs#skopeo -c \
-            skopeo copy \
-            docker-archive:agent-box.tar \
-            docker://${IMAGE_NAME}:${IMAGE_TAG}
+          nix shell nixpkgs#crane -c \
+            crane push agent-box.tar "${IMAGE_NAME}:${IMAGE_TAG}"
 
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            nix shell nixpkgs#skopeo -c \
-              skopeo copy \
-              docker-archive:agent-box.tar \
-              docker://${IMAGE_NAME}:latest
+            nix shell nixpkgs#crane -c \
+              crane push agent-box.tar "${IMAGE_NAME}:latest"
           fi
