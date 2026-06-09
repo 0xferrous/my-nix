@@ -11,21 +11,13 @@ let MountType = < virtiofs | `9p` | image >
 
 let NinePSecurityModel = < mapped | none | passthrough >
 
-let NinePCache = < auto | always | none >
-
 let NetworkType = < user >
-
-let HotplugNetBackend = < user >
 
 let MachineType = < microvm >
 
 let GraphicsBackend = < headless | gtk | cocoa >
 
 let KernelSerial = < off | print | console >
-
-let ShareCache = < auto | always | none >
-
-let ShareSecurityModel = < mapped | none | passthrough >
 
 let BlockFormat = < raw | qcow2 >
 
@@ -34,10 +26,11 @@ let Filesystem = < ext4 >
 let Image =
       { size : Optional Natural
       , fs : Optional Filesystem
-      , format : Optional Text
+      , format : Optional BlockFormat
       , create : Optional Bool
       , label : Optional Text
       , direct : Optional Bool
+      , serial : Optional Text
       }
 
 let Forward =
@@ -47,16 +40,6 @@ let Forward =
       , from : Optional ForwardFrom
       , host : Text
       , guest : Text
-      }
-
-let Volume =
-      { -- Host disk image path.
-        image : Text
-      , size : Optional Natural
-      , fs : Optional Filesystem
-      , create : Optional Bool
-      , read_only : Optional Bool
-      , direct : Optional Bool
       }
 
 let Virtiofs =
@@ -69,7 +52,6 @@ let NineP =
       { -- Options: mapped, none, passthrough
         -- Default: mapped
         security_model : Optional NinePSecurityModel
-      , cache : Optional NinePCache
       }
 
 let Mount =
@@ -77,41 +59,10 @@ let Mount =
       , tag : Optional Text
       , source : Text
       , target : Optional Text
-      , hotplugged : Optional Bool
       , read_only : Optional Bool
-      , cache : Optional ShareCache
-      , security_model : Optional ShareSecurityModel
-      , virtiofsd_exec : Optional (List Text)
-      , virtiofsd_socket : Optional Text
       , virtiofs : Optional Virtiofs
       , `9p` : Optional NineP
       , image : Optional Image
-      }
-
-let HotplugVirtiofs =
-      { -- Stable hotplug id. Also used to derive defaults.
-        id : Text
-      , source : Text
-      , target : Optional Text
-      , socket : Optional Text
-      , bin : Optional Text
-      }
-
-let HotplugNet =
-      { -- Stable QEMU/device id.
-        id : Text
-      , backend : Optional HotplugNetBackend
-      , mac : Text
-      , forward : Optional (List Forward)
-      }
-
-let HotplugBlock =
-      { -- Stable block hotplug id.
-        id : Text
-      , image : Text
-      , format : Optional BlockFormat
-      , read_only : Optional Bool
-      , serial : Optional Text
       }
 
 let RunVars =
@@ -256,15 +207,7 @@ let Manifest =
             }
       , mounts : Optional (List Mount)
       , workspace : Optional Workspace
-      , hotplug :
-          Optional
-            { -- Explicit virtiofs hotplug entries.
-              --
-              -- Default: []
-              virtiofs : Optional (List HotplugVirtiofs)
-            , net : Optional (List HotplugNet)
-            , block : Optional (List HotplugBlock)
-            }
+      , hotplug : Optional { mounts : Optional (List Mount), networks : Optional (List Network) }
       , run : Optional (List Run)
       , networks : Optional (List Network)
       , balloon : Optional Balloon
@@ -276,25 +219,17 @@ in  { ForwardProto
     , ForwardFrom
     , MountType
     , NinePSecurityModel
-    , NinePCache
     , NetworkType
-    , HotplugNetBackend
     , MachineType
     , GraphicsBackend
     , KernelSerial
-    , ShareCache
-    , ShareSecurityModel
     , BlockFormat
     , Filesystem
     , Image
     , Forward
-    , Volume
     , Virtiofs
     , NineP
     , Mount
-    , HotplugVirtiofs
-    , HotplugNet
-    , HotplugBlock
     , RunVars
     , Run
     , Network

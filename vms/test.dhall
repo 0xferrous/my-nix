@@ -30,12 +30,7 @@ in  { host_name = Some "test"
           , tag = Some "ro-store"
           , source = "/nix/store"
           , target = Some ""
-          , hotplugged = None Bool
           , read_only = Some True
-          , cache = None Types.ShareCache
-          , security_model = None Types.ShareSecurityModel
-          , virtiofsd_exec = None (List Text)
-          , virtiofsd_socket = None Text
           , virtiofs = Some { socket = Some "/run/virtiofs-nix-store.sock", bin = Some "", args = Some ([] : List Text) }
           , `9p` = None Types.NineP
           , image = None Types.Image
@@ -43,45 +38,37 @@ in  { host_name = Some "test"
           , tag = None Text
           , source = "/home/dmnt/vms/test/persist.img"
           , target = None Text
-          , hotplugged = None Bool
           , read_only = Some False
-          , cache = None Types.ShareCache
-          , security_model = None Types.ShareSecurityModel
-          , virtiofsd_exec = None (List Text)
-          , virtiofsd_socket = None Text
           , virtiofs = None Types.Virtiofs
           , `9p` = None Types.NineP
           , image = Some
             { size = Some 512
             , fs = Some Types.Filesystem.ext4
-            , format = Some ""
+            , format = None Types.BlockFormat
             , create = Some True
             , label = Some "persist"
             , direct = Some False
+            , serial = None Text
             }
           }, { type = Some Types.MountType.image
           , tag = None Text
           , source = "/home/dmnt/vms/test/home.img"
           , target = None Text
-          , hotplugged = None Bool
           , read_only = Some False
-          , cache = None Types.ShareCache
-          , security_model = None Types.ShareSecurityModel
-          , virtiofsd_exec = None (List Text)
-          , virtiofsd_socket = None Text
           , virtiofs = None Types.Virtiofs
           , `9p` = None Types.NineP
           , image = Some
             { size = Some 2048
             , fs = Some Types.Filesystem.ext4
-            , format = Some ""
+            , format = None Types.BlockFormat
             , create = Some True
             , label = None Text
             , direct = Some False
+            , serial = None Text
             }
           } ]
     , workspace = Some { guest_dir = "/home/agent/workspace", host_dir = "/home/dmnt/vms/test/workspace", mount_cwd = False }
-    , hotplug = None { virtiofs : Optional (List Types.HotplugVirtiofs), net : Optional (List Types.HotplugNet), block : Optional (List Types.HotplugBlock) }
+    , hotplug = None { mounts : Optional (List Types.Mount), networks : Optional (List Types.Network) }
     , run = Some ([] : List Types.Run)
     , networks = Some [ { id = "test-net", mac = "02:02:00:00:00:10", type = Some Types.NetworkType.user, forward = None (List Types.Forward) } ]
     , balloon = Some { enabled = Some False, deflate_on_oom = Some False, free_page_reporting = Some False, controller = None Types.BalloonController }
