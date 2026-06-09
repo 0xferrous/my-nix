@@ -139,5 +139,11 @@ in
       "127.0.0.1" = localhostHosts;
       "::1" = localhostHosts;
     };
+
+    nix.settings = {
+      substituters = [ "https://0xferrous.cachix.org" ];
+      trusted-public-keys = [ "0xferrous.cachix.org-1:p38oLu+8I+EwBW6NCl+ffI8qn+WOtUeRzES/dYNuSUE=" ];
+      trusted-substituters = [ "https://0xferrous.cachix.org" ];
+    };
   };
 }
