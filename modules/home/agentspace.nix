@@ -199,12 +199,12 @@ let
       ++ (vmSandboxConfig.homeModules or [ ]);
     };
 
-  mkLaunchProgram =
-    sandboxConfig: agentspaceInput.lib.mkLaunch (agentspaceInput.lib.mkSandbox sandboxConfig);
+  mkLaunchProgram = nixosConfig: agentspaceInput.lib.mkLaunch nixosConfig;
 
-  mkVmLaunchProgram = name: vmCfg: mkLaunchProgram (sandboxConfigOf name vmCfg);
+  mkVmSystem = name: vmCfg: agentspaceInput.lib.mkSandbox (sandboxConfigOf name vmCfg);
 
-  mkVmSystems = import ../../lib/mkAgentspaceVmSystems.nix;
+  mkVmLaunchProgram = name: _vmCfg: mkLaunchProgram cfg.systems.${name};
+
   mkVmApps = import ../../lib/mkAgentspaceVmApps.nix;
 
   mkVmPackage =
@@ -224,22 +224,26 @@ let
   mkStateDir =
     name: vmCfg:
     let
-      sandboxConfig = sandboxConfigOf name vmCfg;
+      sandboxConfig = cfg.systems.${name}.config.agentspace.sandbox;
     in
     sandboxConfig.persistence.baseDir or ".agentspace";
 
   mkHostName =
     name: vmCfg:
     let
-      sandboxConfig = sandboxConfigOf name vmCfg;
+      sandboxConfig = cfg.systems.${name}.config.agentspace.sandbox;
     in
     sandboxConfig.hostName;
 
   mkDaemonProgram =
-    name: vmCfg:
+    name: _vmCfg:
     mkLaunchProgram (
-      lib.recursiveUpdate (sandboxConfigOf name vmCfg) {
-        ssh.autoconnect = false;
+      cfg.systems.${name}.extendModules {
+        modules = [
+          {
+            agentspace.sandbox.ssh.autoconnect = false;
+          }
+        ];
       }
     );
 
@@ -355,6 +359,17 @@ in
       description = ''
         Flake app definitions for enabled agentspace VMs, suitable for exposing
         from a consuming flake's `apps.<system>` output.
+      '';
+    };
+
+    systems = lib.mkOption {
+      type = lib.types.attrsOf lib.types.raw;
+      default = { };
+      description = ''
+        Evaluated NixOS systems for enabled agentspace VMs. The Home Manager
+        packages and systemd user services reference these systems directly, so
+        a Home Manager build realizes the VM system closures needed by the
+        generated services.
       '';
     };
 
@@ -497,14 +512,12 @@ in
       }
     ];
 
+    fr.agentspace.systems = lib.mapAttrs mkVmSystem enabledVms;
+
     fr.agentspace.apps = mkVmApps {
       agentspace = agentspaceInput;
       inherit lib;
-      systems = mkVmSystems {
-        agentspace = agentspaceInput;
-        inherit lib;
-        vms = enabledVms;
-      };
+      systems = cfg.systems;
     };
 
     home.packages = lib.mapAttrsToList mkVmPackage enabledVms;
@@ -525,7 +538,7 @@ in
       matchBlocks = lib.mapAttrs' (name: vmCfg: {
         name = vmCfg.sshConnect.host;
         value = {
-          user = (sandboxConfigOf name vmCfg).user or "agent";
+          user = cfg.systems.${name}.config.agentspace.sandbox.user or "agent";
           proxyCommand = "${mkProxyCommand name vmCfg}";
           identityFile = lib.optional (vmCfg.sshConnect.identityFile != null) vmCfg.sshConnect.identityFile;
           extraOptions = {

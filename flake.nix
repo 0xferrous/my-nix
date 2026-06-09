@@ -75,6 +75,7 @@
       fenix,
       ghmd,
       agentspace,
+      impermanence,
       ...
     }:
     let
@@ -99,8 +100,8 @@
             opensrc
             pi
             ;
-        };
           "install-bin" = pkgs."install-bin";
+        };
       };
       apps = lib.recursiveUpdate frs-nvim.apps {
         ${system} = {
@@ -108,11 +109,11 @@
             type = "app";
             program = "${pkgs.pi}/bin/pi";
           };
-        };
           "install-bin" = {
             type = "app";
             program = "${pkgs."install-bin"}/bin/install-bin";
           };
+        };
       };
 
       formatter.${system} = pkgs.nixfmt-tree;
@@ -161,12 +162,26 @@
         fr = import ./config/fr/nixos.nix {
           inherit fenix ghmd;
         };
+        agent = import ./config/agent/nixos.nix {
+          inherit fenix ghmd impermanence;
+        };
+      };
+
+      nixosConfigurations.agent = inputs.nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit fenix ghmd impermanence;
+        };
+        modules = [
+          ./config/agent/nixos.nix
+        ];
       };
 
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = with pkgs; [
           dhall
           dhall-json
+          haskellPackages.dhall-toml
         ];
       };
     };

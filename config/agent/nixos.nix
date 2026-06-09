@@ -1,10 +1,17 @@
-{ lib, impermanence, ... }:
+{
+  lib,
+  pkgs,
+  impermanence,
+  ...
+}:
 let
   impermanenceRoot = "/persist";
   opensshSettings = {
     AllowStreamLocalForwarding = lib.mkDefault "yes";
     AllowTcpForwarding = lib.mkDefault "yes";
     DisableForwarding = lib.mkDefault false;
+    PasswordAuthentication = lib.mkDefault true;
+    PermitEmptyPasswords = lib.mkDefault "yes";
     StreamLocalBindUnlink = lib.mkDefault "yes";
   };
 in
@@ -25,7 +32,20 @@ in
 
   environment.sessionVariables.HARMONIA_CACHE_URL = "http://10.0.2.2:5000";
 
-  services.openssh.settings = opensshSettings;
+  services.openssh = {
+    enable = true;
+    settings = opensshSettings;
+  };
+
+  systemd.services.virtie-ssh-signal = {
+    wantedBy = [ "multi-user.target" ];
+    requires = [ "sshd.service" ];
+    after = [ "sshd.service" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      ${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtie.ready
+    '';
+  };
 
   services.getty.autologinUser = "agent";
 
@@ -36,6 +56,7 @@ in
     home = "/home/agent";
     createHome = true;
     extraGroups = [ "wheel" ];
+    hashedPassword = "";
   };
 
   security.sudo.wheelNeedsPassword = false;
