@@ -7,7 +7,7 @@ let ForwardProto = < tcp | udp >
 
 let ForwardFrom = < host | guest >
 
-let MountType = < virtiofs | `9p` >
+let MountType = < virtiofs | `9p` | image >
 
 let NinePSecurityModel = < mapped | none | passthrough >
 
@@ -23,9 +23,22 @@ let GraphicsBackend = < headless | gtk | cocoa >
 
 let KernelSerial = < off | print | console >
 
+let ShareCache = < auto | always | none >
+
+let ShareSecurityModel = < mapped | none | passthrough >
+
 let BlockFormat = < raw | qcow2 >
 
 let Filesystem = < ext4 >
+
+let Image =
+      { size : Optional Natural
+      , fs : Optional Filesystem
+      , format : Optional Text
+      , create : Optional Bool
+      , label : Optional Text
+      , direct : Optional Bool
+      }
 
 let Forward =
       { -- proto options: tcp, udp
@@ -43,18 +56,11 @@ let Volume =
       , fs : Optional Filesystem
       , create : Optional Bool
       , read_only : Optional Bool
-      , label : Optional Text
       , direct : Optional Bool
       }
 
 let Virtiofs =
-      { -- QEMU talks to virtiofsd through this socket.
-        -- Keeping the socket named lets virtie wait for readiness and place it
-        -- under state_dir.
-        --
-        -- For hotplugged virtiofs:
-        -- Default: "<id>.sock" / "<tag>.sock"
-        socket : Optional Text
+      { socket : Optional Text
       , bin : Optional Text
       , args : Optional (List Text)
       }
@@ -67,16 +73,19 @@ let NineP =
       }
 
 let Mount =
-      { -- Options: virtiofs, 9p
-        -- Default: virtiofs
-        type : Optional MountType
-      , tag : Text
+      { type : Optional MountType
+      , tag : Optional Text
       , source : Text
       , target : Optional Text
       , hotplugged : Optional Bool
       , read_only : Optional Bool
+      , cache : Optional ShareCache
+      , security_model : Optional ShareSecurityModel
+      , virtiofsd_exec : Optional (List Text)
+      , virtiofsd_socket : Optional Text
       , virtiofs : Optional Virtiofs
       , `9p` : Optional NineP
+      , image : Optional Image
       }
 
 let HotplugVirtiofs =
@@ -158,21 +167,26 @@ let Balloon =
       }
 
 let WriteFile =
-      < Text :
-          { -- Guest path to write.
-            guest_path : Text
-          , chown : Optional Text
-          , text : Text
-          , mode : Optional Text
-          , overwrite : Optional Bool
-          }
-      | Binary :
-          { -- Guest path to write.
-            guest_path : Text
-          , source : Text
-          , overwrite : Optional Bool
-          }
-      >
+      { guest_path : Text
+      , chown : Optional Text
+      , text : Optional Text
+      , mode : Optional Text
+      , overwrite : Optional Bool
+      , follow_links : Optional Bool
+      , write_back : Optional Bool
+      , source : Optional Text
+      }
+
+let Workspace =
+      { guest_dir : Text
+      , host_dir : Text
+      , mount_cwd : Bool
+      }
+
+let Notifications =
+      { exec : Optional (List Text)
+      , states : Optional (List Text)
+      }
 
 let Manifest =
       { -- Guest name. Also used to derive default lock/state names.
@@ -240,8 +254,8 @@ let Manifest =
               -- Default: full allocatable CID range.
               cid_range : Optional { min : Natural, max : Natural }
             }
-      , volumes : Optional (List Volume)
       , mounts : Optional (List Mount)
+      , workspace : Optional Workspace
       , hotplug :
           Optional
             { -- Explicit virtiofs hotplug entries.
@@ -255,19 +269,7 @@ let Manifest =
       , networks : Optional (List Network)
       , balloon : Optional Balloon
       , write_files : Optional (List WriteFile)
-      , notifications :
-          Optional
-            { -- Host-side hook command for runtime state changes.
-              --
-              -- Template values include:
-              --   {{.State}}, {{.Message}}, {{.Env.USER}}
-              --
-              -- Hook processes also receive VIRTIE_NOTIFY_* env vars.
-              --
-              -- Default: absent / no notification hook.
-              exec : Optional (List Text)
-            , states : Optional (List Text)
-            }
+      , notifications : Optional Notifications
       }
 
 in  { ForwardProto
@@ -280,8 +282,11 @@ in  { ForwardProto
     , MachineType
     , GraphicsBackend
     , KernelSerial
+    , ShareCache
+    , ShareSecurityModel
     , BlockFormat
     , Filesystem
+    , Image
     , Forward
     , Volume
     , Virtiofs
@@ -296,5 +301,7 @@ in  { ForwardProto
     , BalloonController
     , Balloon
     , WriteFile
+    , Workspace
+    , Notifications
     , Manifest
     }

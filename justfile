@@ -49,4 +49,4 @@ render-vm-manifest vm-name: build-agent-kernel build-agent-initramfs build-agent
   dhall-to-toml --file "./vms/{{vm-name}}.dhall" --output "{{vms_base_dir}}/{{vm-name}}/manifest.toml"
 
 run-vm vm-name: (render-vm-manifest vm-name)
-  virtie launch -v --ssh --manifest="{{vms_base_dir}}/{{vm-name}}/manifest.toml"
+  virtie launch -vv --ssh --manifest="{{vms_base_dir}}/{{vm-name}}/manifest.toml"
