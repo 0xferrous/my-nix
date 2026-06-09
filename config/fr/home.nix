@@ -57,11 +57,21 @@ in
 
     home.packages = with pkgs; [
       keyboardBacklightPackage
-      myNixInputs.agentspace.packages.${pkgs.system}.virtie
       install-bin
+      # myNixInputs.agentspace.packages.${pkgs.system}.virtie
+      virtiofsd
+      qemu
     ];
 
     home.sessionPath = [ "${config.home.homeDirectory}/bin" ];
+
+    home.shellAliases = {
+      virtie = "~/dev/fr/open-source/agentspace/result/bin/virtie";
+    };
+
+    programs.nushell.shellAliases = {
+      virtie = "~/dev/fr/open-source/agentspace/result/bin/virtie";
+    };
 
     fr.pass = {
       enable = true;
