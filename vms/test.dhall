@@ -1,67 +1,90 @@
-let A = ./lib/agentspace.dhall
+let Types = ./lib/virtie_types.dhall
 
 let KernelParams = ./lib/kernel-params.dhall
 
-let kernelParamsConfig =
-      { base =
-        [ "8250.nr_uarts=1"
-        , "console=ttyS0"
-        , "earlyprintk=ttyS0"
-        , "loglevel=7"
-        , "systemd.show_status=1"
-        , "rd.systemd.show_status=1"
-        , "udev.log_level=debug"
-        , "lsm=landlock,yama,bpf"
-        ]
-      , init = env:VIRTIE_INIT
-      , regInfo = env:VIRTIE_REGINFO
+let kernelParams =
+      KernelParams.toList
+        { base = [ "8250.nr_uarts=1", "console=ttyS0", "earlyprintk=ttyS0", "loglevel=7", "systemd.show_status=1", "rd.systemd.show_status=1", "udev.log_level=debug", "lsm=landlock,yama,bpf" ]
+        , init = env:VIRTIE_INIT
+        , regInfo = env:VIRTIE_REGINFO
+        }
+
+in  { host_name = Some "test"
+    , working_dir = Some "/home/dmnt"
+    , state_dir = Some "/home/dmnt/vms/test"
+    , qemu =
+      { exec = Some [ "/home/dmnt/.nix-profile/bin/qemu-system-x86_64" ]
+      , fwd_tunnel_exec = Some [ "/home/dmnt/.nix-profile/bin/nc", "{{.Host}}", "{{.Port}}" ]
+      , user = None Text
+      , seccomp = Some True
+      , machine_options = None { accel : Text, pcie : Text }
+      , qmp_socket = Some "qmp.sock"
+      , guest_agent_socket = Some "qga.sock"
       }
-
-let kernelParams = KernelParams.toList kernelParamsConfig
-
-let runtime =
-      A.Runtime.default //
-      { qemu = [ "/home/dmnt/.nix-profile/bin/qemu-system-x86_64" ]
-      , netcat = [ "/home/dmnt/.nix-profile/bin/nc" ]
-      , kernel = env:VIRTIE_KERNEL
-      , initrd = env:VIRTIE_INITRD
-      , kernelParams
-      , ssh =
-        [ "/home/dmnt/.nix-profile/bin/ssh"
-        , "-o"
-        , "ProxyCommand=systemd-ssh-proxy %h %p"
-        , "-o"
-        , "ProxyUseFdpass=yes"
-        , "-o"
-        , "CheckHostIP=no"
-        , "-o"
-        , "StrictHostKeyChecking=no"
-        , "-o"
-        , "UserKnownHostsFile=/dev/null"
-        , "-o"
-        , "GlobalKnownHostsFile=/dev/null"
-        ]
-      }
-
-let workspace =
-      A.Workspace.default //
-      { hostDir = "/home/dmnt/vms/test/workspace" }
-
-let sandbox =
-      A.Sandbox.default //
-      { name = "test"
-      , workingDir = "/home/dmnt"
-      , stateDir = "/home/dmnt/vms/test"
-      , runtime
-      , quiet = False
-      , machine = A.Machine.default // { memory = 2048, vcpu = Some 2 }
-      , workspace = Some workspace
-      , networks = [ A.network "test-net" "02:02:00:00:00:10" ]
-      , mounts =
-        [ A.roVirtiofs "ro-store" "/nix/store" "/run/virtiofs-nix-store.sock" ""
-        , A.labeledImage "/home/dmnt/vms/test/persist.img" 512 "persist"
-        , A.image "/home/dmnt/vms/test/home.img" 2048
-        ]
-      }
-
-in  A.Sandbox.toManifest sandbox
+    , machine = { type = Some Types.MachineType.microvm, id = None Text, memory = Some 2048, vcpu = Some 2, cpu = None Text, kvm = Some True }
+    , kernel = { path = env:VIRTIE_KERNEL, initrd_path = env:VIRTIE_INITRD, params = Some kernelParams, serial = Some Types.KernelSerial.off }
+    , graphics = Some { backend = Some Types.GraphicsBackend.headless }
+    , ssh = { user = Some "agent", exec = Some [ "/home/dmnt/.nix-profile/bin/ssh", "-o", "ProxyCommand=systemd-ssh-proxy %h %p", "-o", "ProxyUseFdpass=yes", "-o", "CheckHostIP=no", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "GlobalKnownHostsFile=/dev/null" ], ready_socket = None Text, retry_delay = None Double, autoprovision = Some False }
+    , vsock = Some { cid_range = Some { min = 0, max = 0 } }
+    , mounts = Some [ { type = Some Types.MountType.virtiofs
+          , tag = Some "ro-store"
+          , source = "/nix/store"
+          , target = Some ""
+          , hotplugged = None Bool
+          , read_only = Some True
+          , cache = None Types.ShareCache
+          , security_model = None Types.ShareSecurityModel
+          , virtiofsd_exec = None (List Text)
+          , virtiofsd_socket = None Text
+          , virtiofs = Some { socket = Some "/run/virtiofs-nix-store.sock", bin = Some "", args = Some ([] : List Text) }
+          , `9p` = None Types.NineP
+          , image = None Types.Image
+          }, { type = Some Types.MountType.image
+          , tag = None Text
+          , source = "/home/dmnt/vms/test/persist.img"
+          , target = None Text
+          , hotplugged = None Bool
+          , read_only = Some False
+          , cache = None Types.ShareCache
+          , security_model = None Types.ShareSecurityModel
+          , virtiofsd_exec = None (List Text)
+          , virtiofsd_socket = None Text
+          , virtiofs = None Types.Virtiofs
+          , `9p` = None Types.NineP
+          , image = Some
+            { size = Some 512
+            , fs = Some Types.Filesystem.ext4
+            , format = Some ""
+            , create = Some True
+            , label = Some "persist"
+            , direct = Some False
+            }
+          }, { type = Some Types.MountType.image
+          , tag = None Text
+          , source = "/home/dmnt/vms/test/home.img"
+          , target = None Text
+          , hotplugged = None Bool
+          , read_only = Some False
+          , cache = None Types.ShareCache
+          , security_model = None Types.ShareSecurityModel
+          , virtiofsd_exec = None (List Text)
+          , virtiofsd_socket = None Text
+          , virtiofs = None Types.Virtiofs
+          , `9p` = None Types.NineP
+          , image = Some
+            { size = Some 2048
+            , fs = Some Types.Filesystem.ext4
+            , format = Some ""
+            , create = Some True
+            , label = None Text
+            , direct = Some False
+            }
+          } ]
+    , workspace = Some { guest_dir = "/home/agent/workspace", host_dir = "/home/dmnt/vms/test/workspace", mount_cwd = False }
+    , hotplug = None { virtiofs : Optional (List Types.HotplugVirtiofs), net : Optional (List Types.HotplugNet), block : Optional (List Types.HotplugBlock) }
+    , run = Some ([] : List Types.Run)
+    , networks = Some [ { id = "test-net", mac = "02:02:00:00:00:10", type = Some Types.NetworkType.user, forward = None (List Types.Forward) } ]
+    , balloon = Some { enabled = Some False, deflate_on_oom = Some False, free_page_reporting = Some False, controller = None Types.BalloonController }
+    , write_files = Some ([] : List Types.WriteFile)
+    , notifications = Some { exec = None (List Text), states = Some ([] : List Text) }
+    }
