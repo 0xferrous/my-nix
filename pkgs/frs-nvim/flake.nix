@@ -188,6 +188,7 @@
             typescript-language-server = typescript-language-server;
             ccls = ccls;
             marksman = marksman;
+            taplo = taplo;
             zls = zls;
             zig = zig;
             ty = ty;
@@ -204,6 +205,7 @@
             "typescript-language-server"
             "ccls"
             "marksman"
+            "taplo"
             "zls"
             "zig"
             "ty"

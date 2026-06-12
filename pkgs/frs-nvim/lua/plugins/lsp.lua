@@ -17,6 +17,7 @@ local servers = {
   zk = {},
   nushell = {},
   marksman = {},
+  taplo = {},
   -- TODO: configure Solidity LSP
   zls = {},
   dhall_lsp_server = {},
@@ -29,7 +30,16 @@ local function configure_lsp_servers(servers)
   end
 end
 
+local function disable_server_formatting(client)
+  if client and client.name == "taplo" then
+    client.server_capabilities.documentFormattingProvider = false
+    client.server_capabilities.documentRangeFormattingProvider = false
+  end
+end
+
 local function on_attach(client, buf)
+  disable_server_formatting(client)
+
   local function nmap(keys, func, desc)
     vim.keymap.set("n", keys, func, {
       buffer = buf,
