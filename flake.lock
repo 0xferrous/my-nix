@@ -448,6 +448,7 @@
         "plugin-feed-nvim": "plugin-feed-nvim",
         "plugin-floating-help": "plugin-floating-help",
         "plugin-flote": "plugin-flote",
+        "plugin-guh-nvim": "plugin-guh-nvim",
         "plugin-logger-nvim": "plugin-logger-nvim",
         "plugin-mcphub-nvim": "plugin-mcphub-nvim",
         "plugin-neotest-foundry": "plugin-neotest-foundry",
@@ -708,11 +709,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777671051,
-        "narHash": "sha256-h215lfBUcT4/HlY7v56hjS90rjAbhKgRGxT6tuq5icc=",
+        "lastModified": 1779886850,
+        "narHash": "sha256-Udj+9DzeLccvPKoW9Q8xFdqIhrw2jhYMoqxBv+8iWzo=",
         "owner": "BirdeeHub",
         "repo": "nix-wrapper-modules",
-        "rev": "5eeeb153ad8869f584e949541e858f3be76e761a",
+        "rev": "168fd6f514a9f8fa47df4fdcf9ecd61db10aec68",
         "type": "github"
       },
       "original": {
@@ -868,16 +869,15 @@
     "plugin-feed-nvim": {
       "flake": false,
       "locked": {
-        "lastModified": 1765821067,
-        "narHash": "sha256-6dry0pD4MXKSHi80LDxktjXQrPkWu3RnZ0SzXp9Gymg=",
+        "lastModified": 1775008438,
+        "narHash": "sha256-pJYr1h7+0Exl0a5DYLeIAjBzOo5KbxxLtMqwDNc+GUg=",
         "owner": "neo451",
         "repo": "feed.nvim",
-        "rev": "d1f8cee9df8ea4c7e319db701fb0ece0eca9a005",
+        "rev": "4e0903343c47b13aa5355ed267dbd58300bff8be",
         "type": "github"
       },
       "original": {
         "owner": "neo451",
-        "ref": "v2.19.2",
         "repo": "feed.nvim",
         "type": "github"
       }
@@ -911,6 +911,22 @@
       "original": {
         "owner": "JellyApple102",
         "repo": "flote.nvim",
+        "type": "github"
+      }
+    },
+    "plugin-guh-nvim": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781181140,
+        "narHash": "sha256-ONOrm4QlhYukdbd6VWFFz8PX6ohU21iimcDzxRR7pxI=",
+        "owner": "justinmk",
+        "repo": "guh.nvim",
+        "rev": "137bbb58b965bdf417d79408050fec2b2107ad93",
+        "type": "github"
+      },
+      "original": {
+        "owner": "justinmk",
+        "repo": "guh.nvim",
         "type": "github"
       }
     },

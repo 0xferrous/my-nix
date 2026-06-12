@@ -132,6 +132,22 @@
         "type": "github"
       }
     },
+    "plugin-guh-nvim": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781181140,
+        "narHash": "sha256-ONOrm4QlhYukdbd6VWFFz8PX6ohU21iimcDzxRR7pxI=",
+        "owner": "justinmk",
+        "repo": "guh.nvim",
+        "rev": "137bbb58b965bdf417d79408050fec2b2107ad93",
+        "type": "github"
+      },
+      "original": {
+        "owner": "justinmk",
+        "repo": "guh.nvim",
+        "type": "github"
+      }
+    },
     "plugin-logger-nvim": {
       "flake": false,
       "locked": {
@@ -254,6 +270,7 @@
         "plugin-feed-nvim": "plugin-feed-nvim",
         "plugin-floating-help": "plugin-floating-help",
         "plugin-flote": "plugin-flote",
+        "plugin-guh-nvim": "plugin-guh-nvim",
         "plugin-logger-nvim": "plugin-logger-nvim",
         "plugin-mcphub-nvim": "plugin-mcphub-nvim",
         "plugin-neotest-foundry": "plugin-neotest-foundry",

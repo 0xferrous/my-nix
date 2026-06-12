@@ -30,6 +30,10 @@
       url = "github:neo451/feed.nvim";
       flake = false;
     };
+    plugin-guh-nvim = {
+      url = "github:justinmk/guh.nvim";
+      flake = false;
+    };
 
     plugin-nightsky-vim = {
       url = "github:nvimdev/nightsky.vim";
@@ -104,6 +108,7 @@
             vim-circom-syntax = mkPluginFromInput "vim-circom-syntax" "plugin-vim-circom-syntax";
             flote-nvim = mkPluginFromInput "flote.nvim" "plugin-flote";
             feed-nvim = mkPluginFromInput "feed.nvim" "plugin-feed-nvim";
+            guh-nvim = mkPluginFromInput "guh.nvim" "plugin-guh-nvim";
 
             gitlinker-nvim = pkgs.vimPlugins.gitlinker-nvim.overrideAttrs (old: {
               patches = (old.patches or [ ]) ++ [
@@ -350,6 +355,7 @@
                       with pkgs;
                       [
                         git
+                        gh
                         fd
                         ripgrep
                       ]

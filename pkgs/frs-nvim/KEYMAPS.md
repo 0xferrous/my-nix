@@ -158,6 +158,28 @@ Notes:
 
 These are not defined via `vim.keymap.set(...)` in this repo, but are enabled/configured here and are expected to be active.
 
+### guh.nvim (`guh://` buffers)
+
+Loaded by `:Guh` / `:GuhComment` in `lua/plugins/misc.lua`. Upstream `guh.nvim` defines buffer-local default mappings in `guh://` buffers unless overridden via `<Plug>(guh-...)` mappings.
+
+| Mode | Key | Action | Source of activation |
+| --- | --- | --- | --- |
+| n | `R` | Refresh current Guh view | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `dd` | View PR diff and comments | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `dl` | View latest CI logs for jobs | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `]f` | View next commit / CI job | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `[f` | View previous commit / CI job | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `g?` | Open Guh help for buffer mappings | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `cC` | Comment on the PR / issue top-level | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `cM` | Merge PR | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `cR` | Review PR | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `c:` | Edit title/body/labels/milestone via `gh` terminal | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `<Enter>` | Open target at cursor with `:Guh` | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `<C-w><Enter>` | Open target at cursor in a split with `:Guh` | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `cc` | Comment on diff line / edit comment at cursor | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| n | `cr` | Reply to or resolve thread at cursor | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+| x | `c` | Comment on selected diff range | `lua/plugins/misc.lua` + upstream `guh.nvim` defaults |
+
 ### mini.surround
 
 Configured in `lua/plugins/mini.lua`.

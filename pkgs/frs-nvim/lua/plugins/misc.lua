@@ -19,6 +19,10 @@ return {
       theme = "gruvbox_dark_hard",
     },
   },
+  {
+    "justinmk/guh.nvim",
+    cmd = { "Guh", "GuhComment" },
+  },
   { "elkowar/yuck.vim", ft = "yuck" },
   { "iden3/vim-circom-syntax", ft = "circom" },
   {
