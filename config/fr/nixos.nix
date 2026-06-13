@@ -77,6 +77,11 @@ in
       enable = lib.mkDefault true;
     };
 
+    programs.kdeconnect = {
+      enable = lib.mkDefault true;
+      package = lib.mkDefault pkgs.kdePackages.kdeconnect-kde;
+    };
+
     assertions = [
       {
         assertion = cfg.user != "";
