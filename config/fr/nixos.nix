@@ -17,6 +17,13 @@ let
     output stderr
     format console
   '';
+  binaryCacheKeys = {
+    "https://0xferrous.cachix.org" =
+      "0xferrous.cachix.org-1:p38oLu+8I+EwBW6NCl+ffI8qn+WOtUeRzES/dYNuSUE=";
+    "https://numtide.cachix.org" = "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE=";
+    "https://cache.numtide.com" = "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=";
+  };
+  binaryCaches = lib.attrNames binaryCacheKeys;
 in
 {
   imports = [
@@ -146,9 +153,9 @@ in
     };
 
     nix.settings = {
-      substituters = [ "https://0xferrous.cachix.org" ];
-      trusted-public-keys = [ "0xferrous.cachix.org-1:p38oLu+8I+EwBW6NCl+ffI8qn+WOtUeRzES/dYNuSUE=" ];
-      trusted-substituters = [ "https://0xferrous.cachix.org" ];
+      substituters = binaryCaches;
+      trusted-public-keys = lib.attrValues binaryCacheKeys;
+      trusted-substituters = binaryCaches;
     };
   };
 }
