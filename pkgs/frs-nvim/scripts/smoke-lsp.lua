@@ -39,6 +39,9 @@ local function setup_workspace()
   write_file(join(root, "main.py"), { "x: int = 1" })
   write_file(join(root, "main.nu"), { "echo 'hi'" })
   write_file(join(root, "main.dhall"), { "{ smoke = True }" })
+  write_file(join(root, "config.toml"), { "smoke = true" })
+  write_file(join(root, "main.ml"), { "let smoke = true" })
+  write_file(join(root, "dune-project"), { "(lang dune 3.0)", "(name smoke)" })
   ensure_dir(join(root, ".zk"))
 
   return root
@@ -94,10 +97,12 @@ local fixtures = {
   gopls = { path = "main.go", filetype = "go", extra_bins = { "go" } },
   ccls = { path = "main.c", filetype = "c" },
   marksman = { path = "README.md", filetype = "markdown" },
+  taplo = { path = "config.toml", filetype = "toml" },
   zls = { path = "main.zig", filetype = "zig", extra_bins = { "zig" } },
   ty = { path = "main.py", filetype = "python" },
   nushell = { path = "main.nu", filetype = "nu" },
   dhall_lsp_server = { path = "main.dhall", filetype = "dhall" },
+  ocamllsp = { path = "main.ml", filetype = "ocaml" },
   zk = { path = "README.md", filetype = "markdown" },
   noir = { path = "README.md", filetype = "markdown" },
 }

@@ -14,6 +14,7 @@ return {
         rust = {},
         toml = { "taplo" },
         dhall = { "dhall_format" },
+        ocaml = { "ocamlformat" },
       },
       formatters = {
         dhall_format = {

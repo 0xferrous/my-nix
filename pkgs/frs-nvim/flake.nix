@@ -199,6 +199,8 @@
             ty = ty;
             nushell = nushell;
             dhall-lsp-server = dhall-lsp-server;
+            ocaml-lsp-server = ocamlPackages.ocaml-lsp;
+            ocamlformat = ocamlPackages.ocamlformat;
             zk = zk;
           };
 
@@ -216,6 +218,8 @@
             "ty"
             "nushell"
             "dhall-lsp-server"
+            "ocaml-lsp-server"
+            "ocamlformat"
             "zk"
           ];
 
