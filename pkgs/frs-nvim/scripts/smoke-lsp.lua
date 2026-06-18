@@ -121,14 +121,19 @@ for _, name in ipairs(server_names) do
     goto continue
   end
 
-  if type(cfg.cmd) ~= "table" or type(cfg.cmd[1]) ~= "string" or cfg.cmd[1] == "" then
-    fail(("%s: invalid cmd in config"):format(name))
-    goto continue
-  end
+  if type(cfg.cmd) == "table" then
+    if type(cfg.cmd[1]) ~= "string" or cfg.cmd[1] == "" then
+      fail(("%s: invalid cmd in config"):format(name))
+      goto continue
+    end
 
-  local cmd_bin = cfg.cmd[1]
-  if vim.fn.exepath(cmd_bin) == "" then
-    fail(("%s: missing binary '%s' in PATH"):format(name, cmd_bin))
+    local cmd_bin = cfg.cmd[1]
+    if vim.fn.exepath(cmd_bin) == "" then
+      fail(("%s: missing binary '%s' in PATH"):format(name, cmd_bin))
+      goto continue
+    end
+  elseif type(cfg.cmd) ~= "function" then
+    fail(("%s: invalid cmd in config"):format(name))
     goto continue
   end
 
