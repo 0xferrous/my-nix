@@ -1,0 +1,109 @@
+# Base colors.
+include ./kitty_theme.conf
+
+# Core terminal behavior.
+shell /run/current-system/sw/bin/nu
+font_family RecMonoCasual Nerd Font Mono
+term xterm-kitty
+layout splits
+
+# Scrollback and shell integration.
+scrollback_lines 1000000
+scrollback_pager_history_size 1000
+shell_integration enabled
+
+# Remote control and startup.
+allow_remote_control yes
+listen_on unix:/run/user/1000/kitty
+startup_session sessions/startup.conf
+
+# General UI and interaction.
+url_style straight
+strip_trailing_spaces smart
+paste_actions quote-urls-at-prompt,confirm,confirm-if-large
+notify_on_cmd_finish unfocused
+show_hyperlink_targets ctrl
+underline_hyperlinks always
+copy_on_select no
+enable_audio_bell yes
+window_alert_on_bell yes
+bell_on_tab "🔔 "
+background_opacity 1.0
+dynamic_background_opacity yes
+
+# Mouse behavior.
+# See: https://sw.kovidgoyal.net/kitty/actions/#mouse-actions
+mouse_map left click ungrabbed mouse_handle_click selection
+mouse_map ctrl+left release ungrabbed mouse_handle_click link
+mouse_map ctrl+shift+right press ungrabbed combine : mouse_select_command_output : kitty_scrollback_nvim --config ksb_builtin_last_visited_cmd_output
+
+# Windows and tabs.
+map kitty_mod+p command_palette
+map ctrl+shift+f toggle_layout stack
+
+map kitty_mod+t combine : launch --type=tab --location=after --cwd=current --hold-after-ssh=yes : goto_layout splits
+map ctrl+alt+enter launch --location=hsplit --cwd=current
+map ctrl+shift+enter launch --location=vsplit --cwd=current
+
+map ctrl+alt+left neighboring_window left
+map ctrl+alt+right neighboring_window right
+map ctrl+alt+up neighboring_window up
+map ctrl+alt+down neighboring_window down
+
+map alt+1 goto_tab 1
+map alt+2 goto_tab 2
+map alt+3 goto_tab 3
+map alt+4 goto_tab 4
+map alt+5 goto_tab 5
+map alt+6 goto_tab 6
+map alt+7 goto_tab 7
+map alt+8 goto_tab 8
+map alt+9 goto_tab -1
+
+# Editing and scrolling.
+map ctrl+insert copy_to_clipboard
+map shift+insert paste_from_selection
+map shift+up scroll_line_up
+map shift+down scroll_line_down
+map shift+page_up scroll_page_up
+map shift+page_down scroll_page_down
+map shift+home scroll_home
+map shift+end scroll_end
+map shift+enter send_text all \n
+# Clear terminal scrollback.
+map super+k clear_terminal to_cursor active
+
+# Utility shortcuts.
+map ctrl+comma edit_config_file
+map ctrl+shift+i show_last_command_output
+map ctrl+enter toggle_fullscreen
+map ctrl+w no_op
+
+# Tab bar styling.
+tab_bar_edge top
+tab_bar_style powerline
+tab_bar_min_tabs 1
+# previous means last used tab
+tab_switch_strategy previous
+tab_bar_margin_width 0.0
+tab_bar_margin_height 0.0 0.0
+tab_bar_align left
+tab_activity_symbol "^"
+tab_title_template "{bell_symbol}{activity_symbol}{tab.last_focused_progress_percent}{index}:{title}"
+active_tab_title_template "{bell_symbol}{activity_symbol}{tab.last_focused_progress_percent}{index}:{title}[{layout_name}]"
+active_tab_font_style bold
+inactive_tab_font_style bold
+inactive_tab_foreground #000000
+
+# Ethereum address / tx hash helpers.
+map ctrl+shift+e>a kitten hints --type regex --regex '0x[a-fA-F0-9]{40}' --program @
+map ctrl+shift+e>t kitten hints --type regex --regex '0x[a-fA-F0-9]{64}' --program @
+map ctrl+shift+e>e kitten hints --type regex --regex '0x[a-fA-F0-9]{64}|0x[a-fA-F0-9]{40}' --program @
+map ctrl+shift+e>shift+a kitten hints --type regex --regex '0x[a-fA-F0-9]{40}' --program "launch --type=overlay --title='Select Explorer' ~/.config/kitty/eth-explorer.sh"
+map ctrl+shift+e>shift+t kitten hints --type regex --regex '0x[a-fA-F0-9]{64}' --program "launch --type=overlay --title='Select Explorer' ~/.config/kitty/eth-explorer.sh"
+map ctrl+shift+e>shift+e kitten hints --type regex --regex '0x[a-fA-F0-9]{64}|0x[a-fA-F0-9]{40}' --program "launch --type=overlay --title='Select Explorer' ~/.config/kitty/eth-explorer.sh"
+
+# Scrollback integration with Neovim.
+action_alias kitty_scrollback_nvim kitten /home/dmnt/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py
+map kitty_mod+h kitty_scrollback_nvim
+map kitty_mod+g kitty_scrollback_nvim --config ksb_builtin_last_cmd_output

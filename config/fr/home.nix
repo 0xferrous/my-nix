@@ -36,6 +36,7 @@ in
     ./home/gtk.nix
     ./home/desktop-entries.nix
     ./home/helix.nix
+    ./home/kitty.nix
     ./home/misc.nix
     ./home/neovim.nix
     ./home/service-misc.nix
