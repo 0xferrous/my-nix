@@ -1,0 +1,14 @@
+{
+  "id": "cryptoPrices",
+  "name": "Crypto Prices",
+  "description": "Shows live crypto prices from Binance in the bar",
+  "version": "1.0.0",
+  "author": "pi",
+  "icon": "currency_bitcoin",
+  "type": "widget",
+  "capabilities": ["dankbar-widget", "network"],
+  "component": "./CryptoPricesWidget.qml",
+  "settings": "./CryptoPricesSettings.qml",
+  "requires": ["curl"],
+  "permissions": ["settings_read", "settings_write", "process", "network"]
+}

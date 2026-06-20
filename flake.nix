@@ -38,6 +38,14 @@
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dms-plugin-registry = {
+      url = "github:AvengeMedia/dms-plugin-registry";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     agentspace = {
       url = "github:shazow/agentspace";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -72,6 +80,7 @@
   outputs =
     inputs@{
       frs-nvim,
+      dms,
       fenix,
       ghmd,
       agentspace,
@@ -160,7 +169,7 @@
       };
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
-          inherit fenix ghmd;
+          inherit dms fenix ghmd;
         };
         agent = import ./config/agent/nixos.nix {
           inherit fenix ghmd impermanence;

@@ -1,2 +1,6 @@
-{ fenix, ghmd }:
-import ./nixos { inherit fenix ghmd; }
+{
+  dms,
+  fenix,
+  ghmd,
+}:
+import ./nixos { inherit dms fenix ghmd; }

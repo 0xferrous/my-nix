@@ -1,3 +1,4 @@
+{ dms }:
 {
   config,
   lib,
@@ -8,6 +9,8 @@ let
   cfg = config.fr.public;
 in
 {
+  imports = [ dms.nixosModules.greeter ];
+
   config = lib.mkIf cfg.enable {
     fr.desktopPortal = {
       enable = lib.mkDefault true;
@@ -38,6 +41,11 @@ in
     programs.kdeconnect = {
       enable = lib.mkDefault true;
       package = lib.mkDefault pkgs.kdePackages.kdeconnect-kde;
+    };
+
+    programs.dank-material-shell.greeter = {
+      enable = true;
+      compositor.name = "niri";
     };
   };
 }

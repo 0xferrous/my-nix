@@ -1,0 +1,14 @@
+{
+  "id": "tailscaleActive",
+  "name": "Tailscale Active",
+  "description": "Shows the active Tailscale switch account from `tailscale switch --list`",
+  "version": "1.0.0",
+  "author": "pi",
+  "icon": "vpn_key",
+  "type": "widget",
+  "capabilities": ["dankbar-widget"],
+  "component": "./TailscaleActiveWidget.qml",
+  "settings": "./TailscaleActiveSettings.qml",
+  "requires": ["tailscale"],
+  "permissions": ["settings_read", "settings_write", "process"]
+}

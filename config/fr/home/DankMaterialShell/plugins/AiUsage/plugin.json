@@ -1,0 +1,14 @@
+{
+  "id": "aiUsage",
+  "name": "AI Usage",
+  "description": "Shows Codex and/or Kimi coding session and weekly usage",
+  "version": "1.1.0",
+  "author": "pi",
+  "icon": "smart_toy",
+  "type": "widget",
+  "capabilities": ["dankbar-widget"],
+  "component": "./AiUsageWidget.qml",
+  "settings": "./AiUsageSettings.qml",
+  "requires": ["codexbar", "curl"],
+  "permissions": ["settings_read", "settings_write", "process"]
+}

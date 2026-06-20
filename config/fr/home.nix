@@ -35,6 +35,7 @@ in
     ./home/gpg.nix
     ./home/gtk.nix
     ./home/desktop-entries.nix
+    ./home/dank-material-shell.nix
     ./home/helix.nix
     ./home/kitty.nix
     ./home/misc.nix
@@ -46,6 +47,8 @@ in
     ./home/zed.nix
     ./agent-vm.nix
     myNixInputs.nix-index-database.homeModules.default
+    myNixInputs.dms.homeModules.dank-material-shell
+    myNixInputs.dms-plugin-registry.homeModules.default
   ];
 
   config = {
