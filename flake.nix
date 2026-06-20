@@ -18,6 +18,42 @@
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    helium = {
+      url = "github:amaanq/helium-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    codexbar = {
+      url = "github:0xferrous/CodexBar-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    frs-xofi-menus = {
+      url = "github:0xferrous/frs-wofi-menus";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nvimpager = {
+      url = "github:lucc/nvimpager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    noogle-cli = {
+      url = "github:juliamertz/noogle-cli";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    numr = {
+      url = "github:nasedkinpv/numr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    wifitui = {
+      url = "github:shazow/wifitui";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";

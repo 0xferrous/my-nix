@@ -40,6 +40,7 @@ in
     ./home/kitty.nix
     ./home/misc.nix
     ./home/neovim.nix
+    ./home/packages.nix
     ./home/service-misc.nix
     ./home/rofi.nix
     ./home/starship.nix
