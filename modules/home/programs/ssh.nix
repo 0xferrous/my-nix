@@ -25,9 +25,9 @@ let
     map (identity: {
       name = identity.name;
       value = {
-        hostname = "github.com";
-        inherit (identity) identityFile;
-        extraOptions.pubkeyAuthentication = "yes";
+        HostName = "github.com";
+        IdentityFile = identity.identityFile;
+        PubkeyAuthentication = "yes";
       };
     }) cfg.identities
   );
@@ -47,14 +47,14 @@ in
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      matchBlocks = identityMatchBlocks // {
+      settings = identityMatchBlocks // {
         "*" = {
           # Recommended by Filo Sottile's whoami.filippo.io to avoid
           # offering all public keys by default; configure explicit per-host
           # IdentityFile entries instead.
           # See: https://github.com/FiloSottile/whoami.filippo.io#how-do-i-stop-it
-          identitiesOnly = true;
-          extraOptions.pubkeyAuthentication = "no";
+          IdentitiesOnly = true;
+          PubkeyAuthentication = "no";
         };
       };
     };

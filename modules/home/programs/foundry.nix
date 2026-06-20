@@ -5,8 +5,8 @@
   ...
 }:
 let
-  foundry-stable = myNixInputs.foundry-stable.defaultPackage.${pkgs.system};
-  foundry-nightly = myNixInputs.foundry-nightly.defaultPackage.${pkgs.system};
+  foundry-stable = myNixInputs.foundry-stable.defaultPackage.${pkgs.stdenv.hostPlatform.system};
+  foundry-nightly = myNixInputs.foundry-nightly.defaultPackage.${pkgs.stdenv.hostPlatform.system};
   components = [
     "cast"
     "forge"

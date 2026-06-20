@@ -34,7 +34,7 @@ in
 
     services.ghmd = lib.mkIf cfg.ghmd.enable {
       enable = true;
-      package = lib.mkDefault ghmd.packages.${pkgs.system}.default;
+      package = lib.mkDefault ghmd.packages.${pkgs.stdenv.hostPlatform.system}.default;
       host = lib.mkDefault "127.0.0.1";
       port = lib.mkDefault 9000;
       theme = lib.mkDefault "gruvbox";
@@ -71,7 +71,7 @@ in
             handle_path /__caddy_probe {
               respond "rustdoc" 200
             }
-            root * ${fenix.packages.${pkgs.system}.complete.rust-docs}/share/doc/rust/html/
+            root * ${fenix.packages.${pkgs.stdenv.hostPlatform.system}.complete.rust-docs}/share/doc/rust/html/
             file_server
           '';
         };

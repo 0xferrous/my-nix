@@ -55,7 +55,7 @@ in
     nixpkgs.overlays = [
       (import ../../pkgs/overlay.nix {
         inputs = myNixInputs;
-        system = pkgs.system;
+        system = pkgs.stdenv.hostPlatform.system;
       })
     ];
 
@@ -125,6 +125,8 @@ in
       (frIdentity // { repo = "~/dev/git/0xferrous/"; })
       (frIdentity // { repo = "~/dev/ag/0xferrous/"; })
     ];
+
+    xdg.userDirs.setSessionVariables = true;
 
     programs.nix-index.enable = true;
   };

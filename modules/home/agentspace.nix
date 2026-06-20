@@ -535,27 +535,25 @@ in
 
     programs.ssh = lib.mkIf (sshVms != { }) {
       enable = true;
-      matchBlocks = lib.mapAttrs' (name: vmCfg: {
+      settings = lib.mapAttrs' (name: vmCfg: {
         name = vmCfg.sshConnect.host;
         value = {
-          user = cfg.systems.${name}.config.agentspace.sandbox.user or "agent";
-          proxyCommand = "${mkProxyCommand name vmCfg}";
-          identityFile = lib.optional (vmCfg.sshConnect.identityFile != null) vmCfg.sshConnect.identityFile;
-          extraOptions = {
-            ProxyUseFdpass = "yes";
-            PubkeyAuthentication = "yes";
-            ForwardAgent = if vmCfg.sshConnect.sshAgentForwarding then "yes" else "no";
-            CheckHostIP = "no";
-            StrictHostKeyChecking = "no";
-            UserKnownHostsFile = "/dev/null";
-            GlobalKnownHostsFile = "/dev/null";
-          }
-          // lib.optionalAttrs vmCfg.sshConnect.gpgAgentForwarding.enable {
-            # TODO: Consider native socket sharing via VM mounts instead of SSH
-            # RemoteForward if agentspace/microvm supports that cleanly.
-            StreamLocalBindUnlink = "yes";
-            RemoteForward = "${vmCfg.sshConnect.gpgAgentForwarding.remoteSocket} ${vmCfg.sshConnect.gpgAgentForwarding.localSocket}";
-          };
+          User = cfg.systems.${name}.config.agentspace.sandbox.user or "agent";
+          ProxyCommand = "${mkProxyCommand name vmCfg}";
+          IdentityFile = lib.optional (vmCfg.sshConnect.identityFile != null) vmCfg.sshConnect.identityFile;
+          ProxyUseFdpass = "yes";
+          PubkeyAuthentication = "yes";
+          ForwardAgent = if vmCfg.sshConnect.sshAgentForwarding then "yes" else "no";
+          CheckHostIP = "no";
+          StrictHostKeyChecking = "no";
+          UserKnownHostsFile = "/dev/null";
+          GlobalKnownHostsFile = "/dev/null";
+        }
+        // lib.optionalAttrs vmCfg.sshConnect.gpgAgentForwarding.enable {
+          # TODO: Consider native socket sharing via VM mounts instead of SSH
+          # RemoteForward if agentspace/microvm supports that cleanly.
+          StreamLocalBindUnlink = "yes";
+          RemoteForward = "${vmCfg.sshConnect.gpgAgentForwarding.remoteSocket} ${vmCfg.sshConnect.gpgAgentForwarding.localSocket}";
         };
       }) sshVms;
     };

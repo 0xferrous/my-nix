@@ -355,7 +355,7 @@
                     };
 
                     # Runtime helpers + LSP servers for a self-contained wrapped Neovim.
-                    extraPackages =
+                    runtimePkgs =
                       with pkgs;
                       [
                         git

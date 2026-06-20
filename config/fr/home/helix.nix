@@ -7,7 +7,7 @@
     lua-language-server
     marksman
     nil
-    nixfmt-rfc-style
+    nixfmt
     pyright
     shellcheck
     shfmt
