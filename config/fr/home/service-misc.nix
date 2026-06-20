@@ -37,11 +37,6 @@
     rustLog = "info,wisp_source=debug,wispd=debug";
   };
 
-  services.easyeffects = {
-    enable = true;
-    # TODO: add this
-  };
-
   services.activitywatch = {
     enable = true;
     watchers = {
