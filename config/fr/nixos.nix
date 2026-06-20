@@ -29,6 +29,7 @@ in
   imports = [
     ghmd.nixosModules.default
     ../../modules/nixos/desktop-portal.nix
+    ../../modules/nixos/power-management.nix
     ../../modules/nixos/virtiofsd-nix-store.nix
   ];
 
@@ -82,6 +83,11 @@ in
 
     fr.virtiofs-nix-store = {
       enable = lib.mkDefault true;
+    };
+
+    fr.powerManagement = {
+      enable = lib.mkDefault true;
+      cpu.amdPstate.enable = lib.mkDefault true;
     };
 
     programs.kdeconnect = {
