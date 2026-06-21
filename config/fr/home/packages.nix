@@ -33,6 +33,7 @@ in
     ++ (import ./packages/productivity.nix subArgs)
     ++ (import ./packages/nix-tools.nix subArgs)
     ++ (import ./packages/ai.nix subArgs)
-    ++ (lib.optionals pkgs.stdenv.isLinux (import ./packages/linux.nix subArgs))
-    ++ (lib.optionals pkgs.stdenv.isDarwin (import ./packages/mac.nix subArgs));
+    ++ (lib.optionals pkgs.stdenv.isLinux (import ./packages/linux.nix subArgs));
+  # macOS package list is kept in ./packages/mac.nix for reference only.
+  # It is intentionally not imported because this package set is maintained Linux-first.
 }
