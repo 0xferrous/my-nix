@@ -93,6 +93,10 @@
       url = "github:AvengeMedia/dms-plugin-registry";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    voxtype = {
+      url = "github:peteonrails/voxtype";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     agentspace = {
       url = "github:shazow/agentspace";
       inputs.nixpkgs.follows = "nixpkgs";

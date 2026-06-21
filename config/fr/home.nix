@@ -16,13 +16,30 @@ let
   keyboardBacklightPackage = pkgs.fr-kbd-backlight.override {
     device = keyboardBacklightDevice;
   };
+
+  voxtypePackage = myNixInputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.vulkan;
+  voiceRecordToggle = pkgs.writeShellApplication {
+    name = "fr-voice-record-toggle";
+    runtimeInputs = [
+      pkgs.libnotify
+      voxtypePackage
+    ];
+    text = ''
+      state=$(voxtype status) || state=idle
+      voxtype record toggle
+      if [ "$state" = recording ]; then
+        notify-send -t 2000 "voice recording stopped"
+      else
+        notify-send -t 2000 "voice recording started"
+      fi
+    '';
+  };
 in
 {
   imports = [
     ../../modules/home/symlinks.nix
     ../../modules/home/vcs.nix
     ../../modules/home/termfilechooser.nix
-    ../../modules/home/speech-to-text.nix
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/pass.nix
     ../../modules/home/programs/direnv.nix
@@ -50,6 +67,7 @@ in
     myNixInputs.nix-index-database.homeModules.default
     myNixInputs.dms.homeModules.dank-material-shell
     myNixInputs.dms-plugin-registry.homeModules.default
+    myNixInputs.voxtype.homeManagerModules.default
   ];
 
   config = {
@@ -62,6 +80,7 @@ in
 
     home.packages = with pkgs; [
       keyboardBacklightPackage
+      voiceRecordToggle
       install-bin
       # myNixInputs.agentspace.packages.${pkgs.system}.virtie
       virtiofsd
@@ -98,7 +117,25 @@ in
       poetry.enable = true;
     };
 
-    fr.speechToText.enable = true;
+    programs.voxtype = {
+      enable = true;
+      package = voxtypePackage;
+      model.name = "base.en";
+      service.enable = true;
+      settings = {
+        hotkey.enabled = false;
+        whisper.language = "en";
+        output = {
+          mode = "type";
+          fallback_to_clipboard = true;
+          notification = {
+            on_recording_start = false;
+            on_recording_stop = false;
+            on_transcription = true;
+          };
+        };
+      };
+    };
 
     fr.termfilechooser = {
       enable = true;
