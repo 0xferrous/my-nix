@@ -34,6 +34,10 @@ in
 
       networking.firewall.enable = false;
 
+      environment.systemPackages = [
+        pkgs.k9s
+      ];
+
       microvm = {
         hypervisor = "qemu";
         optimize.enable = false;
@@ -57,7 +61,7 @@ in
         ];
 
         # Host -> guest access through the SLIRP NAT:
-        #   127.0.0.1:16443 -> guest :6443 (k3s API)
+        #   127.0.0.1:6443 -> guest :6443 (k3s API)
         # If you also want SSH from the host, add another forward such as
         # 127.0.0.1:2223 -> guest :22.
         forwardPorts = [
@@ -65,10 +69,12 @@ in
             from = "host";
             proto = "tcp";
             host.address = "127.0.0.1";
-            host.port = 16443;
+            host.port = 6443;
             guest.port = 6443;
           }
         ];
+
+        writableStoreOverlay = "/nix/.rw-store";
 
         volumes = [
           {
@@ -76,6 +82,12 @@ in
             mountPoint = "/var/lib/rancher/k3s";
             size = 20480;
             label = "k3s-rancher";
+          }
+          {
+            image = "nix-store-overlay.img";
+            mountPoint = "/nix/.rw-store";
+            size = 20480;
+            label = "nix-store-overlay";
           }
         ];
 
