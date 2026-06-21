@@ -91,7 +91,30 @@
       packages = forAllSystems (
         system:
         let
-          pkgs = import nixpkgs { inherit system; };
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [
+              (_final: prev: {
+                vimPlugins = prev.vimPlugins.extend (
+                  _vimFinal: vimPrev: {
+                    # CI sometimes cannot reach Codeberg while building fixed-output
+                    # plugin sources. Use the GitHub mirror for the same revision.
+                    nvim-dap = vimPrev.nvim-dap.overrideAttrs (old: {
+                      src = prev.fetchFromGitHub {
+                        owner = "mfussenegger";
+                        repo = "nvim-dap";
+                        rev = "531771530d4f82ad2d21e436e3cc052d68d7aebb";
+                        hash = "sha256-pgD51NWFyjK1FrXZ8MFFIM9DX2OBxL7cd7JlST2Twvc=";
+                      };
+                      meta = old.meta // {
+                        homepage = "https://github.com/mfussenegger/nvim-dap/";
+                      };
+                    });
+                  }
+                );
+              })
+            ];
+          };
 
           mkPluginFromInput =
             pname: inputName:
