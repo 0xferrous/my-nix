@@ -38,17 +38,24 @@
       url = "github:lucc/nvimpager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    noogle-cli = {
-      url = "github:juliamertz/noogle-cli";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     noogle = {
       url = "github:nix-community/noogle";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    noogle-cli = {
+      url = "github:juliamertz/noogle-cli";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.noogle.follows = "noogle";
+      inputs.rust-overlay.follows = "rust-overlay";
+    };
     numr = {
       url = "github:nasedkinpv/numr";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
     wifitui = {
       url = "github:shazow/wifitui";

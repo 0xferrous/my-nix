@@ -91,7 +91,7 @@ with pkgs;
   # Uncertain macOS support — keeping in linux.nix
   myNixInputs.agent-box.packages.${system}.portal
   myNixInputs.wifitui.packages.${system}.default
-  numr
+  myNixInputs.numr.packages.${system}.default
   railway-wallet
   global-platform-pro
   spacer
