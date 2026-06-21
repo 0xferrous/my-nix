@@ -50,6 +50,7 @@ with pkgs;
   direnv
   zsh
   fzf
+  carapace-bridge
 
   # System utilities
   bubblewrap
@@ -64,6 +65,7 @@ with pkgs;
   magic-wormhole-rs
   cpio
   lsof
+  socat
   simple-http-server
   rclone
   wttrbar

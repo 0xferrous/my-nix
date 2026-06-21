@@ -13,6 +13,9 @@ with pkgs;
   # Activity tracking
   activitywatch
 
+  # Knowledge management and note-taking
+  obsidian
+
   # Documentation and text
   pandoc
   mdcat

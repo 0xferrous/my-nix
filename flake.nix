@@ -42,6 +42,10 @@
       url = "github:juliamertz/noogle-cli";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    noogle = {
+      url = "github:nix-community/noogle";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     numr = {
       url = "github:nasedkinpv/numr";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -8,7 +8,7 @@
   ...
 }:
 let
-  utils = import ../../../modules/home/utils.nix;
+  utils = import ../../../../modules/home/utils.nix;
 in
 with pkgs;
 [
