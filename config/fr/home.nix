@@ -57,6 +57,7 @@ in
     ./home/kitty.nix
     ./home/misc.nix
     ./home/neovim.nix
+    ./home/niri.nix
     ./home/packages.nix
     ./home/service-misc.nix
     ./home/rofi.nix
@@ -79,6 +80,7 @@ in
     ];
 
     home.packages = with pkgs; [
+      fr-frame-summon
       keyboardBacklightPackage
       voiceRecordToggle
       install-bin

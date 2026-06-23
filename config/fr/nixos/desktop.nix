@@ -43,6 +43,15 @@ in
       package = lib.mkDefault pkgs.kdePackages.kdeconnect-kde;
     };
 
+    programs.niri = {
+      enable = lib.mkDefault true;
+
+      # Force the GTK portal for FileChooser. The default Niri module prefers
+      # xdg-desktop-portal-gnome via Nautilus, which breaks file dialogs in
+      # Helium/Chromium on this setup.
+      useNautilus = lib.mkDefault false;
+    };
+
     programs.dank-material-shell.greeter = {
       enable = true;
       compositor.name = "niri";

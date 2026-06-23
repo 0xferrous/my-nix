@@ -3,6 +3,7 @@
   system,
 }:
 final: _prev: {
+  fr-frame-summon = final.callPackage ./frame-summon.nix { };
   fr-kbd-backlight = final.callPackage ./keyboard-backlight.nix { };
   git-hunk = final.callPackage ./git-hunk.nix { };
   opensrc = final.callPackage ./opensrc.nix { };
