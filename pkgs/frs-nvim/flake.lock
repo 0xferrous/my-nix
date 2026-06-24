@@ -39,11 +39,11 @@
     "plugin-ansi-nvim": {
       "flake": false,
       "locked": {
-        "lastModified": 1775672651,
-        "narHash": "sha256-BIf3gXwVwtNFSZdGjdLqboKCwzviKJefe3zjwvUn5GA=",
+        "lastModified": 1782266429,
+        "narHash": "sha256-GrU7Q6ZTzSWnZaNoU+yh2BDYweY6RQx6p+RNNvGx8nY=",
         "owner": "0xferrous",
         "repo": "ansi.nvim",
-        "rev": "95de464c315ecbe9d7ca3d9a203ef85def0cf6aa",
+        "rev": "195b64c3da1c22c2e95648dcbdc6ed075d507064",
         "type": "github"
       },
       "original": {
