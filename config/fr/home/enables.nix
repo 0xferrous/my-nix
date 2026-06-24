@@ -1,11 +1,13 @@
 { lib, ... }:
 {
   programs = {
+    devenv.enableNushellIntegration = true;
     direnv = {
       enable = true;
       nix-direnv.enable = true;
     };
     fish.enable = true;
+    fzf.enableNushellIntegration = true;
     noti.enable = true;
     zoxide.enable = true;
     zoxide.enableZshIntegration = lib.mkForce false;
