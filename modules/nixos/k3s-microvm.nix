@@ -87,7 +87,7 @@ in
             image = "nix-store-overlay.img";
             mountPoint = "/nix/.rw-store";
             size = 20480;
-            label = "nix-store-overlay";
+            label = "nix-store-rw";
           }
         ];
 
