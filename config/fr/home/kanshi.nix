@@ -39,8 +39,8 @@ in
                 status = "disable";
               }
             ];
+            exec = [ onlyExternalExec ];
           };
-          exec = onlyExternalExec;
         }
         {
           profile.name = "only_laptop";
