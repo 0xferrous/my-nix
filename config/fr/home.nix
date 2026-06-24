@@ -55,6 +55,7 @@ in
     ./home/dank-material-shell.nix
     ./home/helix.nix
     ./home/kitty.nix
+    ./home/kanshi.nix
     ./home/misc.nix
     ./home/neovim.nix
     ./home/niri.nix
