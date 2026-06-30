@@ -15,6 +15,7 @@
 
     ./options.nix
     (import ./desktop.nix { inherit dms; })
+    ./dns.nix
     (import ./ghmd.nix { inherit fenix ghmd; })
     ./nix.nix
   ];
