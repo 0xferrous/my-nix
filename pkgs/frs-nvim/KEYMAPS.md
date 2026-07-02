@@ -51,6 +51,7 @@ Notes:
 | n | `<leader>SS` | Select scratch buffer | `lua/plugins/snacks.lua` |
 | n | `<leader>un` | Show notification history | `lua/plugins/snacks.lua` |
 | n | `<leader>lr` | LuaRun | `lua/plugins/misc.lua` |
+| n | `<leader>tk` | Toggle Screenkey key display | `lua/plugins/misc.lua` |
 | n | `\` | Neo-tree reveal | `lua/plugins/neotree.lua` |
 
 ### Sessions
@@ -157,6 +158,16 @@ Notes:
 ## Keymaps provided by dependency / downstream plugins active in this setup
 
 These are not defined via `vim.keymap.set(...)` in this repo, but are enabled/configured here and are expected to be active.
+
+### jj-conflict.nvim (buffers containing JJ conflict markers)
+
+Configured in `lua/plugins/misc.lua`. Upstream default mappings are buffer-local and only set while the current buffer contains JJ conflict markers. In those buffers, `[x` / `]x` are provided by `jj-conflict.nvim` rather than `vim-unimpaired`'s XML/HTML encode/decode mappings.
+
+| Mode | Key | Action | Source of activation |
+| --- | --- | --- | --- |
+| n | `]x` | Jump to next JJ conflict | `lua/plugins/misc.lua` + upstream `jj-conflict.nvim` defaults |
+| n | `[x` | Jump to previous JJ conflict | `lua/plugins/misc.lua` + upstream `jj-conflict.nvim` defaults |
+| n, v | `cx` | Resolve current JJ conflict interactively | `lua/plugins/misc.lua` + upstream `jj-conflict.nvim` defaults |
 
 ### guh.nvim (`guh://` buffers)
 
@@ -290,7 +301,7 @@ Enabled via `keys = { "[", "]" }` in `lua/plugins/noconf.lua`. Upstream `vim-uni
 | n | `<p` / `<P` | Paste linewise after / before and decrease indent | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |
 | n | `=p` / `=P` | Paste linewise after / before and reindent | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |
 | n | `[p` / `]p` / `[P` / `]P` | Force linewise paste while preserving indent behavior | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |
-| n, x | `[x` / `]x` | XML/HTML encode or decode | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |
+| n, x | `[x` / `]x` | XML/HTML encode or decode; overridden by `jj-conflict.nvim` buffer-local conflict navigation in buffers containing JJ conflict markers | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |
 | n, x | `[u` / `]u` | URL encode or decode | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |
 | n, x | `[y` / `]y` | C string encode or decode | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |
 | n, x | `[C` / `]C` | C string encode or decode (alternate form) | `lua/plugins/noconf.lua` + upstream `vim-unimpaired` |

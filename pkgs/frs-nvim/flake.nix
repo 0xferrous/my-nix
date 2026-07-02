@@ -34,6 +34,14 @@
       url = "github:justinmk/guh.nvim";
       flake = false;
     };
+    plugin-jj-conflict-nvim = {
+      url = "github:0xferrous/jj-conflict.nvim";
+      flake = false;
+    };
+    plugin-screenkey-nvim = {
+      url = "github:NStefan002/screenkey.nvim";
+      flake = false;
+    };
 
     plugin-nightsky-vim = {
       url = "github:nvimdev/nightsky.vim";
@@ -132,6 +140,8 @@
             flote-nvim = mkPluginFromInput "flote.nvim" "plugin-flote";
             feed-nvim = mkPluginFromInput "feed.nvim" "plugin-feed-nvim";
             guh-nvim = mkPluginFromInput "guh.nvim" "plugin-guh-nvim";
+            jj-conflict-nvim = mkPluginFromInput "jj-conflict.nvim" "plugin-jj-conflict-nvim";
+            screenkey-nvim = mkPluginFromInput "screenkey.nvim" "plugin-screenkey-nvim";
 
             gitlinker-nvim = pkgs.vimPlugins.gitlinker-nvim.overrideAttrs (old: {
               patches = (old.patches or [ ]) ++ [
@@ -383,6 +393,7 @@
                       [
                         git
                         gh
+                        jujutsu
                         fd
                         ripgrep
                       ]

@@ -23,6 +23,33 @@ return {
     "justinmk/guh.nvim",
     cmd = { "Guh", "GuhComment" },
   },
+  {
+    "0xferrous/jj-conflict.nvim",
+    event = { "BufReadPost", "BufNewFile" },
+    cmd = {
+      "JjConflictResolve",
+      "JjConflictChoose",
+      "JjConflictChooseAll",
+      "JjConflictChooseBase",
+      "JjConflictChooseNone",
+      "JjConflictNext",
+      "JjConflictPrev",
+      "JjConflictList",
+      "JjConflictRefresh",
+    },
+    opts = {
+      -- jj-conflict.nvim currently uses the pre-0.12 diagnostic enable/disable
+      -- signatures internally. Keep diagnostics management off in this wrapper.
+      disable_diagnostics = false,
+    },
+  },
+  {
+    "NStefan002/screenkey.nvim",
+    cmd = "Screenkey",
+    keys = {
+      { "<leader>tk", "<cmd>Screenkey toggle<cr>", desc = "[T]oggle screen[k]ey" },
+    },
+  },
   { "elkowar/yuck.vim", ft = "yuck" },
   { "iden3/vim-circom-syntax", ft = "circom" },
   {
