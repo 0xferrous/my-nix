@@ -128,6 +128,21 @@ in
       settings = {
         hotkey.enabled = false;
         whisper.language = "en";
+        meeting = {
+          enabled = true;
+          chunk_duration_secs = 30;
+          retain_audio = true;
+          max_duration_mins = 180;
+          audio = {
+            mic_device = "default";
+            loopback_device = "auto";
+            echo_cancel = "auto";
+          };
+          diarization = {
+            enabled = true;
+            backend = "simple";
+          };
+        };
         output = {
           mode = "type";
           fallback_to_clipboard = true;

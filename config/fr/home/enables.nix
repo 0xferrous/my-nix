@@ -1,7 +1,10 @@
 { lib, ... }:
 {
   programs = {
-    devenv.enableNushellIntegration = true;
+    devenv = {
+      enable = true;
+      enableNushellIntegration = true;
+    };
     direnv = {
       enable = true;
       nix-direnv.enable = true;
@@ -24,7 +27,10 @@
       enableFishIntegration = true;
       enableNushellIntegration = true;
     };
-    nushell.enable = true;
+    nushell = {
+      enable = true;
+      environmentVariables.DEVENV_SHELL_TYPE = "nu";
+    };
     tealdeer = {
       enable = true;
       settings = {

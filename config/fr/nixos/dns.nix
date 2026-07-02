@@ -22,6 +22,10 @@ in
     };
 
     networking = {
+      nameservers = lib.mkDefault [
+        "1.1.1.1"
+        "1.0.0.1"
+      ];
       networkmanager.dns = lib.mkDefault "systemd-resolved";
       hosts = lib.mkIf (caddyHosts != [ ]) {
         "127.0.0.1" = caddyHosts;
