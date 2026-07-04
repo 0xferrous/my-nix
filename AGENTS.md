@@ -17,4 +17,6 @@ Repo-wide instructions:
 - when adding flake-provided package inputs, make them follow this flake's `nixpkgs` where possible; for Rust-package flakes that use `rust-overlay`, prefer a shared top-level `rust-overlay` input and `inputs.rust-overlay.follows = "rust-overlay"` to avoid stale toolchain fetch/unpack issues
 - prefer upstream/nixpkgs package expressions over local packaging workarounds; if a local package expression is necessary, document why near the package entry
 - prefer Nushell (`.nu`) for repo-maintained scripts instead of embedding large shell scripts in Nix files
+- when changing `pkgs/frs-nvim` or `.github/workflows/frs-nvim-ci.yml`, run the CI smoke tests locally from the repo root: `nix run .#smoke`, `nix run .#smoke-lsp`, and `nix run .#smoke-commands`
+- when updating `pkgs/frs-nvim` core flake inputs, use `just flake-update-frs-nvim-wrapper-inputs`; always keep the `nixpkgs` and `nix-wrapper-modules` pins in the root `flake.lock` and `pkgs/frs-nvim/flake.lock` in sync, and verify the root `nixpkgs` node via `nodes.root.inputs.nixpkgs` rather than assuming it is named `nixpkgs`
 - always run `nix fmt` for formatting the code

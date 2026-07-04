@@ -19,6 +19,15 @@ flake-update-frs-nvim:
   nix flake update --flake ./pkgs/frs-nvim
   nix flake update frs-nvim
 
+# Update the core frs-nvim flake inputs while keeping standalone
+# pkgs/frs-nvim's nixpkgs pin aligned with the root flake's nixpkgs pin.
+flake-update-frs-nvim-wrapper-inputs:
+  nix flake update nixpkgs
+  set -eu; \
+    nixpkgs_url="$(nix eval --impure --raw --expr 'let lock = builtins.fromJSON (builtins.readFile ./flake.lock); node = (builtins.getAttr lock.nodes.root.inputs.nixpkgs lock.nodes).locked; in "github:${node.owner}/${node.repo}/${node.rev}"')"; \
+    (cd ./pkgs/frs-nvim && nix flake lock --override-input nixpkgs "$nixpkgs_url" && nix flake update nix-wrapper-modules)
+  nix flake update frs-nvim
+
 build-agent-kernel:
   mkdir -p "{{agent_vm_artifacts_dir}}"
   nix build .#nixosConfigurations.agent.config.system.build.kernel -o "{{agent_vm_kernel_dir}}"
