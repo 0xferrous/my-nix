@@ -277,6 +277,7 @@ layout {
 // This line starts waybar, a commonly used bar for Wayland compositors.
 // spawn-at-startup "waybar"
 spawn-at-startup "dbus-update-activation-environment" "--systemd" "WAYLAND_DISPLAY" "DISPLAY" "XDG_CURRENT_DESKTOP"
+spawn-at-startup "kdeconnectd"
 // spawn-at-startup "framesh"
 // spawn-at-startup "zen-twilight"
 // spawn-at-startup "nm-applet"
