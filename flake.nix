@@ -14,7 +14,6 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
@@ -38,24 +37,13 @@
       url = "github:lucc/nvimpager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    noogle = {
-      url = "github:nix-community/noogle";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    noogle-cli = {
-      url = "github:juliamertz/noogle-cli";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.noogle.follows = "noogle";
-      inputs.rust-overlay.follows = "rust-overlay";
-    };
+    # noogle-cli = {
+    #   url = "github:juliamertz/noogle-cli";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     numr = {
       url = "github:nasedkinpv/numr";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-overlay.follows = "rust-overlay";
     };
     wifitui = {
       url = "github:shazow/wifitui";
@@ -116,7 +104,6 @@
     ghmd = {
       url = "github:0xferrous/ghmd";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
     # agent-images = {
     #   url = "github:0xferrous/agent-images/feat/nix-ld";

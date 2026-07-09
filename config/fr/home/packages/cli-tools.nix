@@ -98,7 +98,6 @@ with pkgs;
 
   # Music daemon and client
   mpd
-  vimpc
 
   # TUI communication
   himalaya

@@ -16,7 +16,7 @@ with pkgs;
   nurl
   nix-init
   nix-search-tv
-  myNixInputs.noogle-cli.packages.${system}.default
+  # myNixInputs.noogle-cli.packages.${system}.default
   comma
   nix-output-monitor
 
