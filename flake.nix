@@ -123,6 +123,8 @@
       ghmd,
       agentspace,
       impermanence,
+      nix-index-database,
+      home-manager,
       ...
     }:
     let
@@ -211,14 +213,28 @@
           inherit dms fenix ghmd;
         };
         agent = import ./config/agent/nixos.nix {
-          inherit fenix ghmd impermanence;
+          myNixInputs = inputs;
+          inherit
+            fenix
+            ghmd
+            home-manager
+            impermanence
+            nix-index-database
+            ;
         };
       };
 
       nixosConfigurations.agent = inputs.nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
-          inherit fenix ghmd impermanence;
+          myNixInputs = inputs;
+          inherit
+            fenix
+            ghmd
+            home-manager
+            impermanence
+            nix-index-database
+            ;
         };
         modules = [
           ./config/agent/nixos.nix

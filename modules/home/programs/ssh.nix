@@ -47,6 +47,7 @@ in
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
+      includes = [ "/etc/ssh/ssh_config" ];
       settings = identityMatchBlocks // {
         "*" = {
           # Recommended by Filo Sottile's whoami.filippo.io to avoid

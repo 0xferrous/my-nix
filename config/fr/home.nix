@@ -92,12 +92,14 @@ in
 
     home.sessionPath = [ "${config.home.homeDirectory}/bin" ];
 
-    home.shellAliases = {
-      virtie = "~/dev/fr/open-source/agentspace/result/bin/virtie";
-    };
-
-    programs.nushell.shellAliases = {
-      virtie = "~/dev/fr/open-source/agentspace/result/bin/virtie";
+    programs.nushell = {
+      extraEnv = ''
+        let paths_to_add = [
+          ~/dev/fr/open-source/virtle/result/bin
+          ~/dev/fr/ash/result/bin
+        ] | each { |path| $path | path expand }
+        $env.PATH ++= $paths_to_add
+      '';
     };
 
     fr.pass = {

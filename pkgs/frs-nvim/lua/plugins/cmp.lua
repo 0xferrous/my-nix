@@ -9,6 +9,15 @@ return {
       appearance = { nerd_font_variant = "mono" },
       completion = {
         documentation = { auto_show = true },
+        menu = {
+          draw = {
+            columns = {
+              { "label", "label_description", gap = 1 },
+              { "kind_icon", "kind", gap = 1 },
+              { "source_name" },
+            },
+          },
+        },
       },
       signature = { enabled = true },
       sources = {
