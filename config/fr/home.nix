@@ -93,9 +93,9 @@ in
     programs.nushell = {
       extraEnv = ''
         let paths_to_add = [
-          ~/dev/fr/open-source/virtle/result/bin
-          ~/dev/fr/ash/result/bin
-        ] | each { |path| $path | path expand }
+          $"($env.HOME)/dev/fr/open-source/virtle/result/bin"
+          $"($env.HOME)/dev/fr/ash/result/bin"
+        ]
         $env.PATH ++= $paths_to_add
       '';
     };

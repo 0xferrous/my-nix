@@ -8,6 +8,8 @@
   ...
 }:
 let
+  system = pkgs.stdenv.hostPlatform.system;
+  AIPackages = myNixInputs.llm-agents.packages.${system};
   impermanenceRoot = "/persist";
   binaryCaches = [
     {
@@ -74,7 +76,13 @@ in
   environment.systemPackages = with pkgs; [
     git
     jujutsu
+    kitty.terminfo
     pi
+    poetry
+    python3
+    uv
+    AIPackages.codex
+    AIPackages.opencode
     frsNvimPackage
   ];
 
@@ -117,7 +125,27 @@ in
 
   services.getty.autologinUser = "agent";
   services.qemuGuest.enable = true;
+  services.resolved = {
+    enable = true;
+    dnssec = "allow-downgrade";
+    dnsovertls = "opportunistic";
+    fallbackDns = [
+      "1.1.1.1#cloudflare-dns.com"
+      "1.0.0.1#cloudflare-dns.com"
+      "9.9.9.9#dns.quad9.net"
+      "149.112.112.112#dns.quad9.net"
+    ];
+    settings.Resolve = {
+      Cache = "yes";
+      DNSStubListener = "yes";
+    };
+  };
   services.tailscale.enable = true;
+
+  networking.nameservers = [
+    "1.1.1.1"
+    "1.0.0.1"
+  ];
 
   environment.shells = [ pkgs.nushell ];
 
@@ -204,6 +232,7 @@ in
     "virtio_pci"
     "virtio_blk"
     "virtiofs"
+    "overlay"
     "virtio_console"
     "vsock"
     "vmw_vsock_virtio_transport"
@@ -230,11 +259,20 @@ in
     ];
   };
 
-  fileSystems."/nix/store" = {
+  fileSystems."/nix/.ro-store" = {
     device = "ro-store";
     fsType = "virtiofs";
     neededForBoot = true;
     options = [ "ro" ];
+  };
+
+  fileSystems."/nix/store" = {
+    neededForBoot = true;
+    overlay = {
+      lowerdir = [ "/nix/.ro-store" ];
+      upperdir = "${impermanenceRoot}/nix-store-overlay/upper";
+      workdir = "${impermanenceRoot}/nix-store-overlay/work";
+    };
   };
 
   fileSystems.${impermanenceRoot} = {
@@ -245,8 +283,20 @@ in
 
   environment.persistence.${impermanenceRoot} = {
     directories = [
+      "/nix/var/nix"
       "/var/lib/nixos"
       "/var/lib/tailscale"
+    ];
+    users.agent.directories = [
+      ".cache/pypoetry"
+      ".cache/uv"
+      ".cargo"
+      ".codex"
+      ".config/pypoetry"
+      ".foundry"
+      ".local/share/pypoetry"
+      ".local/share/uv"
+      ".pi"
     ];
   };
 
