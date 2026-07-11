@@ -42,6 +42,9 @@ local function setup_workspace()
   write_file(join(root, "config.toml"), { "smoke = true" })
   write_file(join(root, "main.ml"), { "let smoke = true" })
   write_file(join(root, "dune-project"), { "(lang dune 3.0)", "(name smoke)" })
+  write_file(join(root, "foundry.toml"), { "[profile.default]", "src = 'src'" })
+  ensure_dir(join(root, "src"))
+  write_file(join(root, "src", "Smoke.sol"), { "pragma solidity ^0.8.0;", "contract Smoke {}" })
   ensure_dir(join(root, ".zk"))
 
   return root
@@ -103,6 +106,7 @@ local fixtures = {
   nushell = { path = "main.nu", filetype = "nu" },
   dhall_lsp_server = { path = "main.dhall", filetype = "dhall" },
   ocamllsp = { path = "main.ml", filetype = "ocaml" },
+  solar = { path = "src/Smoke.sol", filetype = "solidity" },
   zk = { path = "README.md", filetype = "markdown" },
   noir = { path = "README.md", filetype = "markdown" },
 }
