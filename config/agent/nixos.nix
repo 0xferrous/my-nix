@@ -1,53 +1,125 @@
 {
   lib,
   pkgs,
+  home-manager,
   impermanence,
+  myNixInputs,
+  nix-index-database,
   ...
 }:
 let
   impermanenceRoot = "/persist";
+  binaryCaches = [
+    {
+      url = "http://10.0.2.2:5000?priority=30";
+      key = "nixos-1:TpdALX3FryCxN1I/WG+lhTeme19H/Ka035MJchdsYH4=";
+    }
+    {
+      url = "https://cache.nixos.org";
+      key = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
+    }
+    {
+      url = "https://nix-community.cachix.org";
+      key = "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=";
+    }
+    {
+      url = "https://numtide.cachix.org";
+      key = "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE=";
+    }
+    {
+      # llm-agents.nix publishes builds to the Numtide Nix cache.
+      url = "https://cache.numtide.com";
+      key = "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=";
+    }
+  ];
   opensshSettings = {
     AllowStreamLocalForwarding = lib.mkDefault "yes";
     AllowTcpForwarding = lib.mkDefault "yes";
     DisableForwarding = lib.mkDefault false;
-    PasswordAuthentication = lib.mkDefault true;
-    PermitEmptyPasswords = lib.mkDefault "yes";
+    KbdInteractiveAuthentication = lib.mkDefault false;
+    PasswordAuthentication = lib.mkDefault false;
+    PermitRootLogin = lib.mkDefault "no";
     StreamLocalBindUnlink = lib.mkDefault "yes";
   };
 in
 {
   imports = [
+    home-manager.nixosModules.home-manager
     impermanence.nixosModules.impermanence
+    nix-index-database.nixosModules.nix-index
+  ];
+
+  nixpkgs.overlays = [
+    (import ../../pkgs/overlay.nix {
+      inputs = myNixInputs;
+      system = pkgs.stdenv.hostPlatform.system;
+    })
   ];
 
   nix.settings = {
-    substituters = [
-      "http://10.0.2.2:5000?priority=30"
-      "https://cache.nixos.org"
+    experimental-features = [
+      "nix-command"
+      "flakes"
     ];
-    trusted-public-keys = [
-      "nixos-1:TpdALX3FryCxN1I/WG+lhTeme19H/Ka035MJchdsYH4="
-    ];
+    substituters = map (cache: cache.url) binaryCaches;
+    trusted-public-keys = map (cache: cache.key) binaryCaches;
+    trusted-substituters = map (cache: cache.url) binaryCaches;
   };
 
-  environment.sessionVariables.HARMONIA_CACHE_URL = "http://10.0.2.2:5000";
+  environment.sessionVariables = {
+    EDITOR = "nvim";
+    HARMONIA_CACHE_URL = "http://10.0.2.2:5000";
+  };
+
+  environment.systemPackages = with pkgs; [
+    git
+    jujutsu
+    pi
+    frsNvimPackage
+  ];
+
+  environment.shellAliases = {
+    vi = "nvim";
+    vim = "nvim";
+    vimdiff = "nvim -d";
+  };
+
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+
+  programs.nix-index.enable = true;
+  programs.nix-index-database.comma.enable = true;
 
   services.openssh = {
     enable = true;
     settings = opensshSettings;
   };
 
-  systemd.services.virtie-ssh-signal = {
+  systemd.services.virtle-ssh-signal = {
     wantedBy = [ "multi-user.target" ];
     requires = [ "sshd.service" ];
     after = [ "sshd.service" ];
     serviceConfig.Type = "oneshot";
     script = ''
-      ${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtie.ready
+      for _ in $(${pkgs.coreutils}/bin/seq 1 60); do
+        if [ -e /dev/virtio-ports/virtle.ready ]; then
+          ${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtle.ready
+          exit 0
+        fi
+        ${pkgs.coreutils}/bin/sleep 1
+      done
+      echo "virtle ready port did not appear" >&2
+      exit 1
     '';
   };
 
   services.getty.autologinUser = "agent";
+  services.qemuGuest.enable = true;
+  services.tailscale.enable = true;
+
+  environment.shells = [ pkgs.nushell ];
 
   users.users.agent = {
     isNormalUser = true;
@@ -55,11 +127,60 @@ in
     group = "users";
     home = "/home/agent";
     createHome = true;
+    shell = pkgs.nushell;
     extraGroups = [ "wheel" ];
-    hashedPassword = "";
+    hashedPassword = "!";
   };
 
   security.sudo.wheelNeedsPassword = false;
+
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    extraSpecialArgs = {
+      inherit myNixInputs;
+    };
+    users.agent = { ... }: {
+      imports = [
+        ../../modules/home/programs/direnv.nix
+        ../../modules/home/programs/foundry.nix
+      ];
+
+      home.stateVersion = "26.05";
+
+      programs.devenv = {
+        enable = true;
+        enableNushellIntegration = true;
+      };
+
+      programs.fzf.enableNushellIntegration = true;
+
+      programs.nix-your-shell = {
+        enable = true;
+        enableNushellIntegration = true;
+      };
+
+      programs.nushell = {
+        enable = true;
+        environmentVariables.DEVENV_SHELL_TYPE = "nu";
+      };
+
+      programs.zoxide = {
+        enable = true;
+        enableZshIntegration = lib.mkForce false;
+      };
+
+      fr.direnv = {
+        enable = true;
+        devenv.enable = true;
+        poetry.enable = true;
+        layoutDir = {
+          enable = true;
+          baseDir = "/home/agent/.cache/direnv/layouts";
+        };
+      };
+    };
+  };
 
   systemd.tmpfiles.rules = [
     "d /run/user/1000 0700 agent users - -"
@@ -83,8 +204,22 @@ in
     "virtio_pci"
     "virtio_blk"
     "virtiofs"
+    "virtio_console"
+    "vsock"
+    "vmw_vsock_virtio_transport"
     "ext4"
   ];
+
+  boot.kernelModules = [
+    "virtio_console"
+    "vsock"
+    "vmw_vsock_virtio_transport"
+  ];
+
+  boot.kernel.sysctl = {
+    "kernel.unprivileged_userns_clone" = 1;
+    "vm.vfs_cache_pressure" = 1000;
+  };
 
   fileSystems."/" = {
     device = "tmpfs";
