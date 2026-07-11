@@ -188,8 +188,8 @@ in
     "r /run/user/1000/gnupg/S.gpg-agent - - - - -"
   ];
 
-  systemd.services.agentspace-tmpfiles-create = {
-    description = "Create agentspace runtime tmpfiles";
+  systemd.services.agent-tmpfiles-create = {
+    description = "Create agent runtime tmpfiles";
     wantedBy = [ "multi-user.target" ];
     after = [ "systemd-tmpfiles-setup.service" ];
     serviceConfig = {

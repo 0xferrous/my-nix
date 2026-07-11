@@ -89,10 +89,6 @@
       url = "github:peteonrails/voxtype";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agentspace = {
-      url = "github:shazow/agentspace";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     impermanence = {
       url = "github:nix-community/impermanence";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -125,7 +121,6 @@
       dms,
       fenix,
       ghmd,
-      agentspace,
       impermanence,
       nix-index-database,
       home-manager,
@@ -182,8 +177,6 @@
             };
           }
         );
-      lib.mkAgentspaceVmSystems = import ./lib/mkAgentspaceVmSystems.nix;
-      lib.mkAgentspaceVmApps = import ./mkAgentspaceVmApps.nix;
       homeManagerModules = import ./modules/home;
       nixosModules = import ./modules/nixos;
       homeConfigs = {

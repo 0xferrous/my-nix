@@ -23,33 +23,23 @@ This repository contains public Nix building blocks extracted from a larger pers
 
 The root flake currently exports these main groups:
 
-- `packages`: package outputs from `pkgs/frs-nvim`, plus an `agentspace` package for `x86_64-linux`.
-- `apps`: runnable app outputs from `pkgs/frs-nvim`, plus an `agentspace` app for `x86_64-linux`.
+- `packages`: package outputs from `pkgs/frs-nvim`, plus this repo's helper packages for `x86_64-linux`.
+- `apps`: runnable app outputs from `pkgs/frs-nvim`, plus this repo's helper apps for `x86_64-linux`.
 - `lib.mkAgentBoxImage`: helper imported from `lib/mkAgentBoxImage.nix` for building an agent-box runtime image.
-- `lib.mkAgentspaceVmSystems`: helper imported from `lib/mkAgentspaceVmSystems.nix` for mapping agentspace VM configs to evaluated NixOS system attrsets.
-- `lib.mkAgentspaceVmApps`: helper imported from `lib/mkAgentspaceVmApps.nix` for mapping evaluated agentspace systems to flake app attrsets.
 - `homeManagerModules`: reusable Home Manager modules from `modules/home/default.nix`.
 - `nixosModules`: reusable NixOS modules from `modules/nixos/default.nix`.
 - `homeConfigs.fr`: public Home Manager config wrapper importing `config/fr/home.nix` and passing flake inputs through `_module.args.myNixInputs`.
 - `nixosConfigs.fr`: public NixOS config from `config/fr/nixos.nix`.
 - `nixosConfigs.agent`: agent NixOS config from `config/agent/nixos.nix`.
-- `nixosConfigurations."agentspace-<vm>"` includes the evaluated agentspace VM systems built from `config/fr/agent-vm.nix` via `lib.mkAgentspaceVmSystems`.
-- `apps.${system}` includes agentspace VM launchers built from `config/fr/agent-vm.nix` via `lib.mkAgentspaceVmSystems` + `lib.mkAgentspaceVmApps`.
 
 ## `lib/`
 
 ```text
 lib/
-├── mkAgentBoxImage.nix
-├── mkAgentspaceVmApps.nix
-└── mkAgentspaceVmSystems.nix
+└── mkAgentBoxImage.nix
 ```
 
 `lib/mkAgentBoxImage.nix` builds an image intended for use inside `agent-box`. The root flake exposes it as `lib.mkAgentBoxImage` and injects this flake's inputs, including the stable Foundry input under `foundry`.
-
-`lib/mkAgentspaceVmSystems.nix` maps agentspace VM configs to evaluated `nixosSystem` results.
-
-`lib/mkAgentspaceVmApps.nix` maps evaluated agentspace systems to `type = "app"` entries that launch the corresponding sandbox.
 
 ## Reusable modules: `modules/`
 
@@ -100,7 +90,6 @@ The `config/fr` tree contains the public defaults for the `fr` setup. These modu
 config/fr/
 ├── home.nix
 ├── nixos.nix
-├── agent-vm.nix
 └── home/
     ├── alacritty.nix
     ├── atuin.nix
@@ -141,13 +130,9 @@ Defines the public NixOS baseline under `fr.public`. The baseline is gated by `f
 - Rust documentation served through Caddy at `rustdoc.localhost`
 - localhost host mappings for the public service domains
 
-### `config/fr/agent-vm.nix`
-
 ### `config/agent/nixos.nix`
 
-Defines the agent NixOS baseline under `agent.public`. It is currently a minimal gated module meant for host-specific agent configuration.
-
-Defines the agentspace VM/sandbox configuration used by the root flake's `apps.${system}` launchers and the Home Manager agentspace module. The Home Manager agentspace module installs only `pkgs.kitty.terminfo` in guests by default via `fr.agentspace.terminfoPackages`, avoiding NixOS' all-terminfo set and its larger terminal-emulator build closure.
+Defines the standalone agent NixOS baseline, including SSH, Tailscale, Nushell, Home Manager user configuration, development tools, and VM filesystem/runtime defaults.
 
 ## Packages: `pkgs/`
 

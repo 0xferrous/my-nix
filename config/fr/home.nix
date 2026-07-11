@@ -65,7 +65,6 @@ in
     ./home/starship.nix
     ./home/wofi.nix
     ./home/zed.nix
-    ./agent-vm.nix
     myNixInputs.nix-index-database.homeModules.default
     myNixInputs.dms.homeModules.dank-material-shell
     myNixInputs.dms-plugin-registry.homeModules.default
@@ -85,7 +84,6 @@ in
       keyboardBacklightPackage
       voiceRecordToggle
       install-bin
-      # myNixInputs.agentspace.packages.${pkgs.system}.virtie
       virtiofsd
       qemu
     ];
