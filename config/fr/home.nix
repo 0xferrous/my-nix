@@ -84,6 +84,7 @@ in
       keyboardBacklightPackage
       voiceRecordToggle
       install-bin
+      bindfs
       virtiofsd
       qemu
     ];
