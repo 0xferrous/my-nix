@@ -36,6 +36,21 @@ in
     fr.powerManagement = {
       enable = lib.mkDefault true;
       cpu.amdPstate.enable = lib.mkDefault true;
+      bluetoothKeyboardWake = {
+        enable = lib.mkDefault true;
+        usbDevices = lib.mkDefault [
+          # Internal MediaTek Bluetooth adapter.
+          {
+            vendorId = "0e8d";
+            productId = "e025";
+          }
+          # Parent Genesys USB hub for the internal Bluetooth adapter.
+          {
+            vendorId = "05e3";
+            productId = "0610";
+          }
+        ];
+      };
     };
 
     programs.kdeconnect = {

@@ -1,4 +1,5 @@
 {
+  bluetoothKeyboardWake = import ./bluetooth-keyboard-wake.nix;
   desktopPortal = import ./desktop-portal.nix;
   k3sMicrovm = import ./k3s-microvm.nix;
   powerManagement = import ./power-management.nix;
