@@ -307,15 +307,20 @@ in
       "/var/lib/nixos"
       "/var/lib/tailscale"
     ];
+    users.agent.files = [
+      ".nix-profile"
+    ];
     users.agent.directories = [
       ".cache/pypoetry"
       ".cache/uv"
       ".cargo"
       ".codex"
+      ".config/gh"
       ".config/git"
       ".config/jj"
       ".config/pypoetry"
       ".foundry"
+      ".local/state/nix"
       ".local/share/pypoetry"
       ".local/share/uv"
       ".pi"
