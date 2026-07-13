@@ -292,6 +292,8 @@ in
       ".cache/uv"
       ".cargo"
       ".codex"
+      ".config/git"
+      ".config/jj"
       ".config/pypoetry"
       ".foundry"
       ".local/share/pypoetry"

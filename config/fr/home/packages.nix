@@ -3,7 +3,6 @@
   lib,
   myNixInputs,
   pkgs,
-  pkgsRecent ? pkgs,
   ...
 }:
 let
