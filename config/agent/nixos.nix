@@ -168,46 +168,66 @@ in
     extraSpecialArgs = {
       inherit myNixInputs;
     };
-    users.agent = { ... }: {
-      imports = [
-        ../../modules/home/programs/direnv.nix
-        ../../modules/home/programs/foundry.nix
-      ];
+    users.agent =
+      { config, ... }:
+      let
+        carapaceBin = lib.getExe config.programs.carapace.package;
+      in
+      {
+        imports = [
+          ../../modules/home/programs/direnv.nix
+          ../../modules/home/programs/foundry.nix
+        ];
 
-      home.stateVersion = "26.05";
+        home.stateVersion = "26.05";
 
-      programs.devenv = {
-        enable = true;
-        enableNushellIntegration = true;
-      };
-
-      programs.fzf.enableNushellIntegration = true;
-
-      programs.nix-your-shell = {
-        enable = true;
-        enableNushellIntegration = true;
-      };
-
-      programs.nushell = {
-        enable = true;
-        environmentVariables.DEVENV_SHELL_TYPE = "nu";
-      };
-
-      programs.zoxide = {
-        enable = true;
-        enableZshIntegration = lib.mkForce false;
-      };
-
-      fr.direnv = {
-        enable = true;
-        devenv.enable = true;
-        poetry.enable = true;
-        layoutDir = {
+        programs.devenv = {
           enable = true;
-          baseDir = "/home/agent/.cache/direnv/layouts";
+          enableNushellIntegration = true;
+        };
+
+        programs.fzf.enableNushellIntegration = true;
+
+        programs.carapace = {
+          enable = true;
+          # Source carapace manually before fzf's Nushell integration so fzf can
+          # wrap carapace as its fallback external completer instead of replacing it.
+          enableNushellIntegration = lib.mkForce false;
+        };
+
+        programs.nushell.extraConfig = lib.mkBefore ''
+          source ${
+            pkgs.runCommand "agent-carapace-nushell-config-early.nu" { } ''
+              ${carapaceBin} _carapace nushell | sed 's|"/homeless-shelter|$"($env.HOME)|g' >> "$out"
+            ''
+          }
+        '';
+
+        programs.nix-your-shell = {
+          enable = true;
+          enableNushellIntegration = true;
+        };
+
+        programs.nushell = {
+          enable = true;
+          environmentVariables.DEVENV_SHELL_TYPE = "nu";
+        };
+
+        programs.zoxide = {
+          enable = true;
+          enableZshIntegration = lib.mkForce false;
+        };
+
+        fr.direnv = {
+          enable = true;
+          devenv.enable = true;
+          poetry.enable = true;
+          layoutDir = {
+            enable = true;
+            baseDir = "/home/agent/.cache/direnv/layouts";
+          };
         };
       };
-    };
   };
 
   systemd.tmpfiles.rules = [

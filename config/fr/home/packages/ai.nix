@@ -9,7 +9,6 @@ with pkgs;
 [
   aichat
   mods
-  alpaca
 
   # LLM CLI
   (python314Packages.llm.withPlugins {

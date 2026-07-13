@@ -77,6 +77,7 @@ in
         inputs = myNixInputs;
         system = pkgs.stdenv.hostPlatform.system;
       })
+
     ];
 
     home.packages = with pkgs; [
