@@ -315,7 +315,6 @@ in
       "/var/lib/tailscale"
     ];
     users.agent.files = [
-      ".nix-profile"
     ];
     users.agent.directories = [
       ".cache/pypoetry"
