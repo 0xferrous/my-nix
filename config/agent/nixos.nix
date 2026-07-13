@@ -109,17 +109,24 @@ in
     wantedBy = [ "multi-user.target" ];
     requires = [ "sshd.service" ];
     after = [ "sshd.service" ];
-    serviceConfig.Type = "oneshot";
+    serviceConfig = {
+      Type = "oneshot";
+      TimeoutStartSec = "70s";
+    };
     script = ''
       for _ in $(${pkgs.coreutils}/bin/seq 1 60); do
         if [ -e /dev/virtio-ports/virtle.ready ]; then
-          ${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtle.ready
+          # Writing to this virtio console port blocks forever if the host side
+          # is not currently reading it (e.g. during nixos-rebuild switch).
+          ${pkgs.coreutils}/bin/timeout 2s ${pkgs.bash}/bin/bash -c \
+            '${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtle.ready' \
+            || echo "virtle ready port write timed out" >&2
           exit 0
         fi
         ${pkgs.coreutils}/bin/sleep 1
       done
       echo "virtle ready port did not appear" >&2
-      exit 1
+      exit 0
     '';
   };
 
