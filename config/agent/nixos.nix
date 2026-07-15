@@ -139,19 +139,20 @@ in
   # switch. In the agent VM this can briefly observe missing config symlinks and
   # leave the bus with a policy that denies even root's systemd calls.
   services.dbus.implementation = "dbus";
+
   services.resolved = {
     enable = true;
-    dnssec = "allow-downgrade";
-    dnsovertls = "opportunistic";
-    fallbackDns = [
-      "1.1.1.1#cloudflare-dns.com"
-      "1.0.0.1#cloudflare-dns.com"
-      "9.9.9.9#dns.quad9.net"
-      "149.112.112.112#dns.quad9.net"
-    ];
     settings.Resolve = {
       Cache = "yes";
+      DNSOverTLS = "opportunistic";
+      DNSSEC = "allow-downgrade";
       DNSStubListener = "yes";
+      FallbackDNS = [
+        "1.1.1.1#cloudflare-dns.com"
+        "1.0.0.1#cloudflare-dns.com"
+        "9.9.9.9#dns.quad9.net"
+        "149.112.112.112#dns.quad9.net"
+      ];
     };
   };
   services.tailscale.enable = true;
