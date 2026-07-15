@@ -134,6 +134,11 @@ in
 
   services.getty.autologinUser = "agent";
   services.qemuGuest.enable = true;
+
+  # dbus-broker live-reloads policy when the Nix store overlay changes during a
+  # switch. In the agent VM this can briefly observe missing config symlinks and
+  # leave the bus with a policy that denies even root's systemd calls.
+  services.dbus.implementation = "dbus";
   services.resolved = {
     enable = true;
     dnssec = "allow-downgrade";
