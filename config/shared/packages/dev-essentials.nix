@@ -12,6 +12,12 @@ let
       config.programs.jujutsu.package
     else
       pkgs.jujutsu;
+
+  yaziPackage = pkgs.yazi.override {
+    # Keep yazi itself, without the heavy preview/archive helpers pulled in by
+    # nixpkgs' default optionalDeps (ffmpeg, imagemagick, poppler, resvg, etc.).
+    optionalDeps = [ ];
+  };
 in
 with pkgs;
 [
@@ -25,10 +31,12 @@ with pkgs;
   ripgrep
   fd
   bat
+  _7zz
   eza
   tree
   dua
   tokei
+  yaziPackage
 
   # Structured data and text processing
   jq
@@ -42,6 +50,7 @@ with pkgs;
 
   # Documentation and help
   tealdeer
+  glow
   less
 
   # Network and remote access
