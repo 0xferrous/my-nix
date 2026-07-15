@@ -184,10 +184,7 @@ in
       inherit myNixInputs;
     };
     users.agent =
-      { config, ... }:
-      let
-        carapaceBin = lib.getExe config.programs.carapace.package;
-      in
+      { ... }:
       {
         imports = [
           ../../modules/home/programs/direnv.nix
@@ -201,22 +198,15 @@ in
           enableNushellIntegration = true;
         };
 
-        programs.fzf.enableNushellIntegration = true;
+        programs.fzf = {
+          enable = true;
+          enableNushellIntegration = true;
+        };
 
         programs.carapace = {
           enable = true;
-          # Source carapace manually before fzf's Nushell integration so fzf can
-          # wrap carapace as its fallback external completer instead of replacing it.
-          enableNushellIntegration = lib.mkForce false;
+          enableNushellIntegration = true;
         };
-
-        programs.nushell.extraConfig = lib.mkBefore ''
-          source ${
-            pkgs.runCommand "agent-carapace-nushell-config-early.nu" { } ''
-              ${carapaceBin} _carapace nushell | sed 's|"/homeless-shelter|$"($env.HOME)|g' >> "$out"
-            ''
-          }
-        '';
 
         programs.nix-your-shell = {
           enable = true;
@@ -226,6 +216,7 @@ in
         programs.nushell = {
           enable = true;
           environmentVariables.DEVENV_SHELL_TYPE = "nu";
+          settings.show_banner = false;
         };
 
         programs.zoxide = {
