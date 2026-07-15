@@ -38,10 +38,42 @@ in
   options.fr.powerManagement = {
     enable = lib.mkEnableOption "comprehensive power management";
 
-    upower.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Enable UPower for battery/device status reporting.";
+    upower = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable UPower for battery/device status reporting.";
+      };
+
+      lowPercentage = lib.mkOption {
+        type = lib.types.ints.between 0 100;
+        default = 20;
+        description = "Battery percentage at which UPower reports low battery.";
+      };
+
+      criticalPercentage = lib.mkOption {
+        type = lib.types.ints.between 0 100;
+        default = 10;
+        description = "Battery percentage at which UPower reports critical battery.";
+      };
+
+      actionPercentage = lib.mkOption {
+        type = lib.types.ints.between 0 100;
+        default = 7;
+        description = "Battery percentage at which UPower performs the critical power action.";
+      };
+
+      criticalPowerAction = lib.mkOption {
+        type = lib.types.enum [
+          "PowerOff"
+          "Hibernate"
+          "HybridSleep"
+          "Suspend"
+          "Ignore"
+        ];
+        default = "HybridSleep";
+        description = "UPower critical battery action. HybridSleep preserves state better than plain suspend if the battery keeps draining.";
+      };
     };
 
     powertop.enable = lib.mkOption {
@@ -150,6 +182,14 @@ in
         assertion = cfg.tlp.chargeLimit.start < cfg.tlp.chargeLimit.stop;
         message = "fr.powerManagement.tlp.chargeLimit.start must be lower than .stop.";
       }
+      {
+        assertion = cfg.upower.lowPercentage > cfg.upower.criticalPercentage;
+        message = "fr.powerManagement.upower.lowPercentage must be greater than .criticalPercentage.";
+      }
+      {
+        assertion = cfg.upower.criticalPercentage > cfg.upower.actionPercentage;
+        message = "fr.powerManagement.upower.criticalPercentage must be greater than .actionPercentage.";
+      }
     ];
 
     boot.kernelParams =
@@ -158,7 +198,20 @@ in
         "processor.max_cstate=${toString cfg.cpu.maxCstate}"
       ];
 
-    services.upower.enable = lib.mkDefault cfg.upower.enable;
+    services.upower = {
+      enable = lib.mkDefault cfg.upower.enable;
+      usePercentageForPolicy = lib.mkDefault true;
+      percentageLow = lib.mkDefault cfg.upower.lowPercentage;
+      percentageCritical = lib.mkDefault cfg.upower.criticalPercentage;
+      percentageAction = lib.mkDefault cfg.upower.actionPercentage;
+      criticalPowerAction = lib.mkDefault cfg.upower.criticalPowerAction;
+      allowRiskyCriticalPowerAction = lib.mkDefault (
+        lib.elem cfg.upower.criticalPowerAction [
+          "Suspend"
+          "Ignore"
+        ]
+      );
+    };
 
     powerManagement = {
       enable = lib.mkDefault true;
