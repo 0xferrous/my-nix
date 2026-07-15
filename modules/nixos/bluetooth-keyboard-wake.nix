@@ -7,6 +7,11 @@
 let
   cfg = config.fr.powerManagement.bluetoothKeyboardWake;
 
+  bluetoothKeyboardWakePolicy = import ./bluetooth-keyboard-wake-policy.nix {
+    inherit lib pkgs;
+    inherit (cfg) requireExternalDisplay;
+  };
+
   # udev cannot express the AC-only policy by itself, so these rules only wake
   # the oneshot whenever one of the configured USB devices is added/rebound.
   # The service then decides whether to enable or disable wake based on the
@@ -21,6 +26,12 @@ in
       type = lib.types.bool;
       default = false;
       description = "Keep Bluetooth USB devices wake-enabled for closed-lid keyboard wake from suspend.";
+    };
+
+    requireExternalDisplay = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Only enable Bluetooth wake when an external DRM display connector is attached.";
     };
 
     usbDevices = lib.mkOption {
@@ -63,7 +74,8 @@ in
     '';
 
     systemd.services.bluetooth-keyboard-wakeup = {
-      description = "Manage AC-only wake from internal Bluetooth keyboards";
+      description = "Manage docked Bluetooth wake policy";
+      unitConfig.StartLimitIntervalSec = 0;
       wantedBy = [
         "multi-user.target"
         "sleep.target"
@@ -72,59 +84,11 @@ in
       # relevant device/power events.  The pre-sleep run is important because
       # runtime power-management tools may have changed sysfs values since boot.
       before = [ "sleep.target" ];
-      path = [ pkgs.coreutils ];
-      serviceConfig.Type = "oneshot";
-      script = ''
-        shopt -s nullglob
-
-        # Treat any online non-battery power_supply as AC/external power.  This
-        # covers AC adapters, USB-C docks, and other firmware-specific names.
-        ac_online=false
-        for supply in /sys/class/power_supply/*; do
-          if [ -r "$supply/online" ] \
-            && [ -r "$supply/type" ] \
-            && [ "$(cat "$supply/online")" = 1 ] \
-            && [ "$(cat "$supply/type")" != Battery ]; then
-            ac_online=true
-            break
-          fi
-        done
-
-        # On AC, keep the Bluetooth USB path armed for closed-lid keyboard wake.
-        # On battery, hand it back to normal autosuspend and disable wake so this
-        # feature does not cost idle/suspend battery life.
-        if $ac_online; then
-          wakeup=enabled
-          control=on
-        else
-          wakeup=disabled
-          control=auto
-        fi
-
-        # Start from each Bluetooth controller, resolve its backing device, then
-        # walk up the parent chain.  Internal Bluetooth commonly appears as a USB
-        # device behind an internal hub; both the adapter and hub may need wake
-        # enabled for a keyboard event to reach the sleeping system.
-        for hci in /sys/class/bluetooth/hci*; do
-          dev="$(${pkgs.coreutils}/bin/readlink -f "$hci/device")"
-
-          while [ "$dev" != /sys/devices ] && [ "$dev" != / ]; do
-            # power/wakeup controls whether this device may wake the system from
-            # suspend.  Some parents do not expose it, so only write when present.
-            if [ -w "$dev/power/wakeup" ]; then
-              echo "$wakeup" > "$dev/power/wakeup"
-            fi
-
-            # Only real USB device nodes have busnum.  On AC, keep Bluetooth's
-            # USB chain active for wake; on battery, return it to autosuspend.
-            if [ -e "$dev/busnum" ] && [ -w "$dev/power/control" ]; then
-              echo "$control" > "$dev/power/control"
-            fi
-
-            dev="$(dirname "$dev")"
-          done
-        done
-      '';
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${bluetoothKeyboardWakePolicy}/bin/bluetooth-keyboard-wakeup";
+        LogRateLimitIntervalSec = 0;
+      };
     };
   };
 }
