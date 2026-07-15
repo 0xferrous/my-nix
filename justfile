@@ -40,6 +40,9 @@ build-agent-system:
   mkdir -p "{{agent_vm_artifacts_dir}}"
   nix build .#nixosConfigurations.agent.config.system.build.toplevel -o "{{agent_vm_system_dir}}"
 
+switch-agent-nixos:
+  nh -e sudo os switch . --hostname agent
+
 build-agent-closure-info:
   mkdir -p "{{agent_vm_artifacts_dir}}"
   nix build --impure --expr 'let flake = builtins.getFlake (toString ./.); system = flake.nixosConfigurations.agent; in system.pkgs.closureInfo { rootPaths = [ system.config.system.build.toplevel ]; }' -o "{{agent_vm_closure_info_dir}}"
