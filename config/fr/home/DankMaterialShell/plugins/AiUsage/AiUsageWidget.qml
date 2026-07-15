@@ -227,6 +227,18 @@ PluginComponent {
         return usageColor(100)
     }
 
+    function hasSessionUsage(data) {
+        return Number.isFinite(Number(data.sessionUsedPercent)) && Number(data.sessionUsedPercent) >= 0
+    }
+
+    function hasWeeklyUsage(data) {
+        return Number.isFinite(Number(data.weeklyUsedPercent)) && Number(data.weeklyUsedPercent) >= 0
+    }
+
+    function hasAnyUsage(data) {
+        return hasSessionUsage(data) || hasWeeklyUsage(data)
+    }
+
     function sessionSummary(data) {
         return `S: ${percentText(data.sessionUsedPercent)} ${sessionTimeText(data)}`
     }
@@ -352,9 +364,10 @@ PluginComponent {
             extraInfo = `\n\nQuota: ${data.extra.weeklyUsed}/${data.extra.weeklyLimit}\nParallel: ${data.extra.parallelActive}/${data.extra.parallelLimit} active`
         }
 
-        return `${providerName} usage${data.userDisplay ? `\n${data.userDisplay}` : ""}${data.extra?.membershipLevel ? ` (${data.extra.membershipLevel})` : ""}
-Session: ${percentText(data.sessionUsedPercent)} used · resets ${showAbsoluteTimes ? "at" : "in"} ${sessionTimeText(data)}
-Weekly: ${percentText(data.weeklyUsedPercent)} used · resets ${showAbsoluteTimes ? "at" : "in"} ${weeklyTimeText(data)}
+        const sessionLine = hasSessionUsage(data) ? `\nSession: ${percentText(data.sessionUsedPercent)} used · resets ${showAbsoluteTimes ? "at" : "in"} ${sessionTimeText(data)}` : ""
+        const weeklyLine = hasWeeklyUsage(data) ? `\nWeekly: ${percentText(data.weeklyUsedPercent)} used · resets ${showAbsoluteTimes ? "at" : "in"} ${weeklyTimeText(data)}` : ""
+
+        return `${providerName} usage${data.userDisplay ? `\n${data.userDisplay}` : ""}${data.extra?.membershipLevel ? ` (${data.extra.membershipLevel})` : ""}${sessionLine}${weeklyLine}
 
 Actual: ${percentText(metrics.actualUsage)} / Expected: ${percentText(metrics.expectedUsage)} / ${signedPercentText(metrics.differenceFromExpected)}
 
@@ -431,8 +444,16 @@ Gap before reset: ${gapText}${extraInfo}`
                             }
 
                             StyledText {
-                                visible: modelData.data.error.length === 0
+                                visible: modelData.data.error.length === 0 && root.hasSessionUsage(modelData.data)
                                 text: `Session: ${root.percentText(modelData.data.sessionUsedPercent)} used · resets ${root.showAbsoluteTimes ? "at" : "in"} ${root.sessionTimeText(modelData.data)}`
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceVariantText
+                                wrapMode: Text.Wrap
+                            }
+
+                            StyledText {
+                                visible: modelData.data.error.length === 0 && root.hasWeeklyUsage(modelData.data)
+                                text: `Weekly: ${root.percentText(modelData.data.weeklyUsedPercent)} used · resets ${root.showAbsoluteTimes ? "at" : "in"} ${root.weeklyTimeText(modelData.data)}`
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                                 wrapMode: Text.Wrap
@@ -558,7 +579,7 @@ Gap before reset: ${gapText}${extraInfo}`
         }
 
         StyledText {
-            visible: usageData.loading && usageData.error.length === 0 && usageData.sessionUsedPercent < 0
+            visible: usageData.loading && usageData.error.length === 0 && !root.hasAnyUsage(usageData)
             text: "…"
             color: Theme.surfaceVariantText
             anchors.verticalCenter: parent.verticalCenter
@@ -573,11 +594,12 @@ Gap before reset: ${gapText}${extraInfo}`
         }
 
         Row {
-            visible: usageData.error.length === 0 && usageData.sessionUsedPercent >= 0
+            visible: usageData.error.length === 0 && root.hasAnyUsage(usageData)
             spacing: Theme.spacingXS
             anchors.verticalCenter: parent.verticalCenter
 
             StyledText {
+                visible: root.hasSessionUsage(usageData)
                 text: root.sessionSummary(usageData)
                 font.pixelSize: Theme.fontSizeSmall
                 color: root.usageColor(usageData.sessionUsedPercent)
@@ -585,6 +607,7 @@ Gap before reset: ${gapText}${extraInfo}`
             }
 
             StyledText {
+                visible: root.hasSessionUsage(usageData) && root.hasWeeklyUsage(usageData)
                 text: "·"
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.surfaceVariantText
@@ -592,6 +615,7 @@ Gap before reset: ${gapText}${extraInfo}`
             }
 
             StyledText {
+                visible: root.hasWeeklyUsage(usageData)
                 text: `W: ${root.percentText(usageData.weeklyUsedPercent)} ${root.weeklyTimeText(usageData)}`
                 font.pixelSize: Theme.fontSizeSmall
                 color: root.usageColor(usageData.weeklyUsedPercent)
@@ -666,7 +690,7 @@ Gap before reset: ${gapText}${extraInfo}`
                     }
 
                     StyledText {
-                        visible: modelData.data.loading && modelData.data.error.length === 0 && modelData.data.sessionUsedPercent < 0
+                        visible: modelData.data.loading && modelData.data.error.length === 0 && !root.hasAnyUsage(modelData.data)
                         text: "…"
                         color: Theme.surfaceVariantText
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -681,11 +705,12 @@ Gap before reset: ${gapText}${extraInfo}`
                     }
 
                     Column {
-                        visible: modelData.data.error.length === 0 && modelData.data.sessionUsedPercent >= 0
+                        visible: modelData.data.error.length === 0 && root.hasAnyUsage(modelData.data)
                         spacing: 1
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         StyledText {
+                            visible: root.hasSessionUsage(modelData.data)
                             text: root.sessionSummary(modelData.data)
                             font.pixelSize: Theme.fontSizeSmall
                             color: root.usageColor(modelData.data.sessionUsedPercent)
@@ -697,6 +722,7 @@ Gap before reset: ${gapText}${extraInfo}`
                             anchors.horizontalCenter: parent.horizontalCenter
 
                             StyledText {
+                                visible: root.hasWeeklyUsage(modelData.data)
                                 text: `W: ${root.percentText(modelData.data.weeklyUsedPercent)} ${root.weeklyTimeText(modelData.data)}`
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: root.usageColor(modelData.data.weeklyUsedPercent)
