@@ -93,11 +93,11 @@
     "agent-stuff": {
       "flake": false,
       "locked": {
-        "lastModified": 1784107875,
-        "narHash": "sha256-b2NxTtug74Zq8gmxuTcL2GPs+psHa5g2eXsvLAn0oek=",
+        "lastModified": 1784110869,
+        "narHash": "sha256-4jyLwYLiYrT9sxm5BgcuegXuqZqZXokmtQoEz2Dh7dw=",
         "owner": "0xferrous",
         "repo": "agent-stuff",
-        "rev": "e9ec0d75905c820007f66f5423fbcdb18a42b675",
+        "rev": "7eff4d53d300a187db1c85c27fa2dce52afeb717",
         "type": "github"
       },
       "original": {
