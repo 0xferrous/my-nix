@@ -2,6 +2,7 @@
   pkgs,
   piPackage,
   agentStuffSrc,
+  gitHunk,
 }:
 let
   lib = pkgs.lib;
@@ -46,8 +47,11 @@ let
     "${agentStuffPackage}/lib/node_modules/pi-extensions/themes/gruvbox-material-dark-hard.json"
     "--prompt-template"
     "${agentStuffPackage}/lib/node_modules/pi-extensions/prompts"
+    "--skill"
+    "${gitHunk}/share/git-hunk/skills/git-hunk"
   ];
 in
 pkgs.writeShellScriptBin "pi" ''
+  export PATH=${lib.makeBinPath [ gitHunk ]}:$PATH
   exec ${piPackage}/bin/pi ${lib.escapeShellArgs resourceArgs} "$@"
 ''

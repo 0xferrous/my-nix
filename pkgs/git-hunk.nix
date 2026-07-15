@@ -17,6 +17,10 @@ pkgs.rustPlatform.buildRustPackage rec {
   cargoHash = "sha256-iiqlFZTAlFF6jy5m8jMcqLcRvNLkPdRlK/XoQucceoQ=";
   doCheck = false;
 
+  postInstall = ''
+    install -Dm0644 SKILL.md "$out/share/git-hunk/skills/git-hunk/SKILL.md"
+  '';
+
   meta = with lib; {
     description = "Non-interactive hunk staging for AI agents";
     homepage = "https://github.com/nexxeln/git-hunk";

@@ -31,6 +31,7 @@ final: prev: {
   pi = final.callPackage ./pi.nix {
     piPackage = inputs.llm-agents.packages.${system}.pi;
     agentStuffSrc = inputs."agent-stuff";
+    gitHunk = final.git-hunk;
   };
   frsNvimPackage = inputs.frs-nvim.packages.${system}.default;
 }
