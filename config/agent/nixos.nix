@@ -224,7 +224,12 @@ in
 
         programs.zoxide = {
           enable = true;
+          enableNushellIntegration = true;
           enableZshIntegration = lib.mkForce false;
+          options = [
+            "--cmd"
+            "cd"
+          ];
         };
 
         fr.direnv = {
@@ -331,6 +336,7 @@ in
       ".local/state/nix"
       ".local/share/pypoetry"
       ".local/share/uv"
+      ".local/share/zoxide"
       ".pi"
     ];
   };
