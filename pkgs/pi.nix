@@ -44,6 +44,8 @@ let
     "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/codex-web-search/index.ts"
     "--theme"
     "${agentStuffPackage}/lib/node_modules/pi-extensions/themes/gruvbox-material-dark-hard.json"
+    "--prompt-template"
+    "${agentStuffPackage}/lib/node_modules/pi-extensions/prompts"
   ];
 in
 pkgs.writeShellScriptBin "pi" ''
