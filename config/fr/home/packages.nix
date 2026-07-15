@@ -25,7 +25,8 @@ let
 in
 {
   home.packages =
-    (import ./packages/cli-tools.nix subArgs)
+    (import ../../shared/packages/dev-essentials.nix subArgs)
+    ++ (import ./packages/cli-tools.nix subArgs)
     ++ (import ./packages/dev.nix subArgs)
     ++ (import ./packages/gui.nix subArgs)
     ++ (import ./packages/network-security.nix subArgs)

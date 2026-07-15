@@ -2,12 +2,10 @@
 with pkgs;
 [
   # Network and web tools
-  httpie
   xh
   wget
   aria2
   websocat
-  doggo
   whois
   dnscrypt-proxy
 

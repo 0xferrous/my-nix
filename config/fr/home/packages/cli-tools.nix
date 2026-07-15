@@ -7,21 +7,14 @@ with pkgs;
   zellij
 
   # File system utilities
-  eza
-  bat
-  fd
-  ripgrep
   ripgrep-all
   tree
   dust
-  dua
 
   # Text processing and JSON tools
-  jq
   jid
   jaq
   jless
-  fx
   qsv
   choose
   sd
@@ -47,17 +40,13 @@ with pkgs;
 
   # Terminal enhancements
   starship
-  direnv
   zsh
-  fzf
   carapace-bridge
 
   # System utilities
   bubblewrap
   bc
-  tokei
   hyperfine
-  just
   navi
   pastel
   silicon

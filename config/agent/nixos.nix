@@ -10,6 +10,7 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
+  devEssentialsPackages = import ../shared/packages/dev-essentials.nix { inherit pkgs; };
   impermanenceRoot = "/persist";
   binaryCaches = [
     {
@@ -73,18 +74,19 @@ in
     HARMONIA_CACHE_URL = "http://10.0.2.2:5000";
   };
 
-  environment.systemPackages = with pkgs; [
-    git
-    jujutsu
-    kitty.terminfo
-    pi
-    poetry
-    python3
-    uv
-    AIPackages.codex
-    AIPackages.opencode
-    frsNvimPackage
-  ];
+  environment.systemPackages =
+    (with pkgs; [
+      kitty.terminfo
+      pi
+      poetry
+      python3
+      uv
+      AIPackages.codex
+      AIPackages.opencode
+      home-manager
+      frsNvimPackage
+    ])
+    ++ devEssentialsPackages;
 
   environment.shellAliases = {
     vi = "nvim";

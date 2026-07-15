@@ -17,7 +17,6 @@ with pkgs;
   git-cliff
   git-quick-stats
   lazygit
-  gh
   gh-dash
 
   # Programming languages and runtimes
@@ -92,7 +91,6 @@ with pkgs;
 
   # Python tools
   poetry
-  uv
   python312Packages.qrcode
 
   # Rust ecosystem
@@ -146,9 +144,6 @@ with pkgs;
   # Merge and diff
   difftastic
   mergiraf
-
-  # Version control
-  git-lfs
 
   # Scripting
   rust-script
