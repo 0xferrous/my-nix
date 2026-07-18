@@ -926,6 +926,23 @@
         "type": "github"
       }
     },
+    "libgit2-patched": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784361855,
+        "narHash": "sha256-UWZ8WbuCCgMfDDGwY4Ugb2Y/i6kFGzaYFdUT1bWlUFw=",
+        "owner": "0xferrous",
+        "repo": "libgit2",
+        "rev": "438cb8cb646d7c651f46c62fc8ac57297052c7a5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xferrous",
+        "ref": "fix/read-only-mmap-private",
+        "repo": "libgit2",
+        "type": "github"
+      }
+    },
     "llm-agents": {
       "inputs": {
         "blueprint": "blueprint",
@@ -1495,6 +1512,7 @@
         "helium": "helium",
         "home-manager": "home-manager_2",
         "impermanence": "impermanence",
+        "libgit2-patched": "libgit2-patched",
         "llm-agents": "llm-agents_2",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_6",

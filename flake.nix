@@ -21,6 +21,10 @@
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
+    libgit2-patched = {
+      url = "github:0xferrous/libgit2?ref=fix/read-only-mmap-private";
+      flake = false;
+    };
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -57,6 +57,11 @@ in
       inputs = myNixInputs;
       system = pkgs.stdenv.hostPlatform.system;
     })
+    (_final: prev: {
+      libgit2 = prev.libgit2.overrideAttrs {
+        src = myNixInputs.libgit2-patched;
+      };
+    })
   ];
 
   nix.settings = {
