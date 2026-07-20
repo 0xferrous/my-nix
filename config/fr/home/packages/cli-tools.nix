@@ -1,10 +1,8 @@
 { pkgs, ... }:
 with pkgs;
 [
-  # Terminal multiplexers and emulators
-  tmux
+  # Terminal emulators
   alacritty
-  zellij
 
   # File system utilities
   ripgrep-all

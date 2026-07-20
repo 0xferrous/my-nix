@@ -48,6 +48,10 @@ with pkgs;
   direnv
   fzf
 
+  # Terminal multiplexers
+  tmux
+  zellij
+
   # Documentation and help
   tealdeer
   glow
