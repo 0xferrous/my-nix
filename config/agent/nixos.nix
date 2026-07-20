@@ -302,12 +302,29 @@ in
     options = [ "ro" ];
   };
 
+  fileSystems."/run/ash/shares/ro" = {
+    device = "shares-ro";
+    fsType = "virtiofs";
+    neededForBoot = true;
+    options = [ "ro" ];
+  };
+
+  fileSystems."/run/ash/shares/rw" = {
+    device = "shares-rw";
+    fsType = "virtiofs";
+    neededForBoot = true;
+  };
+
   fileSystems."/nix/store" = {
     neededForBoot = true;
+    # VirtioFS cannot store trusted.overlay.* xattrs, but it can store
+    # user.overlay.* xattrs. userxattr tells overlayfs to use the latter, which
+    # lets the host-backed share act as the writable upper layer.
+    options = [ "userxattr" ];
     overlay = {
       lowerdir = [ "/nix/.ro-store" ];
-      upperdir = "${impermanenceRoot}/nix-store-overlay/upper";
-      workdir = "${impermanenceRoot}/nix-store-overlay/work";
+      upperdir = "/run/ash/shares/rw/guest-store-upper";
+      workdir = "/run/ash/shares/rw/guest-store-work";
     };
   };
 
@@ -340,6 +357,7 @@ in
       ".local/share/uv"
       ".local/share/zoxide"
       ".pi"
+      ".supermaven"
     ];
   };
 
