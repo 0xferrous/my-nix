@@ -12,6 +12,15 @@ let
   AIPackages = myNixInputs.llm-agents.packages.${system};
   devEssentialsPackages = import ../shared/packages/dev-essentials.nix { inherit pkgs; };
   impermanenceRoot = "/persist";
+  lowerStoreUri = "local?real=/nix/.ro-store&state=/run/ash/shares/ro/guest-store-state&read-only=true";
+  upperStoreState = "/run/ash/shares/rw/guest-store-state";
+  # Keep the writable store database beside its upper layer. Both must have the
+  # same lifetime; persisting the database in /nix/var/nix while rebuilding the
+  # Ash shares leaves Nix believing deleted upper-layer paths are still valid.
+  # The store overlay is mounted in stage 1, so /proc/mounts records its layer
+  # paths with /sysroot prefixes. Nix compares them against the post-switch-root
+  # paths and incorrectly rejects the otherwise matching mount.
+  agentStoreUri = "local-overlay://?state=${lib.escapeURL upperStoreState}&lower-store=${lib.escapeURL lowerStoreUri}&upper-layer=${lib.escapeURL "/run/ash/shares/rw/guest-store-upper"}&check-mount=false";
   binaryCaches = [
     {
       url = "http://10.0.2.2:5000?priority=30";
@@ -68,16 +77,25 @@ in
     experimental-features = [
       "nix-command"
       "flakes"
+      "local-overlay-store"
+      "read-only-local-store"
     ];
     substituters = map (cache: cache.url) binaryCaches;
     trusted-public-keys = map (cache: cache.key) binaryCaches;
     trusted-substituters = map (cache: cache.url) binaryCaches;
   };
 
+  environment.etc."ash/local-overlay-store".text = "";
+
   environment.sessionVariables = {
     EDITOR = "nvim";
     HARMONIA_CACHE_URL = "http://10.0.2.2:5000";
   };
+
+  # Only the privileged daemon should open the local overlay store directly.
+  # Unprivileged Nix clients keep the default `auto` store and connect through
+  # the daemon socket instead of trying to write /nix/var/nix themselves.
+  systemd.services.nix-daemon.environment.NIX_REMOTE = agentStoreUri;
 
   environment.systemPackages =
     (with pkgs; [
@@ -319,8 +337,8 @@ in
   fileSystems."/nix/store" = {
     neededForBoot = true;
     # VirtioFS cannot store trusted.overlay.* xattrs, but it can store
-    # user.overlay.* xattrs. userxattr tells overlayfs to use the latter, which
-    # lets the host-backed share act as the writable upper layer.
+    # user.overlay.* xattrs. Keep the writable layer host-backed so it grows
+    # with host storage instead of the VM persistence image.
     options = [ "userxattr" ];
     overlay = {
       lowerdir = [ "/nix/.ro-store" ];
