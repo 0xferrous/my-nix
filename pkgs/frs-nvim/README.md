@@ -141,7 +141,7 @@ NVIM_STARTUP_DEBUG=1 nix run .
 
 When enabled, Neovim writes startup logs to:
 - `/tmp/nvim-init.log`
-- `/tmp/nvim-startup.log`
+- `/tmp/nvim-startup.log` (monotonic elapsed timings for config stages)
 
 ## Notes
 

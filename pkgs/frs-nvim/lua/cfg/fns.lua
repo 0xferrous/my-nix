@@ -535,25 +535,28 @@ end
 local function build_lze_specs(all_specs, known_plugins)
   local alias_to_id = {}
   local ordered = {}
+  local validate_plugin_names = next(known_plugins) ~= nil
 
   for idx, spec in ipairs(all_specs) do
     local load_name = resolve_pack_name(spec, known_plugins)
-    local id = plugin_id(spec, load_name or ("anonymous-plugin-" .. idx))
-    table.insert(ordered, { id = id, load_name = load_name, spec = spec })
+    if not validate_plugin_names or known_plugins[load_name] then
+      local id = plugin_id(spec, load_name or ("anonymous-plugin-" .. idx))
+      table.insert(ordered, { id = id, load_name = load_name, spec = spec })
 
-    alias_to_id[id] = id
-    if type(load_name) == "string" and load_name ~= "" then
-      alias_to_id[load_name] = id
-    end
-    if type(spec[1]) == "string" then
-      alias_to_id[spec[1]] = id
-    end
-    if type(spec.name) == "string" then
-      alias_to_id[spec.name] = id
-    end
-    local short = short_repo_name(spec)
-    if short then
-      alias_to_id[short] = id
+      alias_to_id[id] = id
+      if type(load_name) == "string" and load_name ~= "" then
+        alias_to_id[load_name] = id
+      end
+      if type(spec[1]) == "string" then
+        alias_to_id[spec[1]] = id
+      end
+      if type(spec.name) == "string" then
+        alias_to_id[spec.name] = id
+      end
+      local short = short_repo_name(spec)
+      if short then
+        alias_to_id[short] = id
+      end
     end
   end
 

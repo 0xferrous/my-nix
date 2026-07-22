@@ -285,7 +285,9 @@
                     specs.nixpkgs = {
                       lazy = true;
                       pluginDeps = false;
-                      collateGrammars = false;
+                      # nvim-treesitter.withAllGrammars otherwise exposes
+                      # hundreds of grammar directories for runtime scans.
+                      collateGrammars = true;
                       data = with pkgs.vimPlugins; [
                         FixCursorHold-nvim
                         tabular

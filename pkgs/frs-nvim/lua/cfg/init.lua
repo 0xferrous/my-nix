@@ -1,5 +1,6 @@
 -- Debug logging setup
 local startup_debug = vim.env.NVIM_STARTUP_DEBUG == "1"
+local startup_start_ns = vim.uv.hrtime()
 local logfile = startup_debug and io.open("/tmp/nvim-startup.log", "w") or nil
 
 local function log(msg)
@@ -7,8 +8,8 @@ local function log(msg)
     return
   end
 
-  logfile:write(string.format("%s - %s - Mem: %.2f MB\n",
-    os.date("%H:%M:%S"),
+  logfile:write(string.format("%9.3f ms - %s - Mem: %.2f MB\n",
+    (vim.uv.hrtime() - startup_start_ns) / 1e6,
     msg,
     collectgarbage("count") / 1024))
   logfile:flush()
@@ -131,6 +132,8 @@ vim.api.nvim_create_user_command("WriteMessagesToFile", function()
   vim.fn.writefile(vim.split(out, "\n"), path)
   vim.notify("Wrote :messages to " .. path)
 end, { desc = "Write :messages output to /tmp/frs-nvim/messages.log" })
+
+log("Core options, keymaps, autocommands, and commands configured")
 
 -- Setup plugins via nix-provided runtime paths (no runtime package manager)
 log("Before requiring nix plugin loader")
