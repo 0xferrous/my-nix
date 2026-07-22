@@ -152,6 +152,7 @@
             git-hunk
             opensrc
             pi
+            flake-utils
             ;
           "install-bin" = pkgs."install-bin";
         };

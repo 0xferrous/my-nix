@@ -28,6 +28,7 @@ final: prev: {
   git-hunk = final.callPackage ./git-hunk.nix { };
   opensrc = final.callPackage ./opensrc.nix { };
   "install-bin" = final.callPackage ./install-bin.nix { };
+  flake-utils = final.callPackage ./flake-utils.nix { };
   pi = final.callPackage ./pi.nix {
     piPackage = inputs.llm-agents.packages.${system}.pi;
     agentStuffSrc = inputs."agent-stuff";

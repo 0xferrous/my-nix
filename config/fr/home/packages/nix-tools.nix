@@ -11,6 +11,7 @@ with pkgs;
   nixpkgs-fmt
   nixfmt
   nixfmt-tree
+  flake-utils
 
   # Nix utilities
   nurl
