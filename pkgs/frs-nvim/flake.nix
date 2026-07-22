@@ -9,6 +9,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    ethereum-nix = {
+      url = "github:nix-community/ethereum.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Missing plugins from nixpkgs: packaged via flake inputs + buildVimPlugin.
     plugin-ansi-nvim = {
       url = "github:0xferrous/ansi.nvim";
@@ -227,6 +232,7 @@
             ccls = ccls;
             marksman = marksman;
             taplo = taplo;
+            solar = inputs."ethereum-nix".packages.${system}.solar;
             zls = zls;
             zig = zig;
             ty = ty;
@@ -246,6 +252,7 @@
             "ccls"
             "marksman"
             "taplo"
+            "solar"
             "zls"
             "zig"
             "ty"

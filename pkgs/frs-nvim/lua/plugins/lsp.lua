@@ -18,7 +18,6 @@ local servers = {
   nushell = {},
   marksman = {},
   taplo = {},
-  -- TODO: install solar from the ethereum.nix flake once https://github.com/nix-community/ethereum.nix/pull/1213 lands.
   solar = {
     cmd = { "solar", "lsp" },
     filetypes = { "solidity" },
