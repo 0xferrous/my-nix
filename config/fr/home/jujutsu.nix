@@ -21,7 +21,11 @@
       push = lib.mkDefault "origin";
     };
 
+    revsets.bookmark-advance-to = lib.mkDefault "closest_pushable(@)";
+
     revset-aliases = {
+      "closest_pushable(to)" =
+        lib.mkDefault "heads(::to & mutable() & ~description(exact:\"\") & (~empty() | merges()))";
       "to_push()" = lib.mkDefault "mine() & mutable() & bookmarks()";
       "to_rebase()" = lib.mkDefault "roots(mine() & mutable())";
     };
