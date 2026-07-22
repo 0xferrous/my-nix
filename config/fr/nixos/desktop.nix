@@ -12,6 +12,8 @@ in
   imports = [ dms.nixosModules.greeter ];
 
   config = lib.mkIf cfg.enable {
+    hardware.enableRedistributableFirmware = lib.mkDefault true;
+
     fr.desktopPortal = {
       enable = lib.mkDefault true;
       desktopName = lib.mkDefault "niri";
