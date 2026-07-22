@@ -14,6 +14,12 @@ let
         description = "Match block name.";
       };
 
+      hostName = lib.mkOption {
+        type = lib.types.str;
+        default = "github.com";
+        description = "Remote SSH hostname for this match block.";
+      };
+
       identityFile = lib.mkOption {
         type = lib.types.str;
         description = "SSH identity file path for this match block.";
@@ -25,7 +31,7 @@ let
     map (identity: {
       name = identity.name;
       value = {
-        HostName = "github.com";
+        HostName = identity.hostName;
         IdentityFile = identity.identityFile;
         PubkeyAuthentication = "yes";
       };
@@ -39,7 +45,7 @@ in
     identities = lib.mkOption {
       type = lib.types.listOf identityType;
       default = [ ];
-      description = "SSH match blocks to generate for GitHub identities.";
+      description = "Named SSH identity match blocks to generate.";
     };
   };
 
