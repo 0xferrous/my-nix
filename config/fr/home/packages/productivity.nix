@@ -5,7 +5,6 @@ with pkgs;
   taskwarrior3
   timewarrior
   when-cli
-  yazi
   superfile
   ranger
   zk
