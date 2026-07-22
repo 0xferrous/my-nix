@@ -101,6 +101,8 @@ in
         ]
         $env.PATH ++= $paths_to_add
       '';
+      # Consume the SSH-kitten cwd marker after the standard integrations load.
+      extraConfig = lib.mkAfter (builtins.readFile ../shared/nushell/kitty-ssh-cwd.nu);
     };
 
     fr.pass = {
