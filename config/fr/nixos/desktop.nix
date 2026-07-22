@@ -55,8 +55,11 @@ in
       };
     };
 
+    # KDE Connect keeps a Bluetooth discovery client around on this setup, which
+    # makes the MediaTek Bluetooth controller's post-suspend state harder to
+    # recover from. Keep it disabled unless explicitly overridden elsewhere.
     programs.kdeconnect = {
-      enable = lib.mkDefault true;
+      enable = lib.mkDefault false;
       package = lib.mkDefault pkgs.kdePackages.kdeconnect-kde;
     };
 

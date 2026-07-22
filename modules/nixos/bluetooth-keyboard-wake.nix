@@ -19,6 +19,53 @@ let
   bluetoothWakeUdevRules = lib.concatMapStringsSep "\n" (device: ''
     ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="${device.vendorId}", ATTR{idProduct}=="${device.productId}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="bluetooth-keyboard-wakeup.service"
   '') cfg.usbDevices;
+
+  bluetoothPostResumeReset = pkgs.writeShellApplication {
+    name = "bluetooth-post-resume-reset";
+    runtimeInputs = [
+      pkgs.bluez
+      pkgs.coreutils
+      pkgs.systemd
+    ];
+    text = ''
+      shopt -s nullglob
+
+      sleep ${toString cfg.resetAfterResume.delaySeconds}
+
+      echo "bluetooth-post-resume-reset: resetting bluetooth controller after resume"
+
+      # A bluetoothd restart is not always enough for this MediaTek adapter; the
+      # inconsistent LE scan/connect state can live in the kernel btusb device.
+      # Try a lightweight BlueZ power cycle first, then unbind/rebind btusb.
+      bluetoothctl power off || true
+      sleep 1
+
+      rebound=false
+      for hci in /sys/class/bluetooth/hci*; do
+        dev="$(readlink -f "$hci/device")"
+        if [ -L "$dev/driver" ]; then
+          driver="$(readlink -f "$dev/driver")"
+          device_name="$(basename "$dev")"
+          if [ -w "$driver/unbind" ] && [ -w "$driver/bind" ]; then
+            echo "bluetooth-post-resume-reset: rebinding $device_name via $driver"
+            echo "$device_name" > "$driver/unbind" || true
+            sleep 1
+            echo "$device_name" > "$driver/bind" || true
+            rebound=true
+          fi
+        fi
+      done
+
+      sleep 2
+      systemctl try-restart bluetooth.service || true
+      sleep 1
+      bluetoothctl power on || true
+
+      if ! $rebound; then
+        echo "bluetooth-post-resume-reset: no bindable bluetooth controller found"
+      fi
+    '';
+  };
 in
 {
   options.fr.powerManagement.bluetoothKeyboardWake = {
@@ -61,6 +108,20 @@ in
       ];
       description = "USB devices whose Bluetooth wake policy should be managed while on AC power.";
     };
+
+    resetAfterResume = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Hard-reset the Bluetooth controller after resume to recover wedged BLE HID connections.";
+      };
+
+      delaySeconds = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 3;
+        description = "Seconds to wait after resume before resetting Bluetooth.";
+      };
+    };
   };
 
   config = lib.mkIf (cfg.enable && pkgs.stdenv.isLinux) {
@@ -87,6 +148,27 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${bluetoothKeyboardWakePolicy}/bin/bluetooth-keyboard-wakeup";
+        LogRateLimitIntervalSec = 0;
+      };
+    };
+
+    systemd.services.bluetooth-post-resume-reset = lib.mkIf cfg.resetAfterResume.enable {
+      description = "Reset Bluetooth controller after resume";
+      after = [
+        "suspend.target"
+        "hibernate.target"
+        "hybrid-sleep.target"
+        "suspend-then-hibernate.target"
+      ];
+      wantedBy = [
+        "suspend.target"
+        "hibernate.target"
+        "hybrid-sleep.target"
+        "suspend-then-hibernate.target"
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${bluetoothPostResumeReset}/bin/bluetooth-post-resume-reset";
         LogRateLimitIntervalSec = 0;
       };
     };
