@@ -241,7 +241,13 @@ in
           enable = true;
           environmentVariables.DEVENV_SHELL_TYPE = "nu";
           settings.show_banner = false;
+          # Load after the fzf/zoxide snippets supplied by Home Manager.
+          extraConfig = lib.mkAfter (builtins.readFile ../shared/nushell/kitty-ssh-cwd.nu);
         };
+
+        # Nushell creates a starter config when this file is absent. It must not
+        # block Home Manager from installing the declarative config on boot.
+        home.file."/home/agent/.config/nushell/config.nu".force = true;
 
         programs.zoxide = {
           enable = true;
