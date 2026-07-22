@@ -60,6 +60,20 @@ in
       package = lib.mkDefault pkgs.kdePackages.kdeconnect-kde;
     };
 
+    services.keyd = {
+      enable = lib.mkDefault true;
+      keyboards.default = {
+        # Match only the laptop's built-in AT keyboard.
+        ids = lib.mkDefault [ "0001:0001:09b4e68d" ];
+        settings.main = {
+          # The laptop Fn key is exposed as XF86WakeUp/keyd's "wakeup" key.
+          # Remap it to a real Shift modifier before niri sees it.
+          wakeup = lib.mkDefault "layer(shift)";
+          capslock = lib.mkDefault "layer(shift)";
+        };
+      };
+    };
+
     programs.niri = {
       enable = lib.mkDefault true;
 
