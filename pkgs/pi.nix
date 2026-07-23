@@ -49,6 +49,8 @@ let
     "--prompt-template"
     "${agentStuffPackage}/lib/node_modules/pi-extensions/prompts"
     "--skill"
+    "${agentStuffPackage}/lib/node_modules/pi-extensions/skills"
+    "--skill"
     "${gitHunk}/share/git-hunk/skills/git-hunk"
     "--skill"
     "${jjHunk}/share/jj-hunk/skills/jj-hunk"
