@@ -108,6 +108,7 @@ in
       AIPackages.opencode
       home-manager
       frsNvimPackage
+      ironclaw
     ])
     ++ devEssentialsPackages;
 
@@ -374,9 +375,12 @@ in
       ".codex"
       ".config/gh"
       ".config/git"
+      # IronClaw generates and enables its user unit in this directory.
+      ".config/systemd/user"
       ".config/jj"
       ".config/pypoetry"
       ".foundry"
+      ".ironclaw"
       ".local/state/nix"
       ".local/share/pypoetry"
       ".local/share/uv"
