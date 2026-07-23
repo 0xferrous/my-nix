@@ -26,6 +26,7 @@ final: prev: {
   fr-frame-summon = final.callPackage ./frame-summon.nix { };
   fr-kbd-backlight = final.callPackage ./keyboard-backlight.nix { };
   git-hunk = final.callPackage ./git-hunk.nix { };
+  jj-hunk = final.callPackage ./jj-hunk.nix { };
   google-authenticator-transfer-decode =
     final.callPackage ./google-authenticator-transfer-decode.nix
       { };
@@ -36,6 +37,7 @@ final: prev: {
     piPackage = inputs.llm-agents.packages.${system}.pi;
     agentStuffSrc = inputs."agent-stuff";
     gitHunk = final.git-hunk;
+    jjHunk = final.jj-hunk;
   };
   frsNvimPackage = inputs.frs-nvim.packages.${system}.default;
 }

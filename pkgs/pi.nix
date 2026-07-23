@@ -3,6 +3,7 @@
   piPackage,
   agentStuffSrc,
   gitHunk,
+  jjHunk,
 }:
 let
   lib = pkgs.lib;
@@ -49,9 +50,16 @@ let
     "${agentStuffPackage}/lib/node_modules/pi-extensions/prompts"
     "--skill"
     "${gitHunk}/share/git-hunk/skills/git-hunk"
+    "--skill"
+    "${jjHunk}/share/jj-hunk/skills/jj-hunk"
   ];
 in
 pkgs.writeShellScriptBin "pi" ''
-  export PATH=${lib.makeBinPath [ gitHunk ]}:$PATH
+  export PATH=${
+    lib.makeBinPath [
+      gitHunk
+      jjHunk
+    ]
+  }:$PATH
   exec ${piPackage}/bin/pi ${lib.escapeShellArgs resourceArgs} "$@"
 ''

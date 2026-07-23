@@ -139,11 +139,13 @@ Defines the standalone agent NixOS baseline, including SSH, Tailscale, Nushell, 
 ```text
 pkgs/
 ├── git-hunk.nix
+├── jj-hunk.nix
 ├── install-bin.nix
 └── frs-nvim/
 ```
 
 - `pkgs/git-hunk.nix` packages the `git-hunk` tool.
+- `pkgs/jj-hunk.nix` packages the `jj-hunk` tool.
 - `pkgs/install-bin.nix` packages the `install-bin` helper for symlinking a path into `~/bin`.
 - `pkgs/frs-nvim/` is a nested flake for the portable Neovim distribution.
 

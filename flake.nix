@@ -150,6 +150,7 @@
             fr-frame-summon
             fr-kbd-backlight
             git-hunk
+            jj-hunk
             google-authenticator-transfer-decode
             opensrc
             pi
