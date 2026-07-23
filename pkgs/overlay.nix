@@ -26,6 +26,9 @@ final: prev: {
   fr-frame-summon = final.callPackage ./frame-summon.nix { };
   fr-kbd-backlight = final.callPackage ./keyboard-backlight.nix { };
   git-hunk = final.callPackage ./git-hunk.nix { };
+  google-authenticator-transfer-decode =
+    final.callPackage ./google-authenticator-transfer-decode.nix
+      { };
   opensrc = final.callPackage ./opensrc.nix { };
   "install-bin" = final.callPackage ./install-bin.nix { };
   flake-utils = final.callPackage ./flake-utils.nix { };

@@ -150,6 +150,7 @@
             fr-frame-summon
             fr-kbd-backlight
             git-hunk
+            google-authenticator-transfer-decode
             opensrc
             pi
             flake-utils
@@ -166,6 +167,10 @@
           "install-bin" = {
             type = "app";
             program = "${pkgs."install-bin"}/bin/install-bin";
+          };
+          google-authenticator-transfer-decode = {
+            type = "app";
+            program = "${pkgs.google-authenticator-transfer-decode}/bin/google-authenticator-transfer-decode";
           };
         };
       };
