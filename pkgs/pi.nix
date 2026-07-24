@@ -7,11 +7,27 @@
 }:
 let
   lib = pkgs.lib;
+  agentStuffFixedSrc =
+    pkgs.runCommand "agent-stuff-fixed-src"
+      {
+        outputHashMode = "recursive";
+        outputHashAlgo = "sha256";
+        outputHash = "sha256-X6xxhjNaj/Ok6YJPkBr5chv7QEMR+qs38u9UJBx0pfc=";
+        nativeBuildInputs = [ pkgs.npm-lockfile-fix ];
+      }
+      ''
+        cp -R ${agentStuffSrc} $out
+        chmod -R u+w $out
+        npm-lockfile-fix $out/package-lock.json
+      '';
+
   agentStuffPackage = pkgs.buildNpmPackage {
     pname = "agent-stuff";
     version = "unstable";
-    src = agentStuffSrc;
-    npmDepsHash = "sha256-t0Ek9KQ9pSNXmHVmb/VQumZGosx8rb+iteE/IgM1oJY=";
+    src = agentStuffFixedSrc;
+    npmDepsHash = "sha256-bBgWVbCWIk6yO/X5hd+2csRKNFZEvQE5LW6x5+EZ5rk=";
+    npmDepsFetcherVersion = 2;
+
     dontNpmBuild = true;
     npmInstallFlags = [
       "--ignore-scripts"
@@ -21,35 +37,40 @@ let
       "--ignore-scripts"
       "--omit=optional"
     ];
+
+    postInstall = ''
+      mkdir -p $out/share/pi-extensions
+      cp -R extensions themes prompts skills package.json $out/share/pi-extensions/
+    '';
   };
 
   resourceArgs = [
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/notify.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/notify.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/turn-timer.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/turn-timer.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/vendored/usage-bar.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/vendored/usage-bar.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/block-sensitive-files.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/block-sensitive-files.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/followup.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/followup.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/agent-summary.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/agent-summary.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/idle-inhibit.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/idle-inhibit.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/vendored/read-mode.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/vendored/read-mode.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/vendored/tps.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/vendored/tps.ts"
     "--extension"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/extensions/codex-web-search/index.ts"
+    "${agentStuffPackage}/share/pi-extensions/extensions/codex-web-search/index.ts"
     "--theme"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/themes/gruvbox-material-dark-hard.json"
+    "${agentStuffPackage}/share/pi-extensions/themes/gruvbox-material-dark-hard.json"
     "--prompt-template"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/prompts"
+    "${agentStuffPackage}/share/pi-extensions/prompts"
     "--skill"
-    "${agentStuffPackage}/lib/node_modules/pi-extensions/skills"
+    "${agentStuffPackage}/share/pi-extensions/skills"
     "--skill"
     "${gitHunk}/share/git-hunk/skills/git-hunk"
     "--skill"
