@@ -169,9 +169,13 @@ in
     enable = true;
     settings.Resolve = {
       Cache = "yes";
-      DNSOverTLS = "opportunistic";
+      DNSOverTLS = "yes";
       DNSSEC = "allow-downgrade";
       DNSStubListener = "yes";
+      DNS = [
+        "1.1.1.1#cloudflare-dns.com"
+        "1.0.0.1#cloudflare-dns.com"
+      ];
       FallbackDNS = [
         "1.1.1.1#cloudflare-dns.com"
         "1.0.0.1#cloudflare-dns.com"
@@ -182,10 +186,7 @@ in
   };
   services.tailscale.enable = true;
 
-  networking.nameservers = [
-    "1.1.1.1"
-    "1.0.0.1"
-  ];
+  networking.nameservers = lib.mkForce [ ];
 
   environment.shells = [ pkgs.nushell ];
 
