@@ -30,9 +30,7 @@ The root flake currently exports these main groups:
 - `nixosModules`: reusable NixOS modules from `modules/nixos/default.nix`.
 - `homeConfigs.fr`: public Home Manager config wrapper importing `config/fr/home.nix` and passing flake inputs through `_module.args.myNixInputs`.
 - `nixosConfigs.fr`: public NixOS config from `config/fr/nixos.nix`.
-- `nixosConfigs.agent`: base agent NixOS config from `config/agent/nixos.nix`.
-- `nixosConfigs.agent-with-hermes`: agent NixOS config with Hermes and its user gateway enabled.
-- `nixosConfigurations.agent` and `nixosConfigurations.agent-with-hermes`: standalone builds of those two agent variants.
+- `nixosConfigs.agent`: agent NixOS config from `config/agent/nixos.nix`.
 
 ## `lib/`
 

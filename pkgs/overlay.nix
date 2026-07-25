@@ -31,11 +31,6 @@ final: prev: {
   google-authenticator-transfer-decode =
     final.callPackage ./google-authenticator-transfer-decode.nix
       { };
-  # Upstream's Electron headers hash is stale. Keep this patch local and
-  # assertion-guarded so an upstream fix makes the workaround fail loudly.
-  hermes-desktop = final.callPackage ./hermes-desktop.nix {
-    inherit inputs system;
-  };
   opensrc = final.callPackage ./opensrc.nix { };
   "install-bin" = final.callPackage ./install-bin.nix { };
   flake-utils = final.callPackage ./flake-utils.nix { };

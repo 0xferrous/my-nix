@@ -28,8 +28,4 @@ with pkgs;
   AIPackages.amp
   AIPackages.pi
   AIPackages.tuicr
-
-  # Uses the minimal Hermes agent and locally patches upstream's stale
-  # Electron headers hash; see pkgs/hermes-desktop.nix.
-  hermes-desktop
 ]
