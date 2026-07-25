@@ -21,6 +21,15 @@
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hermes-home = {
+      url = "path:/home/dmnt/dev/fr/open-source/hermes-home.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
     libgit2-patched = {
       url = "github:0xferrous/libgit2?ref=fix/read-only-mmap-private";
       flake = false;
@@ -140,6 +149,28 @@
         overlays = [ overlay ];
       };
       lib = pkgs.lib;
+      agentModuleArgs = {
+        myNixInputs = inputs;
+        inherit
+          fenix
+          ghmd
+          home-manager
+          impermanence
+          nix-index-database
+          ;
+      };
+      mkAgentModule =
+        enableHermes: moduleArgs:
+        import ./config/agent/nixos.nix (moduleArgs // agentModuleArgs // { inherit enableHermes; });
+      mkAgentNixos =
+        enableHermes:
+        inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = agentModuleArgs // {
+            inherit enableHermes;
+          };
+          modules = [ ./config/agent/nixos.nix ];
+        };
     in
     {
       overlays.default = overlay;
@@ -153,6 +184,7 @@
             ironclaw
             jj-hunk
             google-authenticator-transfer-decode
+            hermes-desktop
             opensrc
             pi
             flake-utils
@@ -221,33 +253,13 @@
         fr = import ./config/fr/nixos.nix {
           inherit dms fenix ghmd;
         };
-        agent = import ./config/agent/nixos.nix {
-          myNixInputs = inputs;
-          inherit
-            fenix
-            ghmd
-            home-manager
-            impermanence
-            nix-index-database
-            ;
-        };
+        agent = mkAgentModule false;
+        agent-with-hermes = mkAgentModule true;
       };
 
-      nixosConfigurations.agent = inputs.nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          myNixInputs = inputs;
-          inherit
-            fenix
-            ghmd
-            home-manager
-            impermanence
-            nix-index-database
-            ;
-        };
-        modules = [
-          ./config/agent/nixos.nix
-        ];
+      nixosConfigurations = {
+        agent = mkAgentNixos false;
+        agent-with-hermes = mkAgentNixos true;
       };
 
       devShells.${system}.default = pkgs.mkShell {

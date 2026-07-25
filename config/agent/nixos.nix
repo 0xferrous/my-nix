@@ -5,11 +5,14 @@
   impermanence,
   myNixInputs,
   nix-index-database,
+  enableHermes ? false,
   ...
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
+  hermesPackage = myNixInputs.hermes-agent.packages.${system}.default;
+  hermesServePort = 9119;
   devEssentialsPackages = import ../shared/packages/dev-essentials.nix { inherit pkgs; };
   impermanenceRoot = "/persist";
   lowerStoreUri = "local?real=/nix/.ro-store&state=/run/ash/shares/ro/guest-store-state&read-only=true";
@@ -186,6 +189,8 @@ in
   };
   services.tailscale.enable = true;
 
+  # Expose the Hermes Desktop backend on the configured network interfaces.
+  networking.firewall.allowedTCPPorts = lib.optional enableHermes hermesServePort;
   networking.nameservers = lib.mkForce [ ];
 
   environment.shells = [ pkgs.nushell ];
@@ -213,11 +218,23 @@ in
       { ... }:
       {
         imports = [
+          myNixInputs.hermes-home.homeManagerModules.default
           ../../modules/home/programs/direnv.nix
           ../../modules/home/programs/foundry.nix
         ];
 
         home.stateVersion = "26.05";
+
+        programs.hermes-agent = {
+          enable = enableHermes;
+          package = hermesPackage;
+          gateway.enable = enableHermes;
+          serve = {
+            enable = enableHermes;
+            host = "0.0.0.0";
+            port = hermesServePort;
+          };
+        };
 
         programs.devenv = {
           enable = true;
@@ -388,7 +405,8 @@ in
       ".local/share/zoxide"
       ".pi"
       ".supermaven"
-    ];
+    ]
+    ++ lib.optional enableHermes ".hermes";
   };
 
   system.stateVersion = "26.05";
