@@ -199,6 +199,9 @@ in
     shell = pkgs.nushell;
     extraGroups = [ "wheel" ];
     hashedPassword = "!";
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGIBIABk26sFfyg3iuOTK+6iZ2RhkiNXEJZ8wmgDUrhB"
+    ];
   };
 
   security.sudo.wheelNeedsPassword = false;
