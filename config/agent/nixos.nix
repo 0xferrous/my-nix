@@ -108,7 +108,6 @@ in
       AIPackages.opencode
       home-manager
       frsNvimPackage
-      herdr
       ironclaw
     ])
     ++ devEssentialsPackages;
@@ -214,79 +213,7 @@ in
     extraSpecialArgs = {
       inherit myNixInputs;
     };
-    users.agent =
-      { ... }:
-      {
-        imports = [
-          ../../modules/home/programs/direnv.nix
-          ../../modules/home/programs/foundry.nix
-        ];
-
-        home.stateVersion = "26.05";
-
-        home.packages = [ myNixInputs.codexbar.packages.${system}.default ];
-
-        systemd.user.services.herdr = {
-          Unit.Description = "Herdr agent multiplexer server";
-          Service = {
-            ExecStart = "${pkgs.herdr}/bin/herdr server";
-            Restart = "on-failure";
-          };
-          Install.WantedBy = [ "default.target" ];
-        };
-
-        programs.devenv = {
-          enable = true;
-          enableNushellIntegration = true;
-        };
-
-        programs.fzf = {
-          enable = true;
-          enableNushellIntegration = true;
-        };
-
-        programs.carapace = {
-          enable = true;
-          enableNushellIntegration = true;
-        };
-
-        programs.nix-your-shell = {
-          enable = true;
-          enableNushellIntegration = true;
-        };
-
-        programs.nushell = {
-          enable = true;
-          environmentVariables.DEVENV_SHELL_TYPE = "nu";
-          settings.show_banner = false;
-          # Load after the fzf/zoxide snippets supplied by Home Manager.
-          extraConfig = lib.mkAfter (builtins.readFile ../shared/nushell/kitty-ssh-cwd.nu);
-        };
-
-        # Nushell creates a starter config when this file is absent. It must not
-        # block Home Manager from installing the declarative config on boot.
-        home.file."/home/agent/.config/nushell/config.nu".force = true;
-
-        programs.zoxide = {
-          enable = true;
-          enableNushellIntegration = true;
-          enableZshIntegration = lib.mkForce false;
-          options = [
-            "--cmd"
-            "cd"
-          ];
-        };
-
-        fr.direnv = {
-          enable = true;
-          devenv.enable = true;
-          poetry.enable = true;
-          layoutDir = {
-            enable = true;
-            baseDir = "/home/agent/.cache/direnv/layouts";
-          };
-        };
-      };
+    users.agent = import ./home.nix;
   };
 
   systemd.tmpfiles.rules = [
