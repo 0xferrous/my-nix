@@ -219,6 +219,8 @@ in
 
         home.stateVersion = "26.05";
 
+        home.packages = [ myNixInputs.codexbar.packages.${system}.default ];
+
         programs.devenv = {
           enable = true;
           enableNushellIntegration = true;
