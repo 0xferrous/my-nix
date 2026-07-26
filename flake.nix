@@ -147,6 +147,7 @@
       packages = lib.recursiveUpdate frs-nvim.packages {
         ${system} = {
           inherit (pkgs)
+            codeg-server
             fr-frame-summon
             fr-kbd-backlight
             git-hunk
