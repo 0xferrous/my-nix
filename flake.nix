@@ -155,6 +155,7 @@
             google-authenticator-transfer-decode
             opensrc
             pi
+            takopi
             flake-utils
             ;
           "install-bin" = pkgs."install-bin";
@@ -165,6 +166,10 @@
           pi = {
             type = "app";
             program = "${pkgs.pi}/bin/pi";
+          };
+          takopi = {
+            type = "app";
+            program = "${pkgs.takopi}/bin/takopi";
           };
           "install-bin" = {
             type = "app";

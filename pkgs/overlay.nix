@@ -32,6 +32,7 @@ final: prev: {
     final.callPackage ./google-authenticator-transfer-decode.nix
       { };
   opensrc = final.callPackage ./opensrc.nix { };
+  takopi = final.callPackage ./takopi.nix { };
   "install-bin" = final.callPackage ./install-bin.nix { };
   flake-utils = final.callPackage ./flake-utils.nix { };
   pi = final.callPackage ./pi.nix {
