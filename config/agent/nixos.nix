@@ -108,6 +108,7 @@ in
       AIPackages.opencode
       home-manager
       frsNvimPackage
+      herdr
       ironclaw
     ])
     ++ devEssentialsPackages;
@@ -196,6 +197,7 @@ in
     group = "users";
     home = "/home/agent";
     createHome = true;
+    linger = true;
     shell = pkgs.nushell;
     extraGroups = [ "wheel" ];
     hashedPassword = "!";
@@ -223,6 +225,15 @@ in
         home.stateVersion = "26.05";
 
         home.packages = [ myNixInputs.codexbar.packages.${system}.default ];
+
+        systemd.user.services.herdr = {
+          Unit.Description = "Herdr agent multiplexer server";
+          Service = {
+            ExecStart = "${pkgs.herdr}/bin/herdr server";
+            Restart = "on-failure";
+          };
+          Install.WantedBy = [ "default.target" ];
+        };
 
         programs.devenv = {
           enable = true;
@@ -381,6 +392,7 @@ in
       ".codex"
       ".config/gh"
       ".config/git"
+      ".config/herdr"
       # IronClaw generates and enables its user unit in this directory.
       ".config/systemd/user"
       ".config/jj"
