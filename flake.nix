@@ -223,6 +223,12 @@
             _module.args.myNixInputs = inputs;
           };
       };
+      homeConfigurations.agent = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs.myNixInputs = inputs;
+        modules = [ ./config/agent/home.nix ];
+      };
+
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
           inherit dms fenix ghmd;
