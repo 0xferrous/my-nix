@@ -23,7 +23,6 @@ final: prev: {
     '';
   };
 
-  codeg-server = final.callPackage ./codeg-server.nix { };
   fr-frame-summon = final.callPackage ./frame-summon.nix { };
   fr-kbd-backlight = final.callPackage ./keyboard-backlight.nix { };
   git-hunk = final.callPackage ./git-hunk.nix { };
