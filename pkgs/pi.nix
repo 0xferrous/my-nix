@@ -3,6 +3,7 @@
   piPackage,
   agentStuffSrc,
   gitHunk,
+  herdr,
   jjHunk,
 }:
 let
@@ -44,7 +45,21 @@ let
     '';
   };
 
+  herdrPiExtension =
+    pkgs.runCommand "herdr-pi-extension-${herdr.version}"
+      {
+        nativeBuildInputs = [ herdr ];
+      }
+      ''
+        export HOME="$TMPDIR/home"
+        mkdir -p "$HOME/.pi/agent/extensions"
+        herdr integration install pi
+        cp "$HOME/.pi/agent/extensions/herdr-agent-state.ts" "$out"
+      '';
+
   resourceArgs = [
+    "--extension"
+    "${herdrPiExtension}"
     "--extension"
     "${agentStuffPackage}/share/pi-extensions/extensions/notify.ts"
     "--extension"
