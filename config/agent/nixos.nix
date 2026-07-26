@@ -392,6 +392,7 @@ in
       ".local/share/uv"
       ".local/share/zoxide"
       ".pi"
+      ".ssh"
       ".supermaven"
     ];
   };
