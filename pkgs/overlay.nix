@@ -41,5 +41,6 @@ final: prev: {
     gitHunk = final.git-hunk;
     jjHunk = final.jj-hunk;
   };
+  pi-acp = final.callPackage ./pi-acp.nix { };
   frsNvimPackage = inputs.frs-nvim.packages.${system}.default;
 }

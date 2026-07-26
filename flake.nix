@@ -155,6 +155,7 @@
             google-authenticator-transfer-decode
             opensrc
             pi
+            pi-acp
             takopi
             flake-utils
             ;
