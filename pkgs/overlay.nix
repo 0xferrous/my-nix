@@ -35,6 +35,7 @@ final: prev: {
   takopi = final.callPackage ./takopi.nix { };
   "install-bin" = final.callPackage ./install-bin.nix { };
   flake-utils = final.callPackage ./flake-utils.nix { };
+  plannotator-pi-extension = final.callPackage ./plannotator-pi-extension.nix { };
   pi = final.callPackage ./pi.nix {
     piPackage = inputs.llm-agents.packages.${system}.pi;
     agentStuffSrc = inputs."agent-stuff";
