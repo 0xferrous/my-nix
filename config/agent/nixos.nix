@@ -14,6 +14,7 @@ let
   impermanenceRoot = "/persist";
   lowerStoreUri = "local?real=/nix/.ro-store&state=/run/ash/shares/ro/guest-store-state&read-only=true";
   upperStoreState = "/run/ash/shares/rw/guest-store-state";
+  ashHostCacheUrl = "http://192.168.127.1:5000";
   # Keep the writable store database beside its upper layer. Both must have the
   # same lifetime; persisting the database in /nix/var/nix while rebuilding the
   # Ash shares leaves Nix believing deleted upper-layer paths are still valid.
@@ -23,7 +24,7 @@ let
   agentStoreUri = "local-overlay://?state=${lib.escapeURL upperStoreState}&lower-store=${lib.escapeURL lowerStoreUri}&upper-layer=${lib.escapeURL "/run/ash/shares/rw/guest-store-upper"}&check-mount=false";
   binaryCaches = [
     {
-      url = "http://10.0.2.2:5000?priority=30";
+      url = "${ashHostCacheUrl}?priority=30";
       key = "nixos-1:TpdALX3FryCxN1I/WG+lhTeme19H/Ka035MJchdsYH4=";
     }
     {
@@ -89,7 +90,7 @@ in
 
   environment.sessionVariables = {
     EDITOR = "nvim";
-    HARMONIA_CACHE_URL = "http://10.0.2.2:5000";
+    HARMONIA_CACHE_URL = ashHostCacheUrl;
   };
 
   # Only the privileged daemon should open the local overlay store directly.
@@ -186,6 +187,9 @@ in
   };
   services.tailscale.enable = true;
 
+  # Agent VMs run behind the host-only Ash bridge. Allow host access to any
+  # service started inside the guest without maintaining a per-port allowlist.
+  networking.firewall.enable = false;
   networking.nameservers = lib.mkForce [ ];
 
   environment.shells = [ pkgs.nushell ];
