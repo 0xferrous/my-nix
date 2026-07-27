@@ -44,6 +44,9 @@ final: prev: {
     plannotatorPiExtension = final.plannotator-pi-extension;
     zjRadarCli = inputs.zj-radar.packages.${system}.zj-radar-cli;
   };
+  piDev = final.pi.override {
+    agentStuffPath = "~/dev/fr/agent-stuff";
+  };
   pi-acp = final.callPackage ./pi-acp.nix { };
   frsNvimPackage = inputs.frs-nvim.packages.${system}.default;
 }

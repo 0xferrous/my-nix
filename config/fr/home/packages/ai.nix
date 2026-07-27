@@ -26,6 +26,6 @@ with pkgs;
   myNixInputs.codexbar.packages.${system}.default
   AIPackages.codex
   AIPackages.amp
-  AIPackages.pi
+  pkgs.piDev
   AIPackages.tuicr
 ]

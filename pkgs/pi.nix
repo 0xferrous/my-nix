@@ -2,6 +2,7 @@
   pkgs,
   piPackage,
   agentStuffSrc,
+  agentStuffPath ? null,
   gitHunk,
   herdr,
   jjHunk,
@@ -59,39 +60,16 @@ let
         cp "$HOME/.pi/agent/extensions/herdr-agent-state.ts" "$out"
       '';
 
-  resourceArgs = [
+  agentStuffRoot =
+    if agentStuffPath == null then "${agentStuffPackage}/share/pi-extensions" else agentStuffPath;
+
+  staticResourceArgs = [
     "--extension"
     "${herdrPiExtension}"
     "--extension"
     "${./pi/zj-radar.ts}"
     "--extension"
     "${plannotatorPiExtension}/share/pi-extensions/plannotator/apps/pi-extension/index.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/notify.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/turn-timer.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/vendored/usage-bar.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/block-sensitive-files.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/followup.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/agent-summary.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/idle-inhibit.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/vendored/read-mode.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/vendored/tps.ts"
-    "--extension"
-    "${agentStuffPackage}/share/pi-extensions/extensions/codex-web-search/index.ts"
-    "--theme"
-    "${agentStuffPackage}/share/pi-extensions/themes/gruvbox-material-dark-hard.json"
-    "--prompt-template"
-    "${agentStuffPackage}/share/pi-extensions/prompts"
-    "--skill"
-    "${agentStuffPackage}/share/pi-extensions/skills"
     "--skill"
     "${gitHunk}/share/git-hunk/skills/git-hunk"
     "--skill"
@@ -106,5 +84,37 @@ pkgs.writeShellScriptBin "pi" ''
       zjRadarCli
     ]
   }:$PATH
-  exec ${piPackage}/bin/pi ${lib.escapeShellArgs resourceArgs} "$@"
+
+  agent_stuff_root=${lib.escapeShellArg agentStuffRoot}
+  if [[ "$agent_stuff_root" == "~/"* ]]; then
+    agent_stuff_root="$HOME/''${agent_stuff_root:2}"
+  fi
+
+  if [[ ! -d "$agent_stuff_root/extensions" \
+    || ! -d "$agent_stuff_root/prompts" \
+    || ! -d "$agent_stuff_root/skills" \
+    || ! -d "$agent_stuff_root/themes" ]]; then
+    echo "pi: invalid agent-stuff path: $agent_stuff_root" >&2
+    echo "expected extensions/, prompts/, skills/, and themes/ directories" >&2
+    exit 2
+  fi
+
+  resource_args=(
+    ${lib.escapeShellArgs staticResourceArgs}
+    --extension "$agent_stuff_root/extensions/notify.ts"
+    --extension "$agent_stuff_root/extensions/turn-timer.ts"
+    --extension "$agent_stuff_root/extensions/vendored/usage-bar.ts"
+    --extension "$agent_stuff_root/extensions/block-sensitive-files.ts"
+    --extension "$agent_stuff_root/extensions/followup.ts"
+    --extension "$agent_stuff_root/extensions/agent-summary.ts"
+    --extension "$agent_stuff_root/extensions/idle-inhibit.ts"
+    --extension "$agent_stuff_root/extensions/vendored/read-mode.ts"
+    --extension "$agent_stuff_root/extensions/vendored/tps.ts"
+    --extension "$agent_stuff_root/extensions/codex-web-search/index.ts"
+    --theme "$agent_stuff_root/themes/gruvbox-material-dark-hard.json"
+    --prompt-template "$agent_stuff_root/prompts"
+    --skill "$agent_stuff_root/skills"
+  )
+
+  exec ${piPackage}/bin/pi "''${resource_args[@]}" "$@"
 ''

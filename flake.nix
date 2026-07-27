@@ -160,6 +160,7 @@
             google-authenticator-transfer-decode
             opensrc
             pi
+            piDev
             pi-acp
             takopi
             flake-utils
@@ -172,6 +173,10 @@
           pi = {
             type = "app";
             program = "${pkgs.pi}/bin/pi";
+          };
+          piDev = {
+            type = "app";
+            program = "${pkgs.piDev}/bin/pi";
           };
           takopi = {
             type = "app";
