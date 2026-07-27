@@ -248,6 +248,21 @@
         "type": "github"
       }
     },
+    "crane": {
+      "locked": {
+        "lastModified": 1781825982,
+        "narHash": "sha256-SlXKwIRIhrOSAcTjCB3ftPLzJWZStQIPS7J1FlZPnKk=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "469fd08d0bcf6926321fa973c6777fbc87785dd7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -491,6 +506,24 @@
     "flake-utils_11": {
       "inputs": {
         "systems": "systems_14"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_12": {
+      "inputs": {
+        "systems": "systems_15"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -1541,7 +1574,8 @@
         "nvimpager": "nvimpager",
         "voxtype": "voxtype",
         "wifitui": "wifitui",
-        "zen-browser": "zen-browser"
+        "zen-browser": "zen-browser",
+        "zj-radar": "zj-radar"
       }
     },
     "rust-analyzer-src": {
@@ -1691,6 +1725,21 @@
       }
     },
     "systems_14": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_15": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
@@ -1971,6 +2020,32 @@
       "original": {
         "owner": "0xc000022070",
         "repo": "zen-browser-flake",
+        "type": "github"
+      }
+    },
+    "zj-radar": {
+      "inputs": {
+        "crane": "crane",
+        "fenix": [
+          "fenix"
+        ],
+        "flake-utils": "flake-utils_12",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785107586,
+        "narHash": "sha256-/FikabN8kMcakE3E/qy3iPptLTCXONMc0NT4EqLidqc=",
+        "owner": "0xferrous",
+        "repo": "zj-radar",
+        "rev": "543ce945b48c163aba480324b86d051b724a6b2a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xferrous",
+        "ref": "fix/theme",
+        "repo": "zj-radar",
         "type": "github"
       }
     }

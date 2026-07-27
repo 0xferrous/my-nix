@@ -5,6 +5,7 @@
   gitHunk,
   herdr,
   jjHunk,
+  zjRadarCli,
 }:
 let
   lib = pkgs.lib;
@@ -61,6 +62,8 @@ let
     "--extension"
     "${herdrPiExtension}"
     "--extension"
+    "${./pi/zj-radar.ts}"
+    "--extension"
     "${agentStuffPackage}/share/pi-extensions/extensions/notify.ts"
     "--extension"
     "${agentStuffPackage}/share/pi-extensions/extensions/turn-timer.ts"
@@ -97,6 +100,7 @@ pkgs.writeShellScriptBin "pi" ''
     lib.makeBinPath [
       gitHunk
       jjHunk
+      zjRadarCli
     ]
   }:$PATH
   exec ${piPackage}/bin/pi ${lib.escapeShellArgs resourceArgs} "$@"

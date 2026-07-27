@@ -41,6 +41,7 @@ final: prev: {
     agentStuffSrc = inputs."agent-stuff";
     gitHunk = final.git-hunk;
     jjHunk = final.jj-hunk;
+    zjRadarCli = inputs.zj-radar.packages.${system}.zj-radar-cli;
   };
   pi-acp = final.callPackage ./pi-acp.nix { };
   frsNvimPackage = inputs.frs-nvim.packages.${system}.default;

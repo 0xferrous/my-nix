@@ -109,6 +109,11 @@
       url = "github:0xferrous/ghmd";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    zj-radar = {
+      url = "github:0xferrous/zj-radar?ref=fix/theme";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.fenix.follows = "fenix";
+    };
     # agent-images = {
     #   url = "github:0xferrous/agent-images/feat/nix-ld";
     #   inputs.nixpkgs.follows = "nixpkgs";

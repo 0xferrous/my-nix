@@ -6,6 +6,16 @@
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
+  zjRadar = myNixInputs.zj-radar.packages.${system};
+  zjRadarPlugin =
+    pkgs.runCommand "zellij-plugin-zj-radar.wasm"
+      {
+        pname = "zellij-zj-radar";
+        meta.platforms = lib.platforms.unix;
+      }
+      ''
+        cp ${zjRadar.default}/bin/zj_radar.wasm "$out"
+      '';
 in
 {
   imports = [
@@ -81,6 +91,36 @@ in
       "--cmd"
       "cd"
     ];
+  };
+
+  programs.zellij = {
+    enable = true;
+    plugins = [ zjRadarPlugin ];
+    layouts.radar-sidebar = ./zellij-radar.kdl;
+    settings = {
+      default_layout = "radar-sidebar";
+      theme = "gruvbox-dark";
+      pane_frames = false;
+      plugins."zj-radar" = {
+        density = "cards";
+        glyphs = "nerd";
+        naming = "managed";
+        # Zellij 0.44 can delay the initial ModeUpdate for `attach --create`
+        # sessions. Seed Gruvbox immediately; a later mode update still wins.
+        theme_bg = "#3c3836";
+        theme_fg = "#fbf1c7";
+        # Match Zellij's built-in gruvbox-dark text colors exactly: unselected
+        # uses #3c3836, selected uses #504945, and both use #fbf1c7 text.
+        theme_rail_bg = "#3c3836";
+        theme_idle_bg = "#3c3836";
+        theme_agent_bg = "#3c3836";
+        theme_active_bg = "#504945";
+        theme_flash_bg = "#504945";
+        theme_dim_fg = "#fbf1c7";
+        theme_idle_fg = "#fbf1c7";
+        theme_stale_fg = "#fbf1c7";
+      };
+    };
   };
 
   fr.direnv = {
