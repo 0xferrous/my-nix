@@ -43,6 +43,9 @@ build-agent-system:
 switch-agent-nixos:
   nh -e sudo os switch . --hostname agent
 
+switch-agent-hm:
+  nh home switch . -c agent
+
 build-agent-closure-info:
   mkdir -p "{{agent_vm_artifacts_dir}}"
   nix build --impure --expr 'let flake = builtins.getFlake (toString ./.); system = flake.nixosConfigurations.agent; in system.pkgs.closureInfo { rootPaths = [ system.config.system.build.toplevel ]; }' -o "{{agent_vm_closure_info_dir}}"
