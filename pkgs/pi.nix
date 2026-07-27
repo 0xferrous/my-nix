@@ -5,6 +5,7 @@
   gitHunk,
   herdr,
   jjHunk,
+  plannotatorPiExtension,
   zjRadarCli,
 }:
 let
@@ -63,6 +64,8 @@ let
     "${herdrPiExtension}"
     "--extension"
     "${./pi/zj-radar.ts}"
+    "--extension"
+    "${plannotatorPiExtension}/share/pi-extensions/plannotator/apps/pi-extension/index.ts"
     "--extension"
     "${agentStuffPackage}/share/pi-extensions/extensions/notify.ts"
     "--extension"
