@@ -9,6 +9,7 @@
 {
   imports = [
     ghmd.nixosModules.default
+    ../../../modules/nixos/ash-vm-network.nix
     ../../../modules/nixos/bluetooth-keyboard-wake.nix
     ../../../modules/nixos/desktop-portal.nix
     ../../../modules/nixos/power-management.nix
