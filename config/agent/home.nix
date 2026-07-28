@@ -27,7 +27,10 @@ in
     username = "agent";
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
-    packages = [ myNixInputs.codexbar.packages.${system}.default ];
+    packages = [
+      myNixInputs.codexbar.packages.${system}.default
+      pkgs.ashWrappers.wl-paste
+    ];
   };
 
   # Nushell creates a starter config when this file is absent. Remove it before
