@@ -91,6 +91,8 @@ in
   environment.sessionVariables = {
     EDITOR = "nvim";
     HARMONIA_CACHE_URL = ashHostCacheUrl;
+    PLANNOTATOR_REMOTE = "1";
+    PLANNOTATOR_PORT = "19432";
   };
 
   # Agent workloads commonly run many file watchers and subprocesses in the
