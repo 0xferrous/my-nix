@@ -3,6 +3,8 @@
   system,
 }:
 final: prev: {
+  herdr = inputs.llm-agents.packages.${system}.herdr;
+
   fzf = final.symlinkJoin {
     inherit (prev.fzf) pname version;
     name = "${prev.fzf.pname}-${prev.fzf.version}";
