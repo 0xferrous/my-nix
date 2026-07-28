@@ -12,6 +12,10 @@ in
         DNSOverTLS = lib.mkDefault "opportunistic";
         DNSSEC = lib.mkDefault "allow-downgrade";
         DNSStubListener = "yes";
+        DNS = lib.mkDefault [
+          "1.1.1.1#cloudflare-dns.com"
+          "1.0.0.1#cloudflare-dns.com"
+        ];
         FallbackDNS = lib.mkDefault [
           "1.1.1.1#cloudflare-dns.com"
           "1.0.0.1#cloudflare-dns.com"
@@ -22,11 +26,15 @@ in
     };
 
     networking = {
-      nameservers = lib.mkDefault [
-        "1.1.1.1"
-        "1.0.0.1"
-      ];
-      networkmanager.dns = lib.mkDefault "systemd-resolved";
+      networkmanager = {
+        dns = lib.mkDefault "systemd-resolved";
+        # Prefer public resolvers over DHCP-provided router DNS. Some LAN
+        # routers time out on UDP/53, adding ~15s to first requests.
+        insertNameservers = lib.mkDefault [
+          "1.1.1.1"
+          "1.0.0.1"
+        ];
+      };
       hosts = lib.mkIf (caddyHosts != [ ]) {
         "127.0.0.1" = caddyHosts;
       };
