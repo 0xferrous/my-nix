@@ -84,6 +84,9 @@ in
     substituters = map (cache: cache.url) binaryCaches;
     trusted-public-keys = map (cache: cache.key) binaryCaches;
     trusted-substituters = map (cache: cache.url) binaryCaches;
+    # SQLite WAL mode fails with disk I/O errors on Ash's writable VirtioFS
+    # share, which backs the local-overlay store state database.
+    use-sqlite-wal = false;
   };
 
   environment.etc."ash/local-overlay-store".text = "";
