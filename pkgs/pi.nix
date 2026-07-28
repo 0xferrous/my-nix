@@ -11,24 +11,40 @@
 }:
 let
   lib = pkgs.lib;
-  agentStuffFixedSrc =
-    pkgs.runCommand "agent-stuff-fixed-src"
+  agentStuffLockHash = builtins.substring 0 12 (
+    builtins.hashFile "sha256" "${agentStuffSrc}/package-lock.json"
+  );
+
+  # npm-lockfile-fix needs registry access, so only the repaired lockfile is a
+  # fixed-output derivation. Including the original lockfile hash in its name
+  # prevents Nix from silently reusing it when agent-stuff changes dependencies.
+  agentStuffFixedPackageLock =
+    pkgs.runCommand "agent-stuff-fixed-package-lock-${agentStuffLockHash}"
       {
         outputHashMode = "recursive";
         outputHashAlgo = "sha256";
-        outputHash = "sha256-X6xxhjNaj/Ok6YJPkBr5chv7QEMR+qs38u9UJBx0pfc=";
+        outputHash = "sha256-YJxv0ZRba4avpMJruBMHUPu3g8kpiw+YNyA7P6bf8rQ=";
         nativeBuildInputs = [ pkgs.npm-lockfile-fix ];
       }
       ''
-        cp -R ${agentStuffSrc} $out
-        chmod -R u+w $out
+        mkdir -p $out
+        cp ${agentStuffSrc}/package-lock.json $out/package-lock.json
+        chmod u+w $out/package-lock.json
         npm-lockfile-fix $out/package-lock.json
       '';
+
+  # Keep the full source input-addressed so extension, prompt, skill, and theme
+  # updates always change the resulting package and wrapper.
+  agentStuffPatchedSrc = pkgs.runCommand "agent-stuff-patched-src" { } ''
+    cp -R ${agentStuffSrc} $out
+    chmod -R u+w $out
+    cp ${agentStuffFixedPackageLock}/package-lock.json $out/package-lock.json
+  '';
 
   agentStuffPackage = pkgs.buildNpmPackage {
     pname = "agent-stuff";
     version = "unstable";
-    src = agentStuffFixedSrc;
+    src = agentStuffPatchedSrc;
     npmDepsHash = "sha256-bBgWVbCWIk6yO/X5hd+2csRKNFZEvQE5LW6x5+EZ5rk=";
     npmDepsFetcherVersion = 2;
 
