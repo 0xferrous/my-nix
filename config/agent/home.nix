@@ -50,6 +50,7 @@ in
     Unit.Description = "Herdr agent multiplexer server";
     Service = {
       ExecStart = "${pkgs.herdr}/bin/herdr server";
+      LimitNOFILE = 1048576;
       Restart = "on-failure";
     };
     Install.WantedBy = [ "default.target" ];

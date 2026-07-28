@@ -93,6 +93,21 @@ in
     HARMONIA_CACHE_URL = ashHostCacheUrl;
   };
 
+  # Agent workloads commonly run many file watchers and subprocesses in the
+  # same long-lived SSH or user-systemd session. Keep their descriptor ceiling
+  # comfortably above systemd's default and apply it consistently to services,
+  # user services, and PAM-created login sessions.
+  systemd.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
+  systemd.user.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
+  security.pam.loginLimits = [
+    {
+      domain = "*";
+      type = "-";
+      item = "nofile";
+      value = "1048576";
+    }
+  ];
+
   # Only the privileged daemon should open the local overlay store directly.
   # Unprivileged Nix clients keep the default `auto` store and connect through
   # the daemon socket instead of trying to write /nix/var/nix themselves.
@@ -256,6 +271,9 @@ in
   ];
 
   boot.kernel.sysctl = {
+    "fs.inotify.max_queued_events" = 65536;
+    "fs.inotify.max_user_instances" = 1048576;
+    "fs.inotify.max_user_watches" = 2097152;
     "kernel.unprivileged_userns_clone" = 1;
     "vm.vfs_cache_pressure" = 1000;
   };
