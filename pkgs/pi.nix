@@ -93,6 +93,7 @@ let
   ];
 in
 pkgs.writeShellScriptBin "pi" ''
+  export XDG_SESSION_TYPE=wayland
   export PATH=${
     lib.makeBinPath [
       gitHunk
