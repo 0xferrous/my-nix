@@ -113,7 +113,18 @@ in
   # Only the privileged daemon should open the local overlay store directly.
   # Unprivileged Nix clients keep the default `auto` store and connect through
   # the daemon socket instead of trying to write /nix/var/nix themselves.
-  systemd.services.nix-daemon.environment.NIX_REMOTE = agentStoreUri;
+  #
+  # nix-daemon removes NIX_REMOTE from its process environment, so setting it
+  # through systemd does not select this store. Pass it as an explicit Nix
+  # setting instead.
+  environment.etc."ash/nix-daemon-local-overlay".source =
+    pkgs.writeShellScript "nix-daemon-local-overlay" ''
+      exec ${pkgs.nix}/bin/nix-daemon --daemon --option store ${lib.escapeShellArg agentStoreUri}
+    '';
+  systemd.services.nix-daemon.serviceConfig.ExecStart = lib.mkForce [
+    ""
+    "/etc/ash/nix-daemon-local-overlay"
+  ];
 
   environment.systemPackages =
     (with pkgs; [
