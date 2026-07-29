@@ -18,6 +18,11 @@
       url = "github:0xferrous/ash";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Stable host VM manager, independent from the moving development input.
+    ash-stable = {
+      url = "github:0xferrous/ash/v0.1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -163,6 +168,7 @@
             jj-hunk
             google-authenticator-transfer-decode
             opensrc
+            nash
             pi
             piDev
             pi-acp

@@ -12,6 +12,8 @@ with pkgs;
   nixfmt
   nixfmt-tree
   flake-utils
+  nash
+  myNixInputs."ash-stable".packages.${system}.ash
 
   # Nix utilities
   nurl

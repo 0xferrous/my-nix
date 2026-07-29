@@ -34,6 +34,7 @@ final: prev: {
   git-hunk = final.callPackage ./git-hunk.nix { };
   ironclaw = final.callPackage ./ironclaw.nix { };
   jj-hunk = final.callPackage ./jj-hunk.nix { };
+  nash = final.callPackage ./nash.nix { };
   google-authenticator-transfer-decode =
     final.callPackage ./google-authenticator-transfer-decode.nix
       { };
