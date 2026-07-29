@@ -46,6 +46,7 @@ in
     settings = {
       onboarding = false;
       theme.name = "gruvbox";
+      experimental.kitty_graphics = true;
     };
   };
 
