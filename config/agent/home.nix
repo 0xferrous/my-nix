@@ -30,6 +30,7 @@ in
     packages = [
       myNixInputs.codexbar.packages.${system}.default
       pkgs.ashWrappers.wl-paste
+      # pkgs.ashWrappers.dbusProxy
     ];
   };
 
@@ -49,6 +50,15 @@ in
       experimental.kitty_graphics = true;
     };
   };
+
+  # systemd.user.services.ash-dbus-proxy = {
+  #   Unit.Description = "Ash host notification D-Bus bridge";
+  #   Service = {
+  #     ExecStart = "${pkgs.ashWrappers.dbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
+  #     Restart = "on-failure";
+  #   };
+  #   Install.WantedBy = [ "default.target" ];
+  # };
 
   systemd.user.services.herdr = {
     Unit.Description = "Herdr agent multiplexer server";

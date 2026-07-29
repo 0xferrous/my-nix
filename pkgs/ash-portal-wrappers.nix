@@ -26,11 +26,13 @@ let
 
   gh = mkWrapper "gh";
   wl-paste = mkWrapper "wl-paste";
+  # dbusProxy = mkWrapper "ash-dbus-proxy";
   all = symlinkJoin {
     name = "ash-portal-wrappers";
     paths = [
       gh
       wl-paste
+      # dbusProxy
     ];
     meta = {
       description = "Guest-side wrappers for the Ash Portal";
@@ -40,6 +42,11 @@ let
   };
 in
 {
-  inherit gh wl-paste all;
+  inherit
+    gh
+    wl-paste
+    # dbusProxy
+    all
+    ;
   default = all;
 }
