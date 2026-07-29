@@ -27,7 +27,7 @@ final: prev: {
 
   ashWrappers = import ./ash-portal-wrappers.nix {
     inherit (final) lib runCommand symlinkJoin;
-    ashPackage = inputs.ash.packages.${system}.ash;
+    ashPackage = inputs.ash.packages.${system}.all or inputs.ash.packages.${system}.ash;
   };
   fr-frame-summon = final.callPackage ./frame-summon.nix { };
   fr-kbd-backlight = final.callPackage ./keyboard-backlight.nix { };
