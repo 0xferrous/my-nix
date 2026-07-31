@@ -29,7 +29,7 @@ in
     stateVersion = "26.05";
     packages = [
       myNixInputs.codexbar.packages.${system}.default
-      pkgs.ashWrappers.wl-paste
+      myNixInputs.ash.packages.${system}.agent-portal-wrappers
       # pkgs.ashWrappers.dbusProxy
     ];
   };
