@@ -4,13 +4,6 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
 
 ## In progress / queued
 
-Use this for things I started experimenting with but did not finish successfully yet.
-
-- [ ] add any new repo work here as it lands in the local branch
-
-## Recently completed
-
-- [x] hints packaging and integration — packaged `hints`, added the compositor shortcut, and wired the accessibility/user-services pieces together (`b441c30`)
 - [ ] hints follow-up — unresolved issues:
   - Electron/Chromium still need `--force-renderer-accessibility`; `ACCESSIBILITY_ENABLED=1` alone is not enough, and `~/.config/electron-flags.conf` is not honored by Nixpkgs Electron wrappers.
   - Signal works with AT-SPI only when launched with `--force-renderer-accessibility`; normal launch falls back to noisy OpenCV hints.

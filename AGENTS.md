@@ -22,4 +22,4 @@ Repo-wide instructions:
 - always run `nix fmt` for formatting the code
 - use Conventional Commits for commit subjects (e.g. `feat: ...`, `fix: ...`)
 - wrap commit body lines at 80 characters
-- keep `docs/pending-changes.md` current as the repo's rolling WIP / pending-change log for experiments, partial attempts, and blocked work; add new work there and mark completed items when they land
+- keep `docs/pending-changes.md` focused on active experiments, partial attempts, blocked work, and queued follow-ups; remove entries when they are completed and use Git history or a changelog to record landed work
