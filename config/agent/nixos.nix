@@ -320,9 +320,30 @@ in
     ];
   };
 
-  # Ash appends ash.nix-store=shared|image to the kernel command line. Mount
-  # the matching store layout during stage 1 so one system closure can boot
-  # with either transport.
+  # Ash appends ash.nix-store=shared|image to the kernel command line. Enable
+  # only the matching root mount during stage 1. Conditions on the mount units
+  # alone are insufficient because systemd queues their device dependencies
+  # before evaluating the conditions.
+  boot.initrd.systemd.contents."/etc/systemd/system-generators/ash-nix-store-generator".source =
+    pkgs.writeShellScript "ash-nix-store-generator" ''
+      store_strategy=shared
+      for parameter in $(cat /proc/cmdline); do
+        case "$parameter" in
+          ash.nix-store=shared) store_strategy=shared ;;
+          ash.nix-store=image) store_strategy=image ;;
+        esac
+      done
+
+      case "$store_strategy" in
+        shared) mount_unit=sysroot-nix-store.mount ;;
+        image) mount_unit=sysroot-nix.mount ;;
+      esac
+
+      wants_dir="$1/initrd-fs.target.requires"
+      mkdir -p "$wants_dir"
+      ln -s "/etc/systemd/system/$mount_unit" "$wants_dir/$mount_unit"
+    '';
+
   boot.initrd.systemd.mounts =
     let
       sharedCondition = [ "ash.nix-store=shared" ];
@@ -334,7 +355,6 @@ in
             DefaultDependencies = false;
             ConditionKernelCommandLine = condition;
           };
-          requiredBy = [ "initrd-fs.target" ];
           before = [ "initrd-fs.target" ];
         }
         // mount;
