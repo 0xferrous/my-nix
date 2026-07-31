@@ -196,6 +196,7 @@ Key roles:
 
 ```text
 docs/
+├── pending-changes.md
 ├── portals.md
 ├── public-extraction-plan.md
 └── repository-structure.md

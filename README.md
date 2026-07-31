@@ -8,6 +8,7 @@ Current public building blocks include:
 - `packages.<system>.pi`: `pi` wrapped with default CLI args plus bundled extensions/theme
 - `packages.<system>.install-bin`: helper that symlinks a path into `~/bin` using the path basename
 - [`lib/mkAgentBoxImage.nix`](./lib/mkAgentBoxImage.nix): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
+- [`docs/pending-changes.md`](./docs/pending-changes.md): rolling WIP / pending-change log
 - `nixosModules.virtiofsdNixStore`: socket-activated read-only `/nix/store` sharing via `virtiofsd`
 - `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module
 - `homeManagerModules.direnv`: reusable Home Manager direnv module with configurable Poetry/devenv stdlib helpers
