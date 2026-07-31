@@ -193,6 +193,8 @@ in
 
   services.getty.autologinUser = "agent";
   services.qemuGuest.enable = true;
+  # Virtle's SSH autoprovision action asks QGA to execute `sh` by name.
+  systemd.services.qemu-guest-agent.path = [ pkgs.bash ];
 
   # dbus-broker live-reloads policy when the Nix store overlay changes during a
   # switch. In the agent VM this can briefly observe missing config symlinks and
