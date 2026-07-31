@@ -40,6 +40,11 @@ final: prev: {
       { };
   opensrc = final.callPackage ./opensrc.nix { };
   takopi = final.callPackage ./takopi.nix { };
+  hints = final.callPackage ./hints.nix {
+    source = inputs.hints;
+    atspi2Core = final."at-spi2-core";
+    gtkLayerShell = final."gtk-layer-shell";
+  };
   "install-bin" = final.callPackage ./install-bin.nix { };
   flake-utils = final.callPackage ./flake-utils.nix { };
   plannotator-pi-extension = final.callPackage ./plannotator-pi-extension.nix { };

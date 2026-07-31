@@ -403,6 +403,7 @@ binds {
     // For example, this is a standard bind to toggle the screen reader (orca).
     Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
     Mod+S hotkey-overlay-title="Voice to Text" { spawn "fr-voice-record-toggle"; }
+    Mod+Alt+H hotkey-overlay-title="Hints" { spawn-sh "sleep 0.15; exec hints"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.

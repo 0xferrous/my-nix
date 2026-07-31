@@ -65,6 +65,12 @@ in
       package = lib.mkDefault pkgs.kdePackages.kdeconnect-kde;
     };
 
+    hardware.uinput.enable = lib.mkDefault true;
+
+    users.users = lib.mkIf (cfg.user != "") {
+      ${cfg.user}.extraGroups = [ "uinput" ];
+    };
+
     services.keyd = {
       enable = lib.mkDefault true;
       keyboards.default = {
@@ -78,6 +84,8 @@ in
         };
       };
     };
+
+    services.gnome.at-spi2-core.enable = lib.mkDefault true;
 
     programs.niri = {
       enable = lib.mkDefault true;

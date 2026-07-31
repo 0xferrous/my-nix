@@ -114,11 +114,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785214937,
-        "narHash": "sha256-hbHLqglN7ehk9uSZbWB7wsdgsdxzdfo4WLdmh4gEKyY=",
+        "lastModified": 1785426930,
+        "narHash": "sha256-O6B/+EDiCjsO/zD2t2WpkYSyBe5HDko5YFlWQ2a+myU=",
         "owner": "0xferrous",
         "repo": "ash",
-        "rev": "ce3e216904bda03a942aeda3e7f97fe7916854b1",
+        "rev": "46a64d2a3a5ae3dae1cd23a3ee75855203394bfa",
         "type": "github"
       },
       "original": {
@@ -135,16 +135,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1785340526,
-        "narHash": "sha256-HlzytIRs7RrFRPILEv3/Bw09zOmywwdg70g+81EGnWw=",
+        "lastModified": 1785423581,
+        "narHash": "sha256-Ekg3HGXeZFpEyb9DrhyBofN23BDOaDAuW6F3rhfBnWs=",
         "owner": "0xferrous",
         "repo": "ash",
-        "rev": "1bbd03d27070e84b60a5a3a4274d77999e28cba4",
+        "rev": "69aee26a7998e52bc63d9829721bad6b93d67b15",
         "type": "github"
       },
       "original": {
         "owner": "0xferrous",
-        "ref": "v0.1.1",
+        "ref": "v0.1.3",
         "repo": "ash",
         "type": "github"
       }
@@ -941,6 +941,23 @@
         "type": "github"
       }
     },
+    "hints": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782619071,
+        "narHash": "sha256-JhHoXnZeGBu9m2o3cRUky6Nc5uSc1DkS9V8420jEw+o=",
+        "owner": "AlfredoSequeida",
+        "repo": "hints",
+        "rev": "1b23d729d59f5946426c0dc747cc722b2621b6ca",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AlfredoSequeida",
+        "ref": "0.1.1",
+        "repo": "hints",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -1645,6 +1662,7 @@
         "frs-xofi-menus": "frs-xofi-menus",
         "ghmd": "ghmd",
         "helium": "helium",
+        "hints": "hints",
         "home-manager": "home-manager_2",
         "impermanence": "impermanence",
         "libgit2-patched": "libgit2-patched",

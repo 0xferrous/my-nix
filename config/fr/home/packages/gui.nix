@@ -1,8 +1,9 @@
 { pkgs, ... }:
 with pkgs;
 [
-  # Screenshot
+  # Screenshot / GUI interaction
   flameshot
+  hints
 
   # Media players and viewers
   mpv

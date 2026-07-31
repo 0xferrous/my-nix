@@ -89,7 +89,7 @@ with pkgs;
   ddcui
 
   # Uncertain macOS support — keeping in linux.nix
-  myNixInputs.agent-box.packages.${system}.portal
+  # myNixInputs.agent-box.packages.${system}.portal
   myNixInputs.wifitui.packages.${system}.default
   myNixInputs.numr.packages.${system}.default
   railway-wallet

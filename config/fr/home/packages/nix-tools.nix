@@ -14,6 +14,7 @@ with pkgs;
   flake-utils
   nash
   myNixInputs."ash-stable".packages.${system}.ash
+  myNixInputs.ash.packages.${system}.agent-portal-host
 
   # Nix utilities
   nurl
