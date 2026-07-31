@@ -321,9 +321,9 @@ in
   };
 
   # Ash appends ash.nix-store=shared|image to the kernel command line. Enable
-  # only the matching root mount during stage 1. Conditions on the mount units
-  # alone are insufficient because systemd queues their device dependencies
-  # before evaluating the conditions.
+  # only the matching root mount during stage 1. The image mount unit must not
+  # exist in shared mode: systemd otherwise makes mounts below /sysroot/nix
+  # depend implicitly on that parent mount and its block device.
   boot.initrd.systemd.contents."/etc/systemd/system-generators/ash-nix-store-generator".source =
     pkgs.writeShellScript "ash-nix-store-generator" ''
       store_strategy=shared
@@ -335,19 +335,34 @@ in
       done
 
       case "$store_strategy" in
-        shared) mount_unit=sysroot-nix-store.mount ;;
-        image) mount_unit=sysroot-nix.mount ;;
+        shared)
+          mount_unit=sysroot-nix-store.mount
+          mount_unit_path="/etc/systemd/system/$mount_unit"
+          ;;
+        image)
+          mount_unit=sysroot-nix.mount
+          mount_unit_path="$1/$mount_unit"
+          cat > "$mount_unit_path" <<'EOF'
+      [Unit]
+      DefaultDependencies=false
+      Before=initrd-fs.target
+
+      [Mount]
+      What=/dev/disk/by-label/nix-store
+      Where=/sysroot/nix
+      Type=ext4
+      EOF
+          ;;
       esac
 
       wants_dir="$1/initrd-fs.target.requires"
       mkdir -p "$wants_dir"
-      ln -s "/etc/systemd/system/$mount_unit" "$wants_dir/$mount_unit"
+      ln -s "$mount_unit_path" "$wants_dir/$mount_unit"
     '';
 
   boot.initrd.systemd.mounts =
     let
       sharedCondition = [ "ash.nix-store=shared" ];
-      imageCondition = [ "ash.nix-store=image" ];
       initrdMount =
         condition: mount:
         {
@@ -366,11 +381,6 @@ in
       sharedMountUnits = map (path: "${utils.escapeSystemdPath path}.mount") sharedMountPaths;
     in
     [
-      (initrdMount imageCondition {
-        what = "/dev/disk/by-label/nix-store";
-        where = "/sysroot/nix";
-        type = "ext4";
-      })
       (initrdMount sharedCondition {
         what = "ro-store";
         where = "/sysroot/nix/.ro-store";
