@@ -84,6 +84,7 @@ in
       "read-only-local-store"
     ];
     substituters = map (cache: cache.url) binaryCaches;
+    fsync-metadata = false;
     trusted-public-keys = map (cache: cache.key) binaryCaches;
     trusted-substituters = map (cache: cache.url) binaryCaches;
     # SQLite WAL mode fails with disk I/O errors on Ash's writable VirtioFS
