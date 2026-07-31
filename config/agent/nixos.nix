@@ -273,6 +273,9 @@ in
 
   boot.loader.grub.enable = false;
 
+  # Keep stage-1 failures debuggable from Ash's interactive serial console.
+  boot.initrd.systemd.emergencyAccess = true;
+
   boot.initrd.availableKernelModules = [
     "virtio_pci"
     "virtio_blk"
