@@ -5,6 +5,7 @@
   impermanence,
   myNixInputs,
   nix-index-database,
+  utils,
   ...
 }:
 let
@@ -114,20 +115,29 @@ in
     }
   ];
 
-  # Only the privileged daemon should open the local overlay store directly.
-  # Unprivileged Nix clients keep the default `auto` store and connect through
-  # the daemon socket instead of trying to write /nix/var/nix themselves.
-  #
-  # nix-daemon removes NIX_REMOTE from its process environment, so setting it
-  # through systemd does not select this store. Pass it as an explicit Nix
-  # setting instead.
-  environment.etc."ash/nix-daemon-local-overlay".source =
-    pkgs.writeShellScript "nix-daemon-local-overlay" ''
-      exec ${pkgs.nix}/bin/nix-daemon --daemon --option store ${lib.escapeShellArg agentStoreUri}
-    '';
+  # Select the daemon store implementation from the transport Ash records on
+  # the kernel command line. Shared mode uses the host-backed local-overlay
+  # store; image mode uses the regular local store inside the ext4 image.
+  environment.etc."ash/nix-daemon".source = pkgs.writeShellScript "ash-nix-daemon" ''
+    store_strategy=shared
+    for parameter in $(cat /proc/cmdline); do
+      case "$parameter" in
+        ash.nix-store=shared) store_strategy=shared ;;
+        ash.nix-store=image) store_strategy=image ;;
+      esac
+    done
+
+    if [ "$store_strategy" = image ]; then
+      exec ${pkgs.nix}/bin/nix-daemon --daemon
+    fi
+
+    # nix-daemon removes NIX_REMOTE from its process environment, so pass the
+    # local-overlay store as an explicit Nix setting.
+    exec ${pkgs.nix}/bin/nix-daemon --daemon --option store ${lib.escapeShellArg agentStoreUri}
+  '';
   systemd.services.nix-daemon.serviceConfig.ExecStart = lib.mkForce [
     ""
-    "/etc/ash/nix-daemon-local-overlay"
+    "/etc/ash/nix-daemon"
   ];
 
   environment.systemPackages =
@@ -310,38 +320,68 @@ in
     ];
   };
 
-  fileSystems."/nix/.ro-store" = {
-    device = "ro-store";
-    fsType = "virtiofs";
-    neededForBoot = true;
-    options = [ "ro" ];
-  };
-
-  fileSystems."/run/ash/shares/ro" = {
-    device = "shares-ro";
-    fsType = "virtiofs";
-    neededForBoot = true;
-    options = [ "ro" ];
-  };
-
-  fileSystems."/run/ash/shares/rw" = {
-    device = "shares-rw";
-    fsType = "virtiofs";
-    neededForBoot = true;
-  };
-
-  fileSystems."/nix/store" = {
-    neededForBoot = true;
-    # VirtioFS cannot store trusted.overlay.* xattrs, but it can store
-    # user.overlay.* xattrs. Keep the writable layer host-backed so it grows
-    # with host storage instead of the VM persistence image.
-    options = [ "userxattr" ];
-    overlay = {
-      lowerdir = [ "/nix/.ro-store" ];
-      upperdir = "/run/ash/shares/rw/guest-store-upper";
-      workdir = "/run/ash/shares/rw/guest-store-work";
-    };
-  };
+  # Ash appends ash.nix-store=shared|image to the kernel command line. Mount
+  # the matching store layout during stage 1 so one system closure can boot
+  # with either transport.
+  boot.initrd.systemd.mounts =
+    let
+      sharedCondition = [ "ash.nix-store=shared" ];
+      imageCondition = [ "ash.nix-store=image" ];
+      initrdMount =
+        condition: mount:
+        {
+          unitConfig = {
+            DefaultDependencies = false;
+            ConditionKernelCommandLine = condition;
+          };
+          requiredBy = [ "initrd-fs.target" ];
+          before = [ "initrd-fs.target" ];
+        }
+        // mount;
+      sharedMountPaths = [
+        "/sysroot/nix/.ro-store"
+        "/sysroot/run/ash/shares/ro"
+        "/sysroot/run/ash/shares/rw"
+      ];
+      sharedMountUnits = map (path: "${utils.escapeSystemdPath path}.mount") sharedMountPaths;
+    in
+    [
+      (initrdMount imageCondition {
+        what = "/dev/disk/by-label/nix-store";
+        where = "/sysroot/nix";
+        type = "ext4";
+      })
+      (initrdMount sharedCondition {
+        what = "ro-store";
+        where = "/sysroot/nix/.ro-store";
+        type = "virtiofs";
+        options = "ro";
+      })
+      (initrdMount sharedCondition {
+        what = "shares-ro";
+        where = "/sysroot/run/ash/shares/ro";
+        type = "virtiofs";
+        options = "ro";
+      })
+      (initrdMount sharedCondition {
+        what = "shares-rw";
+        where = "/sysroot/run/ash/shares/rw";
+        type = "virtiofs";
+      })
+      (initrdMount sharedCondition {
+        what = "overlay";
+        where = "/sysroot/nix/store";
+        type = "overlay";
+        options = lib.concatStringsSep "," [
+          "lowerdir=/sysroot/nix/.ro-store"
+          "upperdir=/sysroot/run/ash/shares/rw/guest-store-upper"
+          "workdir=/sysroot/run/ash/shares/rw/guest-store-work"
+          "userxattr"
+        ];
+        requires = sharedMountUnits;
+        after = sharedMountUnits;
+      })
+    ];
 
   fileSystems.${impermanenceRoot} = {
     device = "/dev/disk/by-label/persist";
