@@ -420,9 +420,44 @@ in
     neededForBoot = true;
   };
 
+  # Shared mode keeps /nix on tmpfs, so persist its regular Nix state. Image
+  # mode must leave /nix/var/nix on the Nix store image; otherwise this bind
+  # mount shadows the image database that Ash initializes after boot.
+  systemd.services.ash-prepare-shared-nix-state = {
+    requiredBy = [ "nix-var-nix.mount" ];
+    requires = [ "persist.mount" ];
+    after = [ "persist.mount" ];
+    before = [ "nix-var-nix.mount" ];
+    unitConfig = {
+      ConditionKernelCommandLine = [ "ash.nix-store=shared" ];
+      DefaultDependencies = false;
+    };
+    serviceConfig.Type = "oneshot";
+    script = ''
+      ${pkgs.coreutils}/bin/install -d -m 0755 \
+        ${impermanenceRoot}/nix/var/nix /nix/var/nix
+    '';
+  };
+
+  systemd.mounts = [
+    {
+      wantedBy = [ "local-fs.target" ];
+      requires = [ "ash-prepare-shared-nix-state.service" ];
+      after = [ "ash-prepare-shared-nix-state.service" ];
+      before = [ "local-fs.target" ];
+      where = "/nix/var/nix";
+      what = "${impermanenceRoot}/nix/var/nix";
+      type = "none";
+      options = "bind";
+      unitConfig = {
+        ConditionKernelCommandLine = [ "ash.nix-store=shared" ];
+        DefaultDependencies = false;
+      };
+    }
+  ];
+
   environment.persistence.${impermanenceRoot} = {
     directories = [
-      "/nix/var/nix"
       "/var/lib/nixos"
       "/var/lib/tailscale"
     ];
