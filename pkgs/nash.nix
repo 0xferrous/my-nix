@@ -6,9 +6,8 @@ writeShellApplication {
   name = "nash";
   runtimeInputs = [ nix ];
   text = ''
-    export ASH_CONFIG_HOME="''${XDG_CONFIG_HOME:-$HOME/.config}/nash"
-    export ASH_STATE_HOME="''${XDG_STATE_HOME:-$HOME/.local/state}/nash"
+    export ASH_NAME=nash
     exec nix run "git+file://$HOME/dev/fr/ash" -- "$@"
   '';
-  meta.description = "Run the local Ash development checkout with isolated config and state";
+  meta.description = "Run the local Ash development checkout in the nash XDG namespace";
 }
