@@ -6,6 +6,10 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
+  quietXwaylandSatellite = pkgs.writeShellScriptBin "xwayland-satellite" ''
+    export RUST_LOG="''${RUST_LOG:-error}"
+    exec ${pkgs.xwayland-satellite}/bin/xwayland-satellite "$@"
+  '';
   virtioVulkanIcd = "${pkgs.mesa}/share/vulkan/icd.d/virtio_icd.x86_64.json";
 in
 {
@@ -22,7 +26,7 @@ in
     vulkan-tools
     llama-cpp-vulkan
     waypipe
-    xwayland-satellite
+    quietXwaylandSatellite
   ];
 
   # The shared GPU is experimental and belongs only in nash guests.
