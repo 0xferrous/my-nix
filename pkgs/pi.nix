@@ -23,7 +23,7 @@ let
       {
         outputHashMode = "recursive";
         outputHashAlgo = "sha256";
-        outputHash = "sha256-YJxv0ZRba4avpMJruBMHUPu3g8kpiw+YNyA7P6bf8rQ=";
+        outputHash = "sha256-afnmCMSKZIvggF6kMy9Ho945PAZxNVDz+/0WQ7hn2io=";
         nativeBuildInputs = [ pkgs.npm-lockfile-fix ];
       }
       ''
@@ -45,7 +45,7 @@ let
     pname = "agent-stuff";
     version = "unstable";
     src = agentStuffPatchedSrc;
-    npmDepsHash = "sha256-bBgWVbCWIk6yO/X5hd+2csRKNFZEvQE5LW6x5+EZ5rk=";
+    npmDepsHash = "sha256-KA4qJ9MTv35qklVdYFgbY96mbMb+p0PkWrOWXMh3Iyo=";
     npmDepsFetcherVersion = 2;
 
     dontNpmBuild = true;
