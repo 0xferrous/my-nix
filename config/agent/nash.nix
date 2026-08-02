@@ -21,6 +21,8 @@ in
   environment.systemPackages = with pkgs; [
     vulkan-tools
     llama-cpp-vulkan
+    waypipe
+    xwayland-satellite
   ];
 
   # The shared GPU is experimental and belongs only in nash guests.

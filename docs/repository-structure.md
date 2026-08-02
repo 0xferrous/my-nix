@@ -137,7 +137,7 @@ Defines the stable standalone agent NixOS baseline, including SSH, Tailscale, Nu
 
 ### `config/agent/nash.nix`
 
-Imports the stable agent baseline and layers guest-side support for experimental Ash features used through `nash`. It currently installs the development `ash-dbus-proxy` package and starts the user-level host notification D-Bus bridge.
+Imports the stable agent baseline and layers guest-side support for experimental Ash features used through `nash`. It installs Waypipe and xwayland-satellite for guest Wayland/X11 forwarding, installs the development `ash-dbus-proxy` package, and starts the user-level host notification D-Bus bridge.
 
 ## Packages: `pkgs/`
 
