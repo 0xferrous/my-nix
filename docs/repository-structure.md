@@ -30,7 +30,8 @@ The root flake currently exports these main groups:
 - `nixosModules`: reusable NixOS modules from `modules/nixos/default.nix`.
 - `homeConfigs.fr`: public Home Manager config wrapper importing `config/fr/home.nix` and passing flake inputs through `_module.args.myNixInputs`.
 - `nixosConfigs.fr`: public NixOS config from `config/fr/nixos.nix`.
-- `nixosConfigs.agent`: agent NixOS config from `config/agent/nixos.nix`.
+- `nixosConfigs.agent`: stable agent NixOS config from `config/agent/nixos.nix`.
+- `nixosConfigs.nash`: experimental agent NixOS config from `config/agent/nash.nix`, layered on top of the stable agent config.
 
 ## `lib/`
 
@@ -132,7 +133,11 @@ Defines the public NixOS baseline under `fr.public`. The baseline is gated by `f
 
 ### `config/agent/nixos.nix`
 
-Defines the standalone agent NixOS baseline, including SSH, Tailscale, Nushell, Home Manager user configuration, development tools, and VM filesystem/runtime defaults.
+Defines the stable standalone agent NixOS baseline, including SSH, Tailscale, Nushell, Home Manager user configuration, development tools, and VM filesystem/runtime defaults.
+
+### `config/agent/nash.nix`
+
+Imports the stable agent baseline and layers guest-side support for experimental Ash features used through `nash`. It currently installs the development `ash-dbus-proxy` package and starts the user-level host notification D-Bus bridge.
 
 ## Packages: `pkgs/`
 

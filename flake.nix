@@ -257,33 +257,68 @@
         fr = import ./config/fr/nixos.nix {
           inherit dms fenix ghmd;
         };
-        agent = import ./config/agent/nixos.nix {
-          myNixInputs = inputs;
-          inherit
-            fenix
-            ghmd
-            home-manager
-            impermanence
-            nix-index-database
-            ;
+        agent = {
+          imports = [ ./config/agent/nixos.nix ];
+          _module.args = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+          };
+        };
+        nash = {
+          imports = [ ./config/agent/nash.nix ];
+          _module.args = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+          };
         };
       };
 
-      nixosConfigurations.agent = inputs.nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          myNixInputs = inputs;
-          inherit
-            fenix
-            ghmd
-            home-manager
-            impermanence
-            nix-index-database
-            ;
+      nixosConfigurations = {
+        agent = inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+          };
+          modules = [
+            ./config/agent/nixos.nix
+          ];
         };
-        modules = [
-          ./config/agent/nixos.nix
-        ];
+
+        nash = inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+          };
+          modules = [
+            ./config/agent/nash.nix
+          ];
+        };
       };
 
       devShells.${system}.default = pkgs.mkShell {
