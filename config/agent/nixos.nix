@@ -17,6 +17,7 @@ let
   lowerStoreUri = "local?real=/nix/.ro-store&state=/run/ash/shares/ro/guest-store-state&read-only=true";
   upperStoreState = "/run/ash/shares/rw/guest-store-state";
   ashHostCacheUrl = "http://192.168.127.1:5000";
+  virtioVulkanIcd = "${pkgs.mesa}/share/vulkan/icd.d/virtio_icd.x86_64.json";
   # Keep the writable store database beside its upper layer. Both must have the
   # same lifetime; persisting the database in /nix/var/nix while rebuilding the
   # Ash shares leaves Nix believing deleted upper-layer paths are still valid.
@@ -100,6 +101,10 @@ in
     HARMONIA_CACHE_URL = ashHostCacheUrl;
     PLANNOTATOR_REMOTE = "1";
     PLANNOTATOR_PORT = "19432";
+    # Ash's shared GPU mode exposes QEMU's Venus VirtIO-GPU device. Restrict
+    # Vulkan discovery to the matching Mesa guest driver instead of probing
+    # unrelated host-native or gfxstream ICDs.
+    VK_DRIVER_FILES = virtioVulkanIcd;
   };
 
   # Agent workloads commonly run many file watchers and subprocesses in the
@@ -155,6 +160,8 @@ in
       frsNvimPackage
       ironclaw
       agentPortalWrappers
+      vulkan-tools
+      llama-cpp-vulkan
     ])
     ++ devEssentialsPackages;
 
@@ -207,6 +214,10 @@ in
 
   services.getty.autologinUser = "agent";
   services.qemuGuest.enable = true;
+
+  # Ash's shared GPU mode presents a paravirtualized VirtIO-GPU. Mesa's Venus
+  # driver translates guest Vulkan commands through virglrenderer on the host.
+  hardware.graphics.enable = true;
   # Virtle's SSH autoprovision action asks QGA to execute `sh` by name.
   systemd.services.qemu-guest-agent.path = [ pkgs.bash ];
 
@@ -302,6 +313,7 @@ in
   ];
 
   boot.kernelModules = [
+    "virtio_gpu"
     "virtio_console"
     "vsock"
     "vmw_vsock_virtio_transport"
