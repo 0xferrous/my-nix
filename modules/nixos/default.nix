@@ -1,4 +1,5 @@
 {
+  ashVmMdns = import ./ash-vm-mdns.nix;
   ashVmNetwork = import ./ash-vm-network.nix;
   bluetoothKeyboardWake = import ./bluetooth-keyboard-wake.nix;
   desktopPortal = import ./desktop-portal.nix;

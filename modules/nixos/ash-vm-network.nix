@@ -70,7 +70,10 @@ in
       internalInterfaces = [ bridge ];
     };
 
-    networking.firewall.interfaces.${bridge}.allowedUDPPorts = [ 67 ];
+    networking.firewall.interfaces.${bridge}.allowedUDPPorts = [
+      67 # DHCP
+      5353 # mDNS
+    ];
 
     services.dnsmasq = {
       enable = true;

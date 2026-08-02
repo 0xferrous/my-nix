@@ -59,6 +59,7 @@ let
 in
 {
   imports = [
+    ../../modules/nixos/ash-vm-mdns.nix
     home-manager.nixosModules.home-manager
     impermanence.nixosModules.impermanence
     nix-index-database.nixosModules.nix-index
@@ -162,6 +163,8 @@ in
     vim = "nvim";
     vimdiff = "nvim -d";
   };
+
+  fr.ash-vm-mdns.enable = true;
 
   programs.direnv = {
     enable = true;
