@@ -128,6 +128,7 @@ pkgs.writeShellScriptBin "pi" ''
     --extension "$agent_stuff_root/extensions/vendored/read-mode.ts"
     --extension "$agent_stuff_root/extensions/vendored/tps.ts"
     --extension "$agent_stuff_root/extensions/codex-web-search/index.ts"
+    --extension "$agent_stuff_root/extensions/codex-reset-credits/index.ts"
     --theme "$agent_stuff_root/themes/gruvbox-material-dark-hard.json"
     --prompt-template "$agent_stuff_root/prompts"
     --skill "$agent_stuff_root/skills"
