@@ -122,6 +122,7 @@ pkgs.writeShellScriptBin "pi" ''
     --extension "$agent_stuff_root/extensions/turn-timer.ts"
     --extension "$agent_stuff_root/extensions/vendored/usage-bar.ts"
     --extension "$agent_stuff_root/extensions/block-sensitive-files.ts"
+    --extension "$agent_stuff_root/extensions/bash-description/index.ts"
     --extension "$agent_stuff_root/extensions/followup.ts"
     --extension "$agent_stuff_root/extensions/agent-summary.ts"
     --extension "$agent_stuff_root/extensions/idle-inhibit.ts"
