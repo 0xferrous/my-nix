@@ -1,4 +1,5 @@
 {
+  AIPackages,
   config ? null,
   pkgs,
   ...
@@ -26,6 +27,8 @@ with pkgs;
   jjPackage
   git-lfs
   gh
+  AIPackages.hunk
+  oh-my-pi
 
   # Search, navigation, and file inspection
   ripgrep
