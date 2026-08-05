@@ -193,27 +193,28 @@ format = '[ $ssh_symbol$hostname]($style)'
 ssh_only = true
 disabled = false
 
-[custom.task_before_today]
-command = "task due.before:today status:pending count"
-when = true
-style = "bold red" # Urgent: overdue tasks
+# Disabled: these taskwarrior queries were timing out during prompt rendering.
+# [custom.task_before_today]
+# command = "task due.before:today status:pending count"
+# when = true
+# style = "bold red" # Urgent: overdue tasks
 
-[custom.task_today]
-command = "task due:today status:pending count"
-when = true
-style = "bold red" # Urgent: due today
+# [custom.task_today]
+# command = "task due:today status:pending count"
+# when = true
+# style = "bold red" # Urgent: due today
 
-[custom.task_this_week]
-command = "task due.before:eow status:pending count"
-when = true
-style = "bold yellow" # Important: due this week
+# [custom.task_this_week]
+# command = "task due.before:eow status:pending count"
+# when = true
+# style = "bold yellow" # Important: due this week
 
-[custom.task_next_week]
-command = "task due.before:sonw+7d status:pending count"
-when = true
-style = "bold green" # Upcoming: due next week
+# [custom.task_next_week]
+# command = "task due.before:sonw+7d status:pending count"
+# when = true
+# style = "bold green" # Upcoming: due next week
 
-[custom.task_this_month]
-command = "task due.before:eom status:pending count"
-when = true
-style = "bold blue" # Future: due this month
+# [custom.task_this_month]
+# command = "task due.before:eom status:pending count"
+# when = true
+# style = "bold blue" # Future: due this month
