@@ -12,6 +12,7 @@ in
 {
   config = lib.mkIf cfg.enable {
     nix.settings = {
+      auto-optimise-store = false;
       substituters = binaryCaches;
       trusted-public-keys = lib.attrValues binaryCacheKeys;
       trusted-substituters = binaryCaches;
