@@ -41,7 +41,7 @@ in
       enable = lib.mkDefault true;
       cpu.amdPstate.enable = lib.mkDefault true;
       bluetoothKeyboardWake = {
-        enable = lib.mkDefault true;
+        enable = lib.mkDefault false;
         usbDevices = lib.mkDefault [
           # Internal MediaTek Bluetooth adapter.
           {
