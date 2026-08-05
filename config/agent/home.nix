@@ -48,6 +48,17 @@ in
       onboarding = false;
       theme.name = "gruvbox";
       experimental.kitty_graphics = true;
+      ui.sidebar.spaces.rows = [
+        [
+          "state_icon"
+          "workspace"
+        ]
+        [
+          "branch"
+          "git_status"
+          "$jj_status"
+        ]
+      ];
     };
   };
 
@@ -60,14 +71,36 @@ in
   #   Install.WantedBy = [ "default.target" ];
   # };
 
-  systemd.user.services.herdr = {
-    Unit.Description = "Herdr agent multiplexer server";
-    Service = {
-      ExecStart = "${pkgs.herdr}/bin/herdr server";
-      LimitNOFILE = 1048576;
-      Restart = "on-failure";
+  systemd.user.services = {
+    herdr = {
+      Unit.Description = "Herdr agent multiplexer server";
+      Service = {
+        ExecStart = "${pkgs.herdr}/bin/herdr server";
+        LimitNOFILE = 1048576;
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
-    Install.WantedBy = [ "default.target" ];
+
+    herdr-jj-reporter = {
+      Unit = {
+        Description = "Report Jujutsu status to Herdr workspace metadata";
+        After = [ "herdr.service" ];
+        Requires = [ "herdr.service" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.nushell}/bin/nu ${./herdr-jj-reporter.nu}";
+        Environment = "PATH=${
+          lib.makeBinPath [
+            pkgs.herdr
+            pkgs.jujutsu
+          ]
+        }";
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
   };
 
   programs.devenv = {
