@@ -39,6 +39,7 @@ final: prev: {
     final.callPackage ./google-authenticator-transfer-decode.nix
       { };
   opensrc = final.callPackage ./opensrc.nix { };
+  oh-my-pi = final.callPackage ./oh-my-pi.nix { };
   takopi = final.callPackage ./takopi.nix { };
   hints = final.callPackage ./hints.nix {
     source = inputs.hints;

@@ -171,6 +171,7 @@
             ironclaw
             jj-hunk
             google-authenticator-transfer-decode
+            oh-my-pi
             opensrc
             nash
             pi
