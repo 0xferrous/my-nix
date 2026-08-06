@@ -1,6 +1,6 @@
 { lib, ... }:
 {
-  fr.symlinks.configFiles."hunk/config.toml".target = "config/fr/home/hunk/config.toml";
+  xdg.configFile."hunk/config.toml".source = ./hunk/config.toml;
 
   programs.git.settings.core.pager = lib.mkDefault "hunk pager";
 
