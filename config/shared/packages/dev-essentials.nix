@@ -19,6 +19,15 @@ let
     # nixpkgs' default optionalDeps (ffmpeg, imagemagick, poppler, resvg, etc.).
     optionalDeps = [ ];
   };
+
+  hunkPackage = pkgs.symlinkJoin {
+    name = "wrapped-hunk";
+    paths = [AIPackages.hunk];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/hunk --set PAGER "less -FRX"
+    '';
+  };
 in
 with pkgs;
 [
@@ -27,7 +36,7 @@ with pkgs;
   jjPackage
   git-lfs
   gh
-  AIPackages.hunk
+  hunkPackage
   oh-my-pi
 
   # Search, navigation, and file inspection
