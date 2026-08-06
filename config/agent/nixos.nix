@@ -462,10 +462,16 @@ in
     }
   ];
 
+  services.journald.storage = "persistent";
+
   environment.persistence.${impermanenceRoot} = {
+    files = [
+      "/etc/machine-id"
+    ];
     directories = [
       "/var/lib/nixos"
       "/var/lib/tailscale"
+      "/var/log/journal"
     ];
     users.agent.files = [
     ];

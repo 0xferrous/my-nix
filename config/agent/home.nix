@@ -21,7 +21,6 @@ in
   imports = [
     ../../modules/home/programs/direnv.nix
     ../../modules/home/programs/foundry.nix
-    ../../modules/home/symlinks.nix
     ../fr/home/hunk.nix
   ];
 
