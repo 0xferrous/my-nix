@@ -54,6 +54,7 @@ in
     ./home/desktop-entries.nix
     ./home/dank-material-shell.nix
     ./home/helix.nix
+    ./home/hunk.nix
     ./home/jujutsu.nix
     ./home/kitty.nix
     ./home/kanshi.nix

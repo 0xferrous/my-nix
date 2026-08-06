@@ -7,11 +7,7 @@
       backends.gpg.program = lib.mkDefault "${pkgs.sequoia-chameleon-gnupg}/bin/gpg-sq";
     };
 
-    ui = {
-      editor = lib.mkDefault "nvim";
-      pager = lib.mkDefault "delta";
-      diff-formatter = lib.mkDefault ":git";
-    };
+    ui.editor = lib.mkDefault "nvim";
 
     git = {
       fetch = lib.mkDefault [
