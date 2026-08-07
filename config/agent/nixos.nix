@@ -493,7 +493,9 @@ in
       ".local/share/pypoetry"
       ".local/share/uv"
       ".local/share/zoxide"
+      ".omp"
       ".pi"
+      ".prime"
       ".ssh"
       ".supermaven"
     ];
