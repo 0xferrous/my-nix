@@ -41,6 +41,7 @@ final: prev: {
   opensrc = final.callPackage ./opensrc.nix { };
   oh-my-pi = final.callPackage ./oh-my-pi.nix { };
   takopi = final.callPackage ./takopi.nix { };
+  prime-agent = final.callPackage ./prime-agent.nix { };
   hints = final.callPackage ./hints.nix {
     source = inputs.hints;
     atspi2Core = final."at-spi2-core";
@@ -61,5 +62,12 @@ final: prev: {
     agentStuffPath = "~/dev/fr/agent-stuff";
   };
   pi-acp = final.callPackage ./pi-acp.nix { };
+
+  # Direct llama.cpp server for Qwen3-Coder-30B-A3B (Vulkan backend — gfx1151
+  # is unsupported by ROCm/vLLM). Binaries: qwen3-server, qwen3-get-model,
+  # qwen3-bench.
+  qwen3-server = final.callPackage ./qwen3-server.nix {
+    llamaCpp = prev.llama-cpp.override { vulkanSupport = true; };
+  };
   frsNvimPackage = inputs.frs-nvim.packages.${system}.default;
 }
