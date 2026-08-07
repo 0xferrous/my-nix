@@ -22,8 +22,8 @@ let
 
   hunkPackage = pkgs.symlinkJoin {
     name = "wrapped-hunk";
-    paths = [AIPackages.hunk];
-    nativeBuildInputs = [pkgs.makeWrapper];
+    paths = [ AIPackages.hunk ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/hunk --set PAGER "less -FRX"
     '';
@@ -87,4 +87,7 @@ with pkgs;
   # Containers
   docker-client
   docker-compose
+
+  # AI agent tooling
+  prime-agent
 ]
