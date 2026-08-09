@@ -39,6 +39,35 @@ in
       # lives on the host at /var/lib/iron-proxy/ca.key. Guests (agent/nash)
       # trust the same cert via security.pki.certificateFiles.
       caCertificate = lib.mkDefault ../../../modules/nixos/iron-proxy-ca.crt;
+      # Real secrets are read from this root-only file (e.g.
+      # TEST_API_KEY=..., OPENAI_API_KEY=..., ANTHROPIC_API_KEY=...).
+      environmentFile = lib.mkDefault "/var/lib/iron-proxy/.env";
+      # Test entry: verifies token injection end-to-end against httpbingo.org
+      # (httpbin.org has been flaky/503). The guest can then run:
+      #   curl -s https://httpbingo.org/headers | jq .headers.Authorization
+      # and the audit log will show the "injected" annotation.
+      transforms = lib.mkDefault [
+        {
+          name = "secrets";
+          config.secrets = [
+            {
+              source = {
+                type = "env";
+                var = "TEST_API_KEY";
+              };
+              inject = {
+                header = "Authorization";
+                formatter = "Bearer {{ .Value }}";
+              };
+              rules = [
+                {
+                  host = "httpbingo.org";
+                }
+              ];
+            }
+          ];
+        }
+      ];
     };
 
     fr.virtiofs-nix-store = {
