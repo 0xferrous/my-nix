@@ -97,6 +97,14 @@ in
 
   environment.etc."ash/local-overlay-store".text = "";
 
+  # nix (via libgit2) refuses to open git repos not owned by the current user.
+  # The my-nix workspace share is owned by `agent`, but agent-auto-switch runs
+  # as root, so mark the repo safe in the system gitconfig.
+  environment.etc."gitconfig".text = ''
+    [safe]
+      directory = /home/agent/dev/fr/my-nix
+  '';
+
   environment.sessionVariables = {
     EDITOR = "nvim";
     HARMONIA_CACHE_URL = ashHostCacheUrl;
@@ -212,6 +220,80 @@ in
 
   # Virtle's SSH autoprovision action asks QGA to execute `sh` by name.
   systemd.services.qemu-guest-agent.path = [ pkgs.bash ];
+
+  # Self-update: rebuild this VM from the my-nix flake shortly after boot so
+  # config changes made on the host reach the VM without manual steps. The
+  # my-nix workspace share is a plain virtiofs mount created by Ash after boot
+  # (it only appears in /proc/self/mountinfo, not as a systemd mount unit), so
+  # poll for it rather than ordering after a unit. Every echo and all of the
+  # nixos-rebuild output lands in journald under this unit for debugging.
+  #
+  # Deliberately NOT wantedBy multi-user.target: a switch's activation
+  # re-triggers multi-user.target, which NixOS orders after its wantedBy
+  # units, so a switch running inside such a unit deadlocks on its own
+  # activation. A boot timer decouples the switch from that transaction.
+  systemd.timers.agent-auto-switch = {
+    description = "Trigger the agent NixOS self-update shortly after boot";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      RandomizedDelaySec = "30s";
+    };
+  };
+
+  systemd.services.agent-auto-switch = {
+    description = "Rebuild agent NixOS from the my-nix flake";
+    wants = [ "network-online.target" ];
+    after = [
+      "network-online.target"
+      "nix-daemon.service"
+    ];
+    environment.NO_COLOR = "1";
+    serviceConfig = {
+      Type = "oneshot";
+      # Rebuilds can be slow on a cold cache; never let systemd kill them.
+      TimeoutStartSec = "infinity";
+    };
+    script = ''
+      echo "agent-auto-switch: starting, waiting for my-nix share"
+      attempts=0
+      while [ "$attempts" -lt 60 ]; do
+        if ${pkgs.util-linux}/bin/findmnt /home/agent/dev/fr/my-nix >/dev/null 2>&1; then
+          break
+        fi
+        attempts=$((attempts + 1))
+        echo "agent-auto-switch: my-nix share not mounted yet (attempt $attempts/60); retrying in 5s"
+        ${pkgs.coreutils}/bin/sleep 5
+      done
+      if [ "$attempts" -ge 60 ]; then
+        echo "agent-auto-switch: my-nix share did not appear after 60 attempts (300s); aborting" >&2
+        exit 1
+      fi
+      echo "agent-auto-switch: my-nix share is up"
+
+      # nixos-rebuild-ng activates through a fixed-name transient unit
+      # (nixos-rebuild-switch-to-configuration.service). If a switch is already
+      # activating (e.g. a manual one), skip instead of colliding with it.
+      if ${pkgs.systemd}/bin/systemctl is-active --quiet nixos-rebuild-switch-to-configuration.service 2>/dev/null; then
+        echo "agent-auto-switch: a switch is already activating; skipping this run" >&2
+        exit 0
+      fi
+
+      # Serialize with any other instance of this service.
+      ${pkgs.util-linux}/bin/flock -n /run/agent-auto-switch.lock ${pkgs.bash}/bin/bash -c '
+        echo "agent-auto-switch: starting nixos-rebuild switch"
+        ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch \
+          --flake /home/agent/dev/fr/my-nix#agent \
+          --accept-flake-config
+        echo "agent-auto-switch: switch completed successfully"
+      '
+      rc=$?
+      if [ "$rc" -ne 0 ]; then
+        echo "agent-auto-switch: switch failed (or lock busy); see journal for details" >&2
+        exit "$rc"
+      fi
+    '';
+  };
 
   # dbus-broker live-reloads policy when the Nix store overlay changes during a
   # switch. In the agent VM this can briefly observe missing config symlinks and
