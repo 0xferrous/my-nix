@@ -43,6 +43,18 @@ in
     fi
   '';
 
+  # virtiofs shares return ESTALE when git creates loose objects via its
+  # default hardlink+unlink pattern (see fs/fuse inode handling). Rename-based
+  # creation avoids it; see git config core.createobject.
+  programs.git = {
+    enable = true;
+    settings = {
+      core = {
+        createobject = "rename";
+      };
+    };
+  };
+
   programs.herdr = {
     enable = true;
     settings = {
