@@ -33,7 +33,13 @@ in
 
     fr.ash-vm-network.enable = lib.mkDefault true;
 
-    fr.iron-proxy.enable = lib.mkDefault true;
+    fr.iron-proxy = {
+      enable = lib.mkDefault true;
+      # Public CA cert committed next to the module; the matching private key
+      # lives on the host at /var/lib/iron-proxy/ca.key. Guests (agent/nash)
+      # trust the same cert via security.pki.certificateFiles.
+      caCertificate = lib.mkDefault ../../../modules/nixos/iron-proxy-ca.crt;
+    };
 
     fr.virtiofs-nix-store = {
       enable = lib.mkDefault true;

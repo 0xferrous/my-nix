@@ -110,7 +110,24 @@ in
     HARMONIA_CACHE_URL = ashHostCacheUrl;
     PLANNOTATOR_REMOTE = "1";
     PLANNOTATOR_PORT = "19432";
+    # Route agent-tool HTTP(S) egress through the host iron-proxy tunnel so it
+    # can inject real credentials; the proxy is configured with secrets-only
+    # transforms (no allowlist), so nothing is blocked. The Ash bridge, host
+    # cache (192.168.127.1:5000), mDNS, and Tailscale stay in NO_PROXY.
+    HTTP_PROXY = "http://192.168.127.1:8080";
+    HTTPS_PROXY = "http://192.168.127.1:8080";
+    ALL_PROXY = "http://192.168.127.1:8080";
+    http_proxy = "http://192.168.127.1:8080";
+    https_proxy = "http://192.168.127.1:8080";
+    all_proxy = "http://192.168.127.1:8080";
+    NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
+    no_proxy = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
   };
+
+  # Trust the host iron-proxy MITM CA so proxied HTTPS (and the injected
+  # credentials) verify cleanly in the guest. The cert is committed next to
+  # the fr.iron-proxy module; the matching private key never leaves the host.
+  security.pki.certificateFiles = [ ../../modules/nixos/iron-proxy-ca.crt ];
 
   # Agent workloads commonly run many file watchers and subprocesses in the
   # same long-lived SSH or user-systemd session. Keep their descriptor ceiling

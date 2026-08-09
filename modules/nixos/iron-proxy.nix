@@ -180,6 +180,11 @@ in
           mkdir -p "$state_dir"
           chmod 0700 "$state_dir"
           if [ -n "${lib.escapeShellArg caCertFile}" ]; then
+            if [ ! -f "$state_dir/ca.key" ]; then
+              echo "iron-proxy: caCertificate is set but $state_dir/ca.key is missing;" >&2
+              echo "place the matching private key there (0600) before starting." >&2
+              exit 1
+            fi
             install -m 0600 ${lib.escapeShellArg caCertFile} "$state_dir/ca.crt"
           elif [ ! -f "$state_dir/ca.crt" ] || [ ! -f "$state_dir/ca.key" ]; then
             ${ironProxy}/bin/iron-proxy generate-ca -outdir "$state_dir"
