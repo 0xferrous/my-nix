@@ -183,6 +183,7 @@
             qwen3-server
             ;
           "install-bin" = pkgs."install-bin";
+          iron-proxy = pkgs.iron-proxy;
         };
       };
       apps = lib.recursiveUpdate frs-nvim.apps {

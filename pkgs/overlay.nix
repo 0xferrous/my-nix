@@ -33,6 +33,7 @@ final: prev: {
   fr-kbd-backlight = final.callPackage ./keyboard-backlight.nix { };
   git-hunk = final.callPackage ./git-hunk.nix { };
   ironclaw = final.callPackage ./ironclaw.nix { };
+  iron-proxy = final.callPackage ./iron-proxy.nix { };
   jj-hunk = final.callPackage ./jj-hunk.nix { };
   nash = final.callPackage ./nash.nix { };
   google-authenticator-transfer-decode =

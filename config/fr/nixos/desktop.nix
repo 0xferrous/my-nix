@@ -33,6 +33,8 @@ in
 
     fr.ash-vm-network.enable = lib.mkDefault true;
 
+    fr.iron-proxy.enable = lib.mkDefault true;
+
     fr.virtiofs-nix-store = {
       enable = lib.mkDefault true;
     };

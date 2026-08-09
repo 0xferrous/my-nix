@@ -2,6 +2,7 @@
   ashVmMdns = import ./ash-vm-mdns.nix;
   ashVmNetwork = import ./ash-vm-network.nix;
   bluetoothKeyboardWake = import ./bluetooth-keyboard-wake.nix;
+  ironProxy = import ./iron-proxy.nix;
   desktopPortal = import ./desktop-portal.nix;
   k3sMicrovm = import ./k3s-microvm.nix;
   powerManagement = import ./power-management.nix;
