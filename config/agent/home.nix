@@ -29,6 +29,7 @@ in
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
     packages = [
+      pkgs.obscura
       myNixInputs.codexbar.packages.${system}.default
       myNixInputs.ash.packages.${system}.agent-portal-wrappers
       # pkgs.ashWrappers.dbusProxy

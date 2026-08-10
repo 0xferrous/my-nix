@@ -35,6 +35,7 @@ final: prev: {
   ironclaw = final.callPackage ./ironclaw.nix { };
   iron-proxy = final.callPackage ./iron-proxy.nix { };
   jj-hunk = final.callPackage ./jj-hunk.nix { };
+  obscura = final.callPackage ./obscura/package.nix { };
   nash = final.callPackage ./nash.nix { };
   google-authenticator-transfer-decode =
     final.callPackage ./google-authenticator-transfer-decode.nix

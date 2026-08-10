@@ -174,6 +174,7 @@
             oh-my-pi
             opensrc
             nash
+            obscura
             pi
             piDev
             pi-acp
