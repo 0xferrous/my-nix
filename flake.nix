@@ -178,6 +178,7 @@
             piDev
             pi-acp
             takopi
+            terminal-control
             prime-agent
             flake-utils
             qwen3-server

@@ -42,6 +42,7 @@ final: prev: {
   opensrc = final.callPackage ./opensrc.nix { };
   oh-my-pi = final.callPackage ./oh-my-pi.nix { };
   takopi = final.callPackage ./takopi.nix { };
+  terminal-control = final.callPackage ./terminal-control.nix { };
   prime-agent = final.callPackage ./prime-agent.nix { };
   hints = final.callPackage ./hints.nix {
     source = inputs.hints;

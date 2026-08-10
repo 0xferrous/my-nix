@@ -12,6 +12,10 @@ let
 in
 with pkgs;
 [
+  # Terminal TUI testing/automation (drives, inspects, and captures real
+  # terminal apps for agents and TUI review)
+  terminal-control
+
   # Git tools
   git-crypt
   git-cliff
