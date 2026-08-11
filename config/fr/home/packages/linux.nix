@@ -10,6 +10,12 @@ with pkgs;
   # AMD GPU
   ollama-rocm
   amdgpu_top
+  qwen3-server
+
+  # General llama.cpp with the Vulkan backend (gfx1151 is unsupported by
+  # ROCm/vLLM, so this is the go-to engine for local GGUF serving).
+  # Binaries: llama-server, llama-cli, llama-bench.
+  llama-cpp-vulkan
 
   # Wayland screen recording
   wf-recorder
