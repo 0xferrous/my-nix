@@ -62,7 +62,6 @@ in
 {
   imports = [
     ../../modules/nixos/ash-vm-mdns.nix
-    home-manager.nixosModules.home-manager
     impermanence.nixosModules.impermanence
     nix-index-database.nixosModules.nix-index
   ];
@@ -238,12 +237,6 @@ in
     '';
   };
 
-  services.getty.autologinUser = "agent";
-  services.qemuGuest.enable = true;
-
-  # Virtle's SSH autoprovision action asks QGA to execute `sh` by name.
-  systemd.services.qemu-guest-agent.path = [ pkgs.bash ];
-
   # Self-update: rebuild this VM from the my-nix flake shortly after boot so
   # config changes made on the host reach the VM without manual steps. The
   # my-nix workspace share is a plain virtiofs mount created by Ash after boot
@@ -318,6 +311,80 @@ in
     '';
   };
 
+  # Home-manager is deliberately NOT wired into nixos-rebuild (the NixOS module
+  # was removed); the agent home config is rebuilt by this boot timer instead,
+  # scheduled after the NixOS switch has had a chance to run.
+  systemd.timers.agent-home-switch = {
+    description = "Trigger the agent home-manager rebuild after the NixOS switch";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "3min";
+      RandomizedDelaySec = "30s";
+    };
+  };
+
+  systemd.services.agent-home-switch = {
+    description = "Rebuild agent home-manager config from the my-nix flake";
+    wants = [ "network-online.target" ];
+    after = [
+      "network-online.target"
+      "nix-daemon.service"
+      "agent-auto-switch.service"
+    ];
+    path = [
+      pkgs.home-manager
+      pkgs.nix
+      pkgs.git
+    ];
+    environment = {
+      NO_COLOR = "1";
+      # Activation runs as the agent user and needs the user session bus.
+      XDG_RUNTIME_DIR = "/run/user/1000";
+      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/1000/bus";
+      NIX_CONFIG = "accept-flake-config = true";
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      User = "agent";
+      TimeoutStartSec = "infinity";
+    };
+    script = ''
+      echo "agent-home-switch: starting, waiting for my-nix share"
+      attempts=0
+      while [ "$attempts" -lt 60 ]; do
+        if ${pkgs.util-linux}/bin/findmnt /home/agent/dev/fr/my-nix >/dev/null 2>&1; then
+          break
+        fi
+        attempts=$((attempts + 1))
+        echo "agent-home-switch: my-nix share not mounted yet (attempt $attempts/60); retrying in 5s"
+        ${pkgs.coreutils}/bin/sleep 5
+      done
+      if [ "$attempts" -ge 60 ]; then
+        echo "agent-home-switch: my-nix share did not appear after 60 attempts (300s); aborting" >&2
+        exit 1
+      fi
+      echo "agent-home-switch: my-nix share is up; starting home-manager switch"
+
+      ${pkgs.util-linux}/bin/flock -n /run/user/1000/agent-home-switch.lock ${pkgs.bash}/bin/bash -c '
+        echo "agent-home-switch: running home-manager switch"
+        ${pkgs.home-manager}/bin/home-manager switch \
+          --flake /home/agent/dev/fr/my-nix#agent
+        echo "agent-home-switch: switch completed successfully"
+      '
+      rc=$?
+      if [ "$rc" -ne 0 ]; then
+        echo "agent-home-switch: switch failed (or lock busy); see journal for details" >&2
+        exit "$rc"
+      fi
+    '';
+  };
+
+  services.getty.autologinUser = "agent";
+  services.qemuGuest.enable = true;
+
+  # Virtle's SSH autoprovision action asks QGA to execute `sh` by name.
+  systemd.services.qemu-guest-agent.path = [ pkgs.bash ];
+
   # dbus-broker live-reloads policy when the Nix store overlay changes during a
   # switch. In the agent VM this can briefly observe missing config symlinks and
   # leave the bus with a policy that denies even root's systemd calls.
@@ -367,15 +434,6 @@ in
   };
 
   security.sudo.wheelNeedsPassword = false;
-
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    extraSpecialArgs = {
-      inherit myNixInputs;
-    };
-    users.agent = import ./home.nix;
-  };
 
   systemd.tmpfiles.rules = [
     "d /run/user/1000 0700 agent users - -"
@@ -592,6 +650,7 @@ in
       ".config/systemd/user"
       ".config/jj"
       ".config/pypoetry"
+      ".config/sops"
       ".foundry"
       ".ironclaw"
       ".local/state/nix"
