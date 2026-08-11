@@ -17,11 +17,12 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
     `NO_PROXY=localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10`
     are set for both the system and Home Manager sessions. Nix-daemon and
     agent-auto-switch intentionally bypass the proxy (no system-wide env).
-  - Host deploy TODO: place the CA private key at
-    `/var/lib/iron-proxy/ca.key` (0600) — generated with
-    `iron-proxy generate-ca` into `/tmp/irpt-ca` during this session; the
-    module now fails with a clear message if `caCertificate` is set but the
-    key is missing.
+  - Live on the host: guest audit entries show
+    `tunnel.target=httpbingo.org:443` allow/200 through MITM
+    (guest 192.168.127.112), and the httpbingo.org `TEST_API_KEY` inject
+    entry (commit 3f70c85) verified working — guest sees
+    `Authorization: Bearer sk-test-verify-123` upstream and the audit shows
+    the `injected` annotation.
   - Remaining: point agent tools (codex/opencode/gh) at placeholders (inject
     mode) or proxy tokens (swap mode) for the actual secrets to swap.
   - Open question: per-VM token isolation and whether to add an `allowlist`
