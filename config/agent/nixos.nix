@@ -213,21 +213,27 @@ in
     after = [ "sshd.service" ];
     serviceConfig = {
       Type = "oneshot";
-      TimeoutStartSec = "70s";
+      TimeoutStartSec = "130s";
     };
     script = ''
-      for _ in $(${pkgs.coreutils}/bin/seq 1 60); do
+      deadline=$(( $(${pkgs.coreutils}/bin/date +%s) + 120 ))
+      attempts=0
+      while [ "$(${pkgs.coreutils}/bin/date +%s)" -lt "$deadline" ]; do
         if [ -e /dev/virtio-ports/virtle.ready ]; then
           # Writing to this virtio console port blocks forever if the host side
-          # is not currently reading it (e.g. during nixos-rebuild switch).
-          ${pkgs.coreutils}/bin/timeout 2s ${pkgs.bash}/bin/bash -c \
-            '${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtle.ready' \
-            || echo "virtle ready port write timed out" >&2
-          exit 0
+          # is not currently reading it (e.g. during nixos-rebuild switch), so
+          # bound each attempt and keep retrying until the host picks the
+          # token up.
+          if ${pkgs.coreutils}/bin/timeout 2s ${pkgs.bash}/bin/bash -c \
+            '${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtle.ready'; then
+            exit 0
+          fi
+          attempts=$((attempts + 1))
+          echo "virtle ready port write timed out (attempt $attempts); retrying" >&2
         fi
         ${pkgs.coreutils}/bin/sleep 1
       done
-      echo "virtle ready port did not appear" >&2
+      echo "virtle ready port write did not succeed within 2 minutes" >&2
       exit 0
     '';
   };
