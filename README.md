@@ -4,6 +4,8 @@ Public Nix files extracted from my larger setup.
 
 Current public building blocks include:
 
+- `overlays.default`: overlay exposing the reusable packages under [`pkgs/`](./pkgs/) under their plain names (see [Overlay & packages](#overlay--packages))
+- `packages.<system>.*`: the same packages as flake outputs, no overlay required
 - [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md): portable Neovim wrapper config exposed via this repo's flake `packages` and `apps`
 - `packages.<system>.pi`: `pi` wrapped with default CLI args plus bundled extensions/theme
 - `packages.<system>.install-bin`: helper that symlinks a path into `~/bin` using the path basename
@@ -37,6 +39,62 @@ Root flake exports them separately:
 Public `fr` config should be gated behind `fr.public.enable` and use `lib.mkDefault` for values that a private repo may override. Generic modules should expose narrowly-scoped options and let users configure upstream Home Manager/NixOS modules directly where possible.
 
 Current public `fr` Home Manager defaults enable the reusable `direnv` module with devenv and Poetry stdlib helpers, plus the reusable `termfilechooser` module with `superfile` running inside `kitty`.
+
+## Overlay & packages
+
+[`pkgs/`](./pkgs/) holds package expressions that are generally useful beyond this repo's own config. They are exposed two ways:
+
+- `overlays.default` — apply the overlay to get every package under its plain name in `pkgs`
+- `packages.<system>.*` — the same packages as flake outputs, without applying the overlay
+
+The overlay is built from this flake's inputs (e.g. `pi` wraps the `llm-agents` CLI, `herdr` comes from `llm-agents`, `hints` pulls in a pinned source), so consume it via the flake output rather than copying the file standalone.
+
+Example — NixOS module:
+
+```nix
+{ inputs, ... }: {
+  nixpkgs.overlays = [ inputs.my-nix.overlays.default ];
+  environment.systemPackages = [ pkgs.git-hunk pkgs.jj-hunk ];
+}
+```
+
+Example — direct `pkgs` import:
+
+```nix
+pkgs = import inputs.nixpkgs {
+  system = "x86_64-linux";
+  overlays = [ inputs.my-nix.overlays.default ];
+};
+```
+
+Packages provided by the overlay:
+
+| package | description |
+| --- | --- |
+| `pi`, `pi-acp` | `pi` (llm-agents CLI) wrapped with default CLI args plus bundled extensions/theme and AI tooling; `pi-acp` is the Agent Client Protocol adapter |
+| `fzf` | `fzf` wrapper fixing `--nushell` output for nushell |
+| `herdr` | agent multiplexer that lives in your terminal |
+| `git-hunk`, `jj-hunk` | non-interactive hunk staging for `git` and `jj` |
+| `takopi` | Telegram bridge for Codex, Claude Code, and other agent CLIs |
+| `terminal-control` | control, inspect, test, and capture real terminal applications for agents and TUI review |
+| `prime-agent` | self-improving RLM agent for coding workflows and long-running autonomous tasks |
+| `oh-my-pi` | AI coding agent for the terminal |
+| `qwen3-server` | Qwen3-Coder 30B-A3B served directly by llama.cpp (Vulkan backend), plus `qwen3-get-model`/`qwen3-bench` helpers |
+| `ironclaw` | secure personal AI assistant |
+| `iron-proxy` | MITM egress proxy with DNS server, secret injection, and audit logging |
+| `obscura` | headless browser engine in Rust: V8, real DOM, CDP, stealth |
+| `hints` | click, scroll, and drag with your keyboard |
+| `opensrc` | fetch and cache source code for packages and repos |
+| `flake-utils` | synchronize selected flake input locks across local flakes |
+| `google-authenticator-transfer-decode` | decode Google Authenticator transfer QR payloads to standard `otpauth` URIs |
+| `fr-frame-summon` | summon the Frame extension via local JSON-RPC WebSocket |
+| `fr-kbd-backlight` | Nushell helper for managing keyboard backlight brightness |
+| `install-bin` | symlink a binary into `~/bin` using the source path basename |
+| `ashWrappers` | guest-side wrappers for the Ash Portal |
+| `plannotator-pi-extension` | interactive plan and code review extension for Pi |
+| `frsNvimPackage` | the [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md) package |
+
+`packages.<system>.*` exposes all of the above except the overlay-only entries `fzf`, `herdr`, `ashWrappers`, `hints`, `plannotator-pi-extension`, and `frsNvimPackage`.
 
 ## Public `fr` config pattern
 
