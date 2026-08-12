@@ -2,6 +2,15 @@
 
 Public Nix files extracted from my larger setup.
 
+## Table of contents
+
+- [Public building blocks](#public-building-blocks)
+- [Layout pattern](#layout-pattern)
+- [Overlay & packages](#overlay--packages)
+- [Public `fr` config pattern](#public-fr-config-pattern)
+
+## Public building blocks
+
 Current public building blocks include:
 
 - `overlays.default`: overlay exposing the reusable packages under [`pkgs/`](./pkgs/) under their plain names (see [Overlay & packages](#overlay--packages))
