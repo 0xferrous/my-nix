@@ -121,6 +121,10 @@ in
     all_proxy = "http://192.168.127.1:8080";
     NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
     no_proxy = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
+    # Node does not consult the system trust store; point it at the iron-proxy
+    # MITM CA so bundled/proxied HTTPS (and injected credentials) verify in
+    # Node-based tooling too (e.g. the codex-desktop bundled node runtime).
+    NODE_EXTRA_CA_CERTS = ../../modules/nixos/iron-proxy-ca.crt;
   };
 
   # Trust the host iron-proxy MITM CA so proxied HTTPS (and the injected
