@@ -20,6 +20,7 @@
   dpkg,
   autoPatchelfHook,
   makeWrapper,
+  perl,
   wrapGAppsHook3,
   gsettings-desktop-schemas,
   # Runtime deps from the deb's `Depends` plus Electron's usual extras and
@@ -28,6 +29,7 @@
   atk,
   cairo,
   cups,
+  coreutils,
   dbus,
   expat,
   gdk-pixbuf,
@@ -76,6 +78,7 @@ stdenv.mkDerivation (finalAttrs: {
     autoPatchelfHook
     dpkg
     makeWrapper
+    perl
     wrapGAppsHook3
   ];
 
@@ -142,6 +145,25 @@ stdenv.mkDerivation (finalAttrs: {
     find "$out/lib/chatgpt" -type d -name '*-musl' -prune -exec rm -rf {} +
     find "$out/lib/chatgpt" -type f -name '*.musl.node' -delete
 
+    # GPU-less VMs need workarounds in the bundled JavaScript. Sentry does not
+    # handle getGPUInfo() rejecting when GPU access is disabled, and the native
+    # git repository watcher crashes this Electron build with SIGILL. The app
+    # also preserves the Nix store's read-only modes when copying bundled
+    # plugins, so use cp without preserving modes. Keep replacements the same
+    # length so the asar's file offsets stay valid.
+    perl -0777pi -e '
+      $sentry = s/\Qez(),uz(),Nz()\E/ez(),     Nz()/g;
+      $newWatcher = s/\Qlet h=d.start();f.startPromise=h\E/let h=void 0   ;f.startPromise=h/g;
+      $existingWatcher = s/\Qr.watcher.start()\E/Promise.resolve()/g;
+      $pluginCopy = s/\Qawait y.default.cp(e,t,{recursive:!0,verbatimSymlinks:!0});return\E/await wne(`cp`,[`-r`,`--no-preserve=mode`,`--`,e,t]);return      /g;
+      END {
+        die "unexpected Sentry GPU integration count: $sentry\n" unless $sentry == 1;
+        die "unexpected new git watcher start count: $newWatcher\n" unless $newWatcher == 1;
+        die "unexpected existing git watcher start count: $existingWatcher\n" unless $existingWatcher == 1;
+        die "unexpected bundled plugin copy count: $pluginCopy\n" unless $pluginCopy == 1;
+      }
+    ' "$out/lib/chatgpt/resources/app.asar"
+
     makeWrapper "$out/lib/chatgpt/ChatGPT" "$out/libexec/codex-desktop" \
       --prefix XDG_DATA_DIRS : "$out/share" \
       --add-flags "--no-sandbox"
@@ -154,6 +176,20 @@ stdenv.mkDerivation (finalAttrs: {
     set -e
 
     extra_args=()
+
+    # Chromium repeatedly restarts its GPU subprocess when running in an agent
+    # VM without a DRM device. Disable GPU access there; the bundled Sentry
+    # integration is patched above to tolerate this mode.
+    if [[ ! -d /dev/dri ]]; then
+      extra_args+=(--disable-gpu)
+    fi
+
+    # Older launches may have copied Nix-store modes into the plugin cache.
+    # Make those stale directories removable before the app reconciles them.
+    bundled_marketplaces="''${CODEX_HOME:-$HOME/.codex}/.tmp/bundled-marketplaces"
+    if [[ -d "$bundled_marketplaces" ]]; then
+      @chmod@ -R u+w -- "$bundled_marketplaces" || true
+    fi
 
     # Some remote shells do not inherit WAYLAND_DISPLAY even though waypipe
     # has created a socket. Find that socket before Electron falls back to X11.
@@ -180,6 +216,7 @@ stdenv.mkDerivation (finalAttrs: {
     EOF
     substituteInPlace "$out/bin/chatgpt" \
       --replace-fail '@shell@' '${stdenv.shell}' \
+      --replace-fail '@chmod@' '${coreutils}/bin/chmod' \
       --replace-fail '@launcher@' "$out/libexec/codex-desktop"
     chmod +x "$out/bin/chatgpt"
 
@@ -188,6 +225,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   preFixup = ''
     wrapProgram "$out/libexec/codex-desktop" \
+      --prefix PATH : '${lib.makeBinPath [ coreutils ]}' \
       "''${gappsWrapperArgs[@]}"
   '';
 
