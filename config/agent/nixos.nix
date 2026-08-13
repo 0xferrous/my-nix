@@ -138,6 +138,15 @@ in
   # user services, and PAM-created login sessions.
   systemd.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
   systemd.user.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
+
+  # Electron workloads such as codex-desktop can exceed the agent VM's 4 GiB
+  # of RAM. Compressed swap prevents the kernel from killing renderers under
+  # short-lived memory pressure without requiring persistent disk swap.
+  zramSwap = {
+    enable = true;
+    memoryPercent = 100;
+  };
+
   security.pam.loginLimits = [
     {
       domain = "*";
