@@ -35,6 +35,10 @@ final: prev: {
   ironclaw = final.callPackage ./ironclaw.nix { };
   iron-proxy = final.callPackage ./iron-proxy.nix { };
   jj-hunk = final.callPackage ./jj-hunk.nix { };
+  # ChatGPT/Codex Linux desktop app (preview). Not in nixpkgs: the upstream
+  # `chatgpt` package is macOS-only and OpenAI publishes the Linux builds only
+  # as .deb/.rpm under a moving `latest/` URL (see codex-desktop.nix).
+  codex-desktop = final.callPackage ./codex-desktop.nix { };
   obscura = final.callPackage ./obscura/package.nix { };
   nash = final.callPackage ./nash.nix { };
   google-authenticator-transfer-decode =

@@ -183,6 +183,7 @@
             prime-agent
             flake-utils
             qwen3-server
+            codex-desktop
             ;
           "install-bin" = pkgs."install-bin";
           iron-proxy = pkgs.iron-proxy;
