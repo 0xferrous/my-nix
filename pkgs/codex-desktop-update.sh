@@ -1,6 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#! nix-shell -i bash -p curl dpkg nix
 # Bump pkgs/codex-desktop-source.nix to the current ChatGPT/Codex Linux
 # desktop app build (the published `latest/` URL moves as OpenAI ships).
+#
+# Self-contained via the nix-shell shebang: curl for the download, dpkg
+# (dpkg-deb) for the version, and nix-prefetch-url plus nix hash convert
+# (both from the `nix` package) for the SRI hash.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -10,7 +15,8 @@ trap 'rm -rf "$tmp"' EXIT
 
 curl -fsSL -o "$tmp/chatgpt.deb" "$url"
 version=$(dpkg-deb -f "$tmp/chatgpt.deb" Version)
-hash=$(nix-prefetch-url --type sha256 "file://$tmp/chatgpt.deb")
+# nix-prefetch-url prints base32; fetchurl's `hash` needs the SRI form.
+hash=$(nix hash convert --hash-algo sha256 --to sri "$(nix-prefetch-url --type sha256 "file://$tmp/chatgpt.deb")")
 
 cat > codex-desktop-source.nix <<EOF
 # Pin for the ChatGPT/Codex Linux desktop app (preview).

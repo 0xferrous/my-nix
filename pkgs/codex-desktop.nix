@@ -155,22 +155,19 @@ stdenv.mkDerivation (finalAttrs: {
     find "$out/lib/chatgpt" -type d -name '*-musl' -prune -exec rm -rf {} +
     find "$out/lib/chatgpt" -type f -name '*.musl.node' -delete
 
-    # GPU-less VMs need workarounds in the bundled JavaScript. Sentry does not
-    # handle getGPUInfo() rejecting when GPU access is disabled, and the native
-    # git repository watcher crashes this Electron build with SIGILL. The app
-    # also preserves the Nix store's read-only modes when copying bundled
-    # plugins, so use cp without preserving modes. Keep replacements the same
-    # length so the asar's file offsets stay valid.
+    # The app preserves the Nix store's read-only modes when copying bundled
+    # plugins into the codex home (resources/plugins -> ~/.codex/.tmp/...), so
+    # copy via the app's own promisified execFile helper (`lne`) with
+    # --no-preserve=mode instead of fs.cp. Also drop the bundled Sentry
+    # GpuContext integration: getGPUInfo() rejects unhandled when the launcher
+    # passes --disable-gpu in GPU-less VMs. Keep replacements the same length
+    # so the asar's file offsets stay valid.
     perl -0777pi -e '
-      $sentry = s/\Qez(),uz(),Nz()\E/ez(),     Nz()/g;
-      $newWatcher = s/\Qlet h=d.start();f.startPromise=h\E/let h=void 0   ;f.startPromise=h/g;
-      $existingWatcher = s/\Qr.watcher.start()\E/Promise.resolve()/g;
-      $pluginCopy = s/\Qawait y.default.cp(e,t,{recursive:!0,verbatimSymlinks:!0});return\E/await wne(`cp`,[`-r`,`--no-preserve=mode`,`--`,e,t]);return      /g;
+      $pluginCopy = s/\Qawait y.default.cp(e,t,{recursive:!0,verbatimSymlinks:!0});return\E/await lne(`cp`,[`-r`,`--no-preserve=mode`,`--`,e,t]);return      /g;
+      $gpuContext = s/\QTR(),FR(),iz()\E/TR(),     iz()/g;
       END {
-        die "unexpected Sentry GPU integration count: $sentry\n" unless $sentry == 1;
-        die "unexpected new git watcher start count: $newWatcher\n" unless $newWatcher == 1;
-        die "unexpected existing git watcher start count: $existingWatcher\n" unless $existingWatcher == 1;
         die "unexpected bundled plugin copy count: $pluginCopy\n" unless $pluginCopy == 1;
+        die "unexpected Sentry GPU context integration count: $gpuContext\n" unless $gpuContext == 1;
       }
     ' "$out/lib/chatgpt/resources/app.asar"
 
@@ -189,8 +186,8 @@ stdenv.mkDerivation (finalAttrs: {
     extra_args=()
 
     # Chromium repeatedly restarts its GPU subprocess when running in an agent
-    # VM without a DRM device. Disable GPU access there; the bundled Sentry
-    # integration is patched above to tolerate this mode.
+    # VM without a DRM device. Disable GPU access there; the app itself handles
+    # the resulting getGPUInfo() rejection.
     if [[ ! -d /dev/dri ]]; then
       extra_args+=(--disable-gpu)
     fi

@@ -6,9 +6,9 @@
 # URL in nixpkgs (`pkgs/by-name/ch/chatgpt`), but no equivalent exists for
 # the Linux `codex-app-prod` bucket yet.
 {
-  version = "26.803.81509";
+  version = "26.810.41047";
   src = {
     url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb";
-    hash = "sha256-qb+Ro2j598Tuo4CCqfuPtGuNAFtxmm13FdLloZgsOOs=";
+    hash = "sha256-eHFfo80Tb/ZwcNqnaBmtrsxbQumYUVWWWWRdzh+/KvM=";
   };
 }
