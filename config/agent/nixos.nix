@@ -297,6 +297,7 @@ in
 
       # Serialize with any other instance of this service.
       ${pkgs.util-linux}/bin/flock -n /run/agent-auto-switch.lock ${pkgs.bash}/bin/bash -c '
+        set -e
         echo "agent-auto-switch: starting nixos-rebuild switch"
         ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch \
           --flake /home/agent/dev/fr/my-nix#agent \
@@ -366,6 +367,7 @@ in
       echo "agent-home-switch: my-nix share is up; starting home-manager switch"
 
       ${pkgs.util-linux}/bin/flock -n /run/user/1000/agent-home-switch.lock ${pkgs.bash}/bin/bash -c '
+        set -e
         echo "agent-home-switch: running home-manager switch"
         ${pkgs.home-manager}/bin/home-manager switch \
           --flake /home/agent/dev/fr/my-nix#agent
