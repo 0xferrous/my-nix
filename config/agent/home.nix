@@ -16,6 +16,7 @@ let
       ''
         cp ${zjRadar.default}/bin/zj_radar.wasm "$out"
       '';
+  ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
 in
 {
   imports = [
@@ -32,7 +33,7 @@ in
       pkgs.obscura
       myNixInputs.codexbar.packages.${system}.default
       myNixInputs.ash.packages.${system}.agent-portal-wrappers
-      # pkgs.ashWrappers.dbusProxy
+      myNixInputs.ash.packages.${system}."ash-dbus-proxy"
     ];
     # Same iron-proxy tunnel as the system session, so user systemd services
     # and shells started outside a login session also route egress through it.
@@ -91,14 +92,15 @@ in
     };
   };
 
-  # systemd.user.services.ash-dbus-proxy = {
-  #   Unit.Description = "Ash host notification D-Bus bridge";
-  #   Service = {
-  #     ExecStart = "${pkgs.ashWrappers.dbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
-  #     Restart = "on-failure";
-  #   };
-  #   Install.WantedBy = [ "default.target" ];
-  # };
+  systemd.user.services.ash-dbus-proxy = {
+    Unit.Description = "Ash host notification D-Bus bridge";
+    Service = {
+      ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 
   systemd.user.services = {
     herdr = {
