@@ -78,6 +78,10 @@ in
     })
   ];
 
+  # Allow only the unfree ChatGPT/Codex desktop app (codex-desktop); the rest
+  # of the agent VM stays on free software.
+  nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "codex-desktop";
+
   nix.settings = {
     experimental-features = [
       "nix-command"
@@ -190,6 +194,7 @@ in
       uv
       AIPackages.codex
       AIPackages.opencode
+      codex-desktop
       home-manager
       frsNvimPackage
       ironclaw
