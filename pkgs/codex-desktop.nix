@@ -20,6 +20,7 @@
   makeFontsConf,
   dpkg,
   autoPatchelfHook,
+  bubblewrap,
   makeWrapper,
   perl,
   wrapGAppsHook3,
@@ -175,6 +176,7 @@ stdenv.mkDerivation (finalAttrs: {
 
     makeWrapper "$out/lib/chatgpt/ChatGPT" "$out/libexec/codex-desktop" \
       --prefix XDG_DATA_DIRS : "$out/share" \
+      --prefix PATH : "${lib.makeBinPath [ bubblewrap ]}" \
       --add-flags "--no-sandbox"
 
     # Electron otherwise prefers X11 even when only a Wayland socket is
