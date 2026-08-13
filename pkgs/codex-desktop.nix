@@ -126,7 +126,7 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/lib" "$out/bin" "$out/share/applications" "$out/share/pixmaps"
+    mkdir -p "$out/lib" "$out/libexec" "$out/bin" "$out/share/applications" "$out/share/pixmaps"
     cp -a usr/lib/chatgpt "$out/lib/"
     cp usr/share/applications/chatgpt.desktop "$out/share/applications/"
     cp usr/share/pixmaps/chatgpt.png "$out/share/pixmaps/"
@@ -137,9 +137,46 @@ stdenv.mkDerivation (finalAttrs: {
     find "$out/lib/chatgpt" -type d -name '*-musl' -prune -exec rm -rf {} +
     find "$out/lib/chatgpt" -type f -name '*.musl.node' -delete
 
-    makeWrapper "$out/lib/chatgpt/ChatGPT" "$out/bin/chatgpt" \
+    makeWrapper "$out/lib/chatgpt/ChatGPT" "$out/libexec/codex-desktop" \
       --prefix XDG_DATA_DIRS : "${gsettings-desktop-schemas}/share/gsettings-schemas:$out/share" \
       --add-flags "--no-sandbox"
+
+    # Electron otherwise prefers X11 even when only a Wayland socket is
+    # available, as with waypipe's default server mode. Keep X11 working when
+    # no Wayland display is present.
+    cat > "$out/bin/chatgpt" <<'EOF'
+    #!@shell@
+    set -e
+
+    extra_args=()
+
+    # Some remote shells do not inherit WAYLAND_DISPLAY even though waypipe
+    # has created a socket. Find that socket before Electron falls back to X11.
+    runtime_dir="''${XDG_RUNTIME_DIR:-/run/user/$EUID}"
+    if [[ -z "''${WAYLAND_DISPLAY:-}" ]]; then
+      for socket in "$runtime_dir"/wayland-*; do
+        if [[ -S "$socket" ]]; then
+          export XDG_RUNTIME_DIR="$runtime_dir"
+          export WAYLAND_DISPLAY="''${socket##*/}"
+          break
+        fi
+      done
+    fi
+
+    if [[ -n "''${WAYLAND_DISPLAY:-}" ]]; then
+      extra_args+=(--ozone-platform=wayland)
+    fi
+
+    if [[ -z "''${DBUS_SESSION_BUS_ADDRESS:-}" && -S "''${XDG_RUNTIME_DIR:-}/bus" ]]; then
+      export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+    fi
+
+    exec @launcher@ "''${extra_args[@]}" "$@"
+    EOF
+    substituteInPlace "$out/bin/chatgpt" \
+      --replace-fail '@shell@' '${stdenv.shell}' \
+      --replace-fail '@launcher@' "$out/libexec/codex-desktop"
+    chmod +x "$out/bin/chatgpt"
 
     runHook postInstall
   '';
