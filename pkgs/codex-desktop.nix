@@ -20,6 +20,7 @@
   dpkg,
   autoPatchelfHook,
   makeWrapper,
+  wrapGAppsHook3,
   gsettings-desktop-schemas,
   # Runtime deps from the deb's `Depends` plus Electron's usual extras and
   # the libs for the bundled native node modules.
@@ -75,9 +76,11 @@ stdenv.mkDerivation (finalAttrs: {
     autoPatchelfHook
     dpkg
     makeWrapper
+    wrapGAppsHook3
   ];
 
   buildInputs = [
+    gsettings-desktop-schemas
     alsa-lib
     atk
     cairo
@@ -116,6 +119,8 @@ stdenv.mkDerivation (finalAttrs: {
     xz
   ];
 
+  dontWrapGApps = true;
+
   unpackPhase = ''
     runHook preUnpack
     dpkg-deb -x "$src" unpacked
@@ -138,7 +143,7 @@ stdenv.mkDerivation (finalAttrs: {
     find "$out/lib/chatgpt" -type f -name '*.musl.node' -delete
 
     makeWrapper "$out/lib/chatgpt/ChatGPT" "$out/libexec/codex-desktop" \
-      --prefix XDG_DATA_DIRS : "${gsettings-desktop-schemas}/share/gsettings-schemas:$out/share" \
+      --prefix XDG_DATA_DIRS : "$out/share" \
       --add-flags "--no-sandbox"
 
     # Electron otherwise prefers X11 even when only a Wayland socket is
@@ -179,6 +184,11 @@ stdenv.mkDerivation (finalAttrs: {
     chmod +x "$out/bin/chatgpt"
 
     runHook postInstall
+  '';
+
+  preFixup = ''
+    wrapProgram "$out/libexec/codex-desktop" \
+      "''${gappsWrapperArgs[@]}"
   '';
 
   meta = {
