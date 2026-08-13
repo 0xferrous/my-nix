@@ -70,6 +70,13 @@ in
       onboarding = false;
       theme.name = "gruvbox";
       experimental.kitty_graphics = true;
+      # Direct Alt+arrow pane focus instead of prefix chords (prefix+h/j/k/l).
+      keys = {
+        focus_pane_left = "alt+left";
+        focus_pane_down = "alt+down";
+        focus_pane_up = "alt+up";
+        focus_pane_right = "alt+right";
+      };
       ui.sidebar.spaces.rows = [
         [
           "state_icon"
