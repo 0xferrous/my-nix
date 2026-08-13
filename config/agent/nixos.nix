@@ -227,7 +227,13 @@ in
   systemd.services.virtle-ssh-signal = {
     wantedBy = [ "multi-user.target" ];
     requires = [ "sshd.service" ];
-    after = [ "sshd.service" ];
+    after = [
+      "sshd.service"
+      # Signal readiness once the home-manager switch is done, so the host's
+      # SSH provisioning does not wait for the (potentially long) NixOS
+      # rebuild. After= orders only and does not pull the switches in.
+      "agent-home-switch.service"
+    ];
     serviceConfig = {
       Type = "oneshot";
       TimeoutStartSec = "130s";
@@ -255,23 +261,25 @@ in
     '';
   };
 
-  # Self-update: rebuild this VM from the my-nix flake shortly after boot so
+  # Self-update: rebuild this VM from the my-nix flake right after boot so
   # config changes made on the host reach the VM without manual steps. The
-  # my-nix workspace share is a plain virtiofs mount created by Ash after boot
-  # (it only appears in /proc/self/mountinfo, not as a systemd mount unit), so
-  # poll for it rather than ordering after a unit. Every echo and all of the
-  # nixos-rebuild output lands in journald under this unit for debugging.
+  # timers fire almost immediately; the services wait on their real
+  # prerequisites (network-online, nix-daemon, the my-nix share) instead of
+  # delaying the trigger. The workspace share is a plain virtiofs mount
+  # created by Ash after boot (it only appears in /proc/self/mountinfo, not as
+  # a systemd mount unit), so poll for it rather than ordering after a unit.
+  # Every echo and all of the nixos-rebuild output lands in journald under
+  # this unit for debugging.
   #
   # Deliberately NOT wantedBy multi-user.target: a switch's activation
   # re-triggers multi-user.target, which NixOS orders after its wantedBy
   # units, so a switch running inside such a unit deadlocks on its own
   # activation. A boot timer decouples the switch from that transaction.
   systemd.timers.agent-auto-switch = {
-    description = "Trigger the agent NixOS self-update shortly after boot";
+    description = "Trigger the agent NixOS self-update right after boot";
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnBootSec = "2min";
-      RandomizedDelaySec = "30s";
+      OnBootSec = "0s";
     };
   };
 
@@ -281,6 +289,9 @@ in
     after = [
       "network-online.target"
       "nix-daemon.service"
+      # The NixOS switch runs after the fast, user-level home-manager switch:
+      # it re-triggers multi-user.target and restarts sshd, so it stays last.
+      "agent-home-switch.service"
     ];
     environment.NO_COLOR = "1";
     serviceConfig = {
@@ -331,14 +342,14 @@ in
   };
 
   # Home-manager is deliberately NOT wired into nixos-rebuild (the NixOS module
-  # was removed); the agent home config is rebuilt by this boot timer instead,
-  # scheduled after the NixOS switch has had a chance to run.
+  # was removed); the agent home config is rebuilt by this boot timer instead.
+  # The home switch runs first (fast, user-level, no sshd disruption) and the
+  # NixOS switch is ordered after it.
   systemd.timers.agent-home-switch = {
     description = "Trigger the agent home-manager rebuild after the NixOS switch";
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnBootSec = "3min";
-      RandomizedDelaySec = "30s";
+      OnBootSec = "0s";
     };
   };
 
@@ -348,7 +359,6 @@ in
     after = [
       "network-online.target"
       "nix-daemon.service"
-      "agent-auto-switch.service"
     ];
     path = [
       pkgs.home-manager
@@ -383,6 +393,18 @@ in
         exit 1
       fi
       echo "agent-home-switch: my-nix share is up; starting home-manager switch"
+
+      # The timer fires right after boot, so the user session bus may not be up
+      # yet; home-manager activation needs it for systemctl --user.
+      attempts=0
+      while [ ! -S /run/user/1000/bus ]; do
+        attempts=$((attempts + 1))
+        if [ "$attempts" -ge 60 ]; then
+          echo "agent-home-switch: user session bus not found after 60s; continuing anyway" >&2
+          break
+        fi
+        ${pkgs.coreutils}/bin/sleep 1
+      done
 
       ${pkgs.util-linux}/bin/flock -n /run/user/1000/agent-home-switch.lock ${pkgs.bash}/bin/bash -c '
         set -e
