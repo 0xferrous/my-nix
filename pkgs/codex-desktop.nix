@@ -17,6 +17,7 @@
   lib,
   stdenv,
   fetchurl,
+  makeFontsConf,
   dpkg,
   autoPatchelfHook,
   makeWrapper,
@@ -59,12 +60,20 @@
   pango,
   qt5,
   qt6,
+  recursive,
+  nerd-fonts,
   udev,
   xz,
 }:
 
 let
   source = import ./codex-desktop-source.nix;
+  fontsConf = makeFontsConf {
+    fontDirectories = [
+      recursive
+      nerd-fonts.recursive-mono
+    ];
+  };
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "codex-desktop";
@@ -226,6 +235,7 @@ stdenv.mkDerivation (finalAttrs: {
   preFixup = ''
     wrapProgram "$out/libexec/codex-desktop" \
       --prefix PATH : '${lib.makeBinPath [ coreutils ]}' \
+      --set FONTCONFIG_FILE '${fontsConf}' \
       "''${gappsWrapperArgs[@]}"
   '';
 
