@@ -1,11 +1,8 @@
 {
-  myNixInputs,
   pkgs,
   ...
 }:
 let
-  system = pkgs.stdenv.hostPlatform.system;
-  ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
   quietXwaylandSatellite = pkgs.writeShellScriptBin "xwayland-satellite" ''
     export RUST_LOG="''${RUST_LOG:-error}"
     exec ${pkgs.xwayland-satellite}/bin/xwayland-satellite "$@"
@@ -32,20 +29,4 @@ in
   # The shared GPU is experimental and belongs only in nash guests.
   hardware.graphics.enable = true;
   boot.kernelModules = [ "virtio_gpu" ];
-
-  home-manager.users.agent = {
-    home.packages = [
-      ashDbusProxy
-    ];
-
-    systemd.user.services.ash-dbus-proxy = {
-      Unit.Description = "Ash host notification D-Bus bridge";
-      Service = {
-        ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
-        Restart = "on-failure";
-        RestartSec = 1;
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
-  };
 }
