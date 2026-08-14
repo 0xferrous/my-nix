@@ -225,13 +225,13 @@ in
   };
 
   systemd.services.virtle-ssh-signal = {
-    wantedBy = [ "multi-user.target" ];
+    # Do not start at boot (multi-user.target); the home-manager switch pulls
+    # this in via Wants and we order after it, so SSH-READY is only signalled
+    # once the agent home config is in place.
+    wantedBy = [ "agent-home-switch.service" ];
     requires = [ "sshd.service" ];
     after = [
       "sshd.service"
-      # Signal readiness once the home-manager switch is done, so the host's
-      # SSH provisioning does not wait for the (potentially long) NixOS
-      # rebuild. After= orders only and does not pull the switches in.
       "agent-home-switch.service"
     ];
     serviceConfig = {
