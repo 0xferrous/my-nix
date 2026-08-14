@@ -92,7 +92,7 @@ Packages provided by the overlay:
 | `ironclaw` | secure personal AI assistant |
 | `iron-proxy` | MITM egress proxy with DNS server, secret injection, and audit logging |
 | `obscura` | headless browser engine in Rust: V8, real DOM, CDP, stealth |
-| `codex-desktop` | ChatGPT/Codex Linux desktop app (preview): closed-source Electron bundle of the Apache-2.0 `codex` CLI; ships as `.deb` from OpenAI's `latest/` URL, unpacked and patched here (unfree, `--no-sandbox`, Wayland-aware wrapper with X11 fallback) |
+| `codex-desktop` | ChatGPT/Codex Linux desktop app (preview): closed-source Electron bundle of the Apache-2.0 `codex` CLI; ships as `.deb` from OpenAI's apt repository (versioned pool URL, pinned via `pkgs/codex-desktop-source.nix`), unpacked and patched here (unfree, `--no-sandbox`, Wayland-aware wrapper with X11 fallback) |
 | `hints` | click, scroll, and drag with your keyboard |
 | `opensrc` | fetch and cache source code for packages and repos |
 | `flake-utils` | synchronize selected flake input locks across local flakes |

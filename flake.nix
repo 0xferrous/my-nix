@@ -156,6 +156,10 @@
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ overlay ];
+        # Mirror config/agent/nixos.nix: allow only the unfree ChatGPT/Codex
+        # desktop app (codex-desktop) so `nix build .#codex-desktop` and
+        # `nix run .#codex-desktop` work from the flake.
+        config.allowUnfreePredicate = pkg: (pkg.pname or "") == "codex-desktop";
       };
       lib = pkgs.lib;
     in

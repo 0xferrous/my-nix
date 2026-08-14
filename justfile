@@ -28,6 +28,21 @@ flake-update-frs-nvim-wrapper-inputs:
     (cd ./pkgs/frs-nvim && nix flake lock --override-input nixpkgs "$nixpkgs_url" && nix flake update nix-wrapper-modules)
   nix flake update frs-nvim
 
+# Refresh the codex-desktop pin (version + SRI hash) from OpenAI's moving
+# `latest/` URL.
+update-codex-desktop:
+  ./pkgs/codex-desktop-update.sh
+
+# Build codex-desktop, refreshing the pin and retrying only when the pinned
+# hash went stale (the `latest/` URL moves as OpenAI ships).
+build-codex-desktop:
+  nix build .#codex-desktop || { ./pkgs/codex-desktop-update.sh && nix build .#codex-desktop; }
+
+# Run the ChatGPT/Codex desktop app, same stale-hash self-healing as
+# build-codex-desktop.
+run-codex-desktop:
+  nix run .#codex-desktop || { ./pkgs/codex-desktop-update.sh && nix run .#codex-desktop; }
+
 build-agent-kernel:
   mkdir -p "{{agent_vm_artifacts_dir}}"
   nix build .#nixosConfigurations.agent.config.system.build.kernel -o "{{agent_vm_kernel_dir}}"

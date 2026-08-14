@@ -2,10 +2,12 @@
 # preview.
 #
 # Not packaged upstream: nixpkgs only has the macOS build (`chatgpt`),
-# served from a versioned `sidekick` URL. OpenAI publishes the Linux builds
-# only as .deb/.rpm under a moving `codex-app-prod/.../latest/` URL, so this
+# served from a versioned `sidekick` URL. OpenAI also hosts a real apt
+# repository for the Linux builds (codex-app-prod/linux/deb); the pin below
+# uses the versioned pool URL from its Packages index rather than the moving
+# `latest/` URL, so it only goes stale when OpenAI ships a new version. This
 # is a fixed-output derivation over the amd64 deb, pinned via
-# ./codex-desktop-source.nix (bump with ./update.sh).
+# ./codex-desktop-source.nix (bump with ./codex-desktop-update.sh).
 #
 # The app is a closed-source Electron bundle that ships its own Chromium
 # runtime, the open-source Apache-2.0 `codex` CLI, and native node modules
