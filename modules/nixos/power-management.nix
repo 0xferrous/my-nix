@@ -71,8 +71,23 @@ in
           "Suspend"
           "Ignore"
         ];
-        default = "HybridSleep";
-        description = "UPower critical battery action. HybridSleep preserves state better than plain suspend if the battery keeps draining.";
+        default = "Suspend";
+        description = ''
+          UPower critical battery action taken at `upower.actionPercentage`.
+
+          Defaults to Suspend: it works on any laptop without extra setup and
+          preserves the running session in RAM. A suspended laptop draws very
+          little power, so the remaining battery lasts for many hours; this is
+          the critical-battery action used by most desktop environments.
+
+          Avoid Hibernate/HybridSleep unless hibernation is actually
+          configured (swap >= RAM plus `boot.resumeDevice`): UPower silently
+          falls back through HybridSleep -> Hibernate -> PowerOff based on what
+          logind reports available (`systemctl show -p CanHibernate
+          -p CanHybridSleep`). Without working hibernation the machine will
+          cleanly power off at the action percentage, which still loses all
+          unsaved work.
+        '';
       };
     };
 
@@ -189,6 +204,21 @@ in
       {
         assertion = cfg.upower.criticalPercentage > cfg.upower.actionPercentage;
         message = "fr.powerManagement.upower.criticalPercentage must be greater than .actionPercentage.";
+      }
+      {
+        assertion =
+          !(lib.elem cfg.upower.criticalPowerAction [
+            "Hibernate"
+            "HybridSleep"
+          ])
+          || (config.swapDevices != [ ] && config.boot.resumeDevice != null);
+        message = ''
+          fr.powerManagement.upower.criticalPowerAction =
+          '${cfg.upower.criticalPowerAction}' requires working hibernation:
+          configure swap (at least RAM size) and boot.resumeDevice, or use
+          "Suspend". Without hibernation support UPower silently degrades to
+          PowerOff at the action percentage and all unsaved work is lost.
+        '';
       }
     ];
 
