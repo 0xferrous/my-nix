@@ -42,6 +42,11 @@ in
       HTTPS_PROXY = "http://192.168.127.1:8080";
       ALL_PROXY = "http://192.168.127.1:8080";
       NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
+      # rustls-based tools (e.g. obscura) ignore the system trust store and
+      # default to bundled webpki roots; the NixOS bundle includes the
+      # iron-proxy CA (security.pki.certificateFiles), so proxied HTTPS
+      # verifies through the MITM tunnel.
+      SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
       # Bun/Node ignore the system trust store; point them at the iron-proxy
       # MITM CA so proxied HTTPS (and injected credentials) verify in user
       # systemd services and non-login shells too.
