@@ -43,7 +43,9 @@ let
 
   agentStuffPackage = pkgs.buildNpmPackage {
     pname = "agent-stuff";
-    version = "unstable";
+    # Change the npm dependency derivation's identity with the lockfile so Nix
+    # cannot reuse a stale fixed-output path without checking npmDepsHash.
+    version = "unstable-${agentStuffLockHash}";
     src = agentStuffPatchedSrc;
     npmDepsHash = "sha256-KA4qJ9MTv35qklVdYFgbY96mbMb+p0PkWrOWXMh3Iyo=";
     npmDepsFetcherVersion = 2;
