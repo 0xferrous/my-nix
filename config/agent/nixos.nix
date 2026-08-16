@@ -12,9 +12,6 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
   agentPortalWrappers = myNixInputs.ash.packages.${system}.agent-portal-wrappers;
-  devEssentialsPackages = import ../shared/packages/dev-essentials.nix {
-    inherit pkgs AIPackages;
-  };
   impermanenceRoot = "/persist";
   lowerStoreUri = "local?real=/nix/.ro-store&state=/run/ash/shares/ro/guest-store-state&read-only=true";
   upperStoreState = "/run/ash/shares/rw/guest-store-state";
@@ -190,22 +187,19 @@ in
     "/etc/ash/nix-daemon"
   ];
 
-  environment.systemPackages =
-    (with pkgs; [
-      kitty.terminfo
-      pi
-      poetry
-      python3
-      uv
-      AIPackages.codex
-      AIPackages.opencode
-      codex-desktop
-      home-manager
-      frsNvimPackage
-      ironclaw
-      agentPortalWrappers
-    ])
-    ++ devEssentialsPackages;
+  environment.systemPackages = with pkgs; [
+    kitty.terminfo
+    poetry
+    python3
+    uv
+    AIPackages.codex
+    AIPackages.opencode
+    codex-desktop
+    home-manager
+    frsNvimPackage
+    ironclaw
+    agentPortalWrappers
+  ];
 
   environment.shellAliases = {
     vi = "nvim";

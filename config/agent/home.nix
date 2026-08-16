@@ -6,6 +6,12 @@
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
+  AIPackages = myNixInputs.llm-agents.packages.${system};
+  devEssentialsPackages = lib.remove pkgs.gh (
+    import ../shared/packages/dev-essentials.nix {
+      inherit pkgs AIPackages;
+    }
+  );
   zjRadar = myNixInputs.zj-radar.packages.${system};
   zjRadarPlugin =
     pkgs.runCommand "zellij-plugin-zj-radar.wasm"
@@ -31,10 +37,12 @@ in
     stateVersion = "26.05";
     packages = [
       pkgs.obscura
+      pkgs.piDev
       myNixInputs.codexbar.packages.${system}.default
       myNixInputs.ash.packages.${system}.agent-portal-wrappers
       myNixInputs.ash.packages.${system}."ash-dbus-proxy"
-    ];
+    ]
+    ++ devEssentialsPackages;
     # Same iron-proxy tunnel as the system session, so user systemd services
     # and shells started outside a login session also route egress through it.
     sessionVariables = {
