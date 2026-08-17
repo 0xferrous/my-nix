@@ -75,12 +75,15 @@ in
   # creation avoids it; see git config core.createobject.
   programs.git = {
     enable = true;
+    includes = [ { path = "~/.config/git/private.config"; } ];
     settings = {
       core = {
         createobject = "rename";
       };
     };
   };
+
+  programs.jujutsu.enable = true;
 
   programs.herdr = {
     enable = true;

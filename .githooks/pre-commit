@@ -1,0 +1,13 @@
+#!/usr/bin/env nu
+
+let expected_name = "0xferrous"
+let expected_email = "0xferrous@proton.me"
+let configured_name = (^git config --get user.name | complete)
+let configured_email = (^git config --get user.email | complete)
+let actual_name = if $configured_name.exit_code == 0 { $configured_name.stdout | str trim } else { "" }
+let actual_email = if $configured_email.exit_code == 0 { $configured_email.stdout | str trim } else { "" }
+
+if $actual_name != $expected_name or $actual_email != $expected_email {
+  print --stderr $"Refusing commit: Git identity must be ($expected_name) <($expected_email)>; found ($actual_name) <($actual_email)>"
+  exit 1
+}
