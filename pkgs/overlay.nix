@@ -5,26 +5,6 @@
 final: prev: {
   herdr = inputs.llm-agents.packages.${system}.herdr;
 
-  fzf = final.symlinkJoin {
-    inherit (prev.fzf) pname version;
-    name = "${prev.fzf.pname}-${prev.fzf.version}";
-    meta = builtins.removeAttrs prev.fzf.meta [ "outputsToInstall" ];
-    paths = [ prev.fzf ];
-    postBuild = ''
-      rm "$out/bin/fzf"
-      cat > "$out/bin/fzf" <<'EOF'
-      #!${final.runtimeShell}
-      if [ "$#" -eq 1 ] && [ "$1" = --nushell ]; then
-        set -o pipefail
-        ${prev.fzf}/bin/fzf --nushell | ${final.gnused}/bin/sed 's/str downcase/str lowercase/g'
-      else
-        exec ${prev.fzf}/bin/fzf "$@"
-      fi
-      EOF
-      chmod +x "$out/bin/fzf"
-    '';
-  };
-
   ashWrappers = import ./ash-portal-wrappers.nix {
     inherit (final) lib runCommand symlinkJoin;
     ashPackage = inputs.ash.packages.${system}.all or inputs.ash.packages.${system}.ash;
