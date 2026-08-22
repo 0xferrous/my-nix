@@ -51,7 +51,7 @@ final: prev: {
   piDev = final.pi.override {
     agentStuffPath = "~/dev/fr/agent-stuff";
   };
-  abwrap = final.callPackage ./abwrap.nix {
+  abwrap = final.callPackage ./abwrap/package.nix {
     AIPackages = inputs.llm-agents.packages.${system};
     codex = inputs.llm-agents.packages.${system}.codex;
     opencode = inputs.llm-agents.packages.${system}.opencode;

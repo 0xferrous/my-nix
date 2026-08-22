@@ -104,7 +104,7 @@ Packages provided by the overlay:
 | `plannotator-pi-extension` | interactive plan and code review extension for Pi |
 | `frsNvimPackage` | the [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md) package |
 
-`abwrap` starts with a clean environment and forwards only terminal/locale metadata by default. Use `--env NAME` for additional variables. A directly selected `pi`, `codex`, or `opencode` entrypoint automatically receives only its own state directory; use `--tool-state TOOL` when launching a tool later from the default Nushell. It also blocks `TIOCSTI` terminal injection and nested user namespaces while retaining native terminal resizing.
+`abwrap` starts with a clean environment and forwards only terminal/locale metadata by default. Use `--env NAME` for additional variables. A directly selected `pi`, `codex`, or `opencode` entrypoint automatically receives only its own state directory; use `--tool-state TOOL` when launching a tool later from the default Nushell. It also blocks `TIOCSTI` terminal injection and nested user namespaces while retaining native terminal resizing. See the [abwrap documentation](./pkgs/abwrap/README.md) for usage and security details.
 
 `packages.<system>.*` exposes all of the above except the overlay-only entries `herdr`, `ashWrappers`, `hints`, `plannotator-pi-extension`, and `frsNvimPackage`.
 

@@ -13,7 +13,7 @@
   opencode,
 }:
 let
-  devEssentialPackages = import ../config/shared/packages/dev-essentials.nix {
+  devEssentialPackages = import ../../config/shared/packages/dev-essentials.nix {
     inherit AIPackages pkgs;
     includeAbwrap = false;
   };
@@ -52,7 +52,7 @@ stdenv.mkDerivation {
       -trimpath \
       -ldflags ${lib.escapeShellArg linkerFlags} \
       -o abwrap \
-      ${./abwrap.go}
+      ${./main.go}
 
     runHook postBuild
   '';
