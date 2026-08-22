@@ -16,7 +16,9 @@ abwrap --env OPENAI_API_KEY --rw "$PWD" codex
 ```
 
 Nushell is the default entrypoint. A positional command or
-`--entrypoint COMMAND` selects another entrypoint.
+`--entrypoint COMMAND` selects another entrypoint. A Nix-provided Bash is also
+available on `PATH` and mounted at `/bin/sh` for tools, including Pi's bash tool,
+that assume a conventional POSIX shell path exists.
 
 ### Host access
 

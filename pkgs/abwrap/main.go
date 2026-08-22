@@ -21,6 +21,7 @@ import (
 // paths. Keeping them as variables also makes local development builds useful.
 var (
 	bwrapPath         = "bwrap"
+	posixShellPath    = "/bin/sh"
 	defaultEntrypoint = "nu"
 	sandboxPath       = ""
 )
@@ -414,6 +415,8 @@ func bubblewrapArgs(home, overlay string, opts options, stateMounts []mount) []s
 		"--ro-bind-try", "/etc/resolv.conf", "/etc/resolv.conf",
 		"--ro-bind-try", "/etc/hosts", "/etc/hosts",
 		"--ro-bind-try", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
+		// Pi's bash tool and many build scripts expect /bin/sh even on NixOS.
+		"--ro-bind", posixShellPath, "/bin/sh",
 		"--proc", "/proc",
 		"--dev", "/dev",
 		"--tmpfs", "/tmp",

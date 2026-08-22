@@ -3,6 +3,7 @@
   stdenv,
   go,
   AIPackages,
+  bash,
   bubblewrap,
   coreutils,
   nix,
@@ -22,6 +23,7 @@ let
   };
 
   sandboxPackages = devEssentialPackages ++ [
+    bash
     coreutils
     nix
     nushell
@@ -36,6 +38,7 @@ let
     "-s"
     "-w"
     "-X main.bwrapPath=${lib.getExe bubblewrap}"
+    "-X main.posixShellPath=${lib.getExe bash}"
     "-X main.defaultEntrypoint=${lib.getExe nushell}"
     "-X main.sandboxPath=${lib.makeBinPath sandboxPackages}"
   ];
