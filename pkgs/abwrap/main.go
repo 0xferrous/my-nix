@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/binary"
 	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -12,7 +14,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
 )
 
@@ -213,111 +214,60 @@ func parseOptions(args []string) (options, error) {
 	}
 	entrypointExplicit := false
 
-	for index := 0; index < len(args); {
-		arg := args[index]
-		switch {
-		case arg == "--ro" || arg == "--rw":
-			if index+1 >= len(args) {
-				return opts, fmt.Errorf("%s requires a path", arg)
-			}
-			resolved, err := resolveExistingPath(args[index+1])
+	flags := flag.NewFlagSet("abwrap", flag.ContinueOnError)
+	// The wrapper owns error formatting and help output, so suppress flag's
+	// default writes while retaining its parsing and validation behavior.
+	flags.SetOutput(io.Discard)
+	flags.Usage = func() {}
+
+	addMount := func(readOnly bool) func(string) error {
+		return func(path string) error {
+			resolved, err := resolveExistingPath(path)
 			if err != nil {
-				return opts, err
+				return err
 			}
 			opts.mounts = append(opts.mounts, mount{
 				source:   resolved,
 				target:   resolved,
-				readOnly: arg == "--ro",
+				readOnly: readOnly,
 			})
-			index += 2
-
-		case strings.HasPrefix(arg, "--ro=") || strings.HasPrefix(arg, "--rw="):
-			mode, value, _ := strings.Cut(arg, "=")
-			resolved, err := resolveExistingPath(value)
-			if err != nil {
-				return opts, err
-			}
-			opts.mounts = append(opts.mounts, mount{
-				source:   resolved,
-				target:   resolved,
-				readOnly: mode == "--ro",
-			})
-			index++
-
-		case arg == "--env":
-			if index+1 >= len(args) {
-				return opts, errors.New("--env requires a variable name")
-			}
-			if err := addEnvironment(&opts, args[index+1]); err != nil {
-				return opts, err
-			}
-			index += 2
-
-		case strings.HasPrefix(arg, "--env="):
-			if err := addEnvironment(&opts, strings.TrimPrefix(arg, "--env=")); err != nil {
-				return opts, err
-			}
-			index++
-
-		case arg == "--tool-state":
-			if index+1 >= len(args) {
-				return opts, errors.New("--tool-state requires a tool name")
-			}
-			if err := enableToolState(&opts, args[index+1]); err != nil {
-				return opts, err
-			}
-			index += 2
-
-		case strings.HasPrefix(arg, "--tool-state="):
-			if err := enableToolState(&opts, strings.TrimPrefix(arg, "--tool-state=")); err != nil {
-				return opts, err
-			}
-			index++
-
-		case arg == "-e" || arg == "--entrypoint":
-			if index+1 >= len(args) {
-				return opts, fmt.Errorf("%s requires a command", arg)
-			}
-			opts.entrypoint = args[index+1]
-			entrypointExplicit = true
-			index += 2
-
-		case strings.HasPrefix(arg, "--entrypoint="):
-			opts.entrypoint = strings.TrimPrefix(arg, "--entrypoint=")
-			if opts.entrypoint == "" {
-				return opts, errors.New("--entrypoint requires a command")
-			}
-			entrypointExplicit = true
-			index++
-
-		case arg == "--":
-			// Without an explicit -e, the first value after -- is the entrypoint;
-			// otherwise every remaining value belongs to that entrypoint.
-			index++
-			if !entrypointExplicit && index < len(args) {
-				opts.entrypoint = args[index]
-				index++
-			}
-			opts.commandArgs = args[index:]
-			return opts, nil
-
-		case arg == "-h" || arg == "--help":
-			opts.showHelp = true
-			return opts, nil
-
-		case strings.HasPrefix(arg, "-"):
-			return opts, fmt.Errorf("unknown wrapper option: %s; use -- before an entrypoint beginning with a dash", arg)
-
-		default:
-			if entrypointExplicit {
-				return opts, fmt.Errorf("unexpected argument before --: %s", arg)
-			}
-			opts.entrypoint = arg
-			opts.commandArgs = args[index+1:]
-			return opts, nil
+			return nil
 		}
 	}
+	setEntrypoint := func(entrypoint string) error {
+		if entrypoint == "" {
+			return errors.New("entrypoint requires a command")
+		}
+		opts.entrypoint = entrypoint
+		entrypointExplicit = true
+		return nil
+	}
 
+	flags.Func("ro", "expose an existing host path read-only", addMount(true))
+	flags.Func("rw", "expose an existing host path read-write", addMount(false))
+	flags.Func("env", "forward an environment variable if set", func(name string) error {
+		return addEnvironment(&opts, name)
+	})
+	flags.Func("tool-state", "mount pi, codex, opencode, all, or none state", func(state string) error {
+		return enableToolState(&opts, state)
+	})
+	flags.Func("e", "use a command instead of Nushell", setEntrypoint)
+	flags.Func("entrypoint", "use a command instead of Nushell", setEntrypoint)
+
+	if err := flags.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			opts.showHelp = true
+			return opts, nil
+		}
+		return opts, err
+	}
+
+	remaining := flags.Args()
+	if !entrypointExplicit && len(remaining) > 0 {
+		opts.entrypoint = remaining[0]
+		remaining = remaining[1:]
+	}
+	opts.commandArgs = remaining
 	return opts, nil
 }
 
@@ -394,6 +344,9 @@ func resolveHome() (string, error) {
 // resolveExistingPath canonicalizes bind sources and destinations before
 // entering the mount namespace, including resolving user-controlled symlinks.
 func resolveExistingPath(path string) (string, error) {
+	if path == "" {
+		return "", errors.New("path must not be empty")
+	}
 	absolute, err := filepath.Abs(path)
 	if err != nil {
 		return "", fmt.Errorf("resolve path %q: %w", path, err)

@@ -63,8 +63,8 @@ host modification, not as complete containment for hostile code.
 
 ## Implementation
 
-`main.go` is a dependency-free Go implementation. Nix injects the Bubblewrap
-path, default Nushell entrypoint, and sandbox `PATH` through linker flags in
-`package.nix`. The Go process passes the seccomp program to Bubblewrap through
-an inherited file descriptor and forwards termination signals so cleanup can
-run.
+`main.go` uses only the Go standard library, including `flag` for command-line
+parsing. Nix injects the Bubblewrap path, default Nushell entrypoint, and
+sandbox `PATH` through linker flags in `package.nix`. The Go process passes the
+seccomp program to Bubblewrap through an inherited file descriptor and forwards
+termination signals so cleanup can run.
