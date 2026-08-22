@@ -13,6 +13,9 @@
   opencode,
 }:
 let
+  # abwrap needs the individual tools inside its sandbox, not the aggregate
+  # dev-essentials package. Disabling abwrap here breaks the otherwise circular
+  # dev-essentials -> abwrap -> dev-essentials dependency.
   devEssentialPackages = import ../../config/shared/packages/dev-essentials.nix {
     inherit AIPackages pkgs;
     includeAbwrap = false;
@@ -27,6 +30,8 @@ let
     opencode
   ];
 
+  # Embed exact store paths so the Go binary needs no wrapper script. These
+  # strings also retain every sandbox package as a runtime closure reference.
   linkerFlags = lib.concatStringsSep " " [
     "-s"
     "-w"
@@ -45,6 +50,8 @@ stdenv.mkDerivation {
   buildPhase = ''
     runHook preBuild
 
+    # The implementation uses only the standard library, so produce a static
+    # binary and build the single source file without module resolution.
     export CGO_ENABLED=0
     export GO111MODULE=off
     export HOME="$TMPDIR"

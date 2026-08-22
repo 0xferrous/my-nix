@@ -16,6 +16,8 @@ import (
 	"syscall"
 )
 
+// package.nix replaces these defaults at link time with immutable Nix store
+// paths. Keeping them as variables also makes local development builds useful.
 var (
 	bwrapPath         = "bwrap"
 	defaultEntrypoint = "nu"
@@ -23,9 +25,14 @@ var (
 )
 
 const (
+	// The lower store is query-encoded because it is nested inside another
+	// store URI. check-mount is disabled because Bubblewrap exposes the backing
+	// mount through an /oldroot path that Nix cannot match textually.
 	overlayStore = "local-overlay://?root=/&lower-store=/run/abwrap/lower%3Fread-only=true&upper-layer=/run/abwrap/overlay/upper&state=/run/abwrap/overlay/state&check-mount=false"
 	nixConfig    = "extra-experimental-features = nix-command flakes local-overlay-store read-only-local-store\nsandbox = false"
 
+	// Classic BPF and seccomp constants are defined locally to keep the binary
+	// dependency-free. They match Linux's filter and seccomp UAPI headers.
 	bpfLD  = 0x00
 	bpfW   = 0x00
 	bpfABS = 0x20
@@ -52,6 +59,8 @@ const (
 )
 
 var (
+	// These values affect terminal presentation or locale behavior and are safe
+	// enough to preserve without an explicit --env option.
 	safeEnvironment = []string{
 		"TERM",
 		"COLORTERM",
@@ -62,6 +71,8 @@ var (
 		"NO_COLOR",
 		"FORCE_COLOR",
 	}
+	// Bubblewrap receives authoritative values for these names. Refusing to
+	// forward them prevents a caller from bypassing the clean environment.
 	managedEnvironment = map[string]bool{
 		"HOME":       true,
 		"USER":       true,
@@ -74,12 +85,15 @@ var (
 	}
 )
 
+// mount describes one host path exposed at a specific sandbox path.
 type mount struct {
 	source   string
 	target   string
 	readOnly bool
 }
 
+// options is the fully parsed wrapper policy before Bubblewrap arguments are
+// constructed. commandArgs are never interpreted by a shell.
 type options struct {
 	entrypoint    string
 	commandArgs   []string
@@ -90,6 +104,8 @@ type options struct {
 	showHelp      bool
 }
 
+// sockFilter matches Linux's eight-byte struct sock_filter layout. binary.Write
+// serializes fields without Go struct padding.
 type sockFilter struct {
 	Code uint16
 	Jt   uint8
@@ -152,6 +168,8 @@ func run(args []string) int {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	// Do not expose even the wrapper's environment to Bubblewrap. ExtraFiles
+	// maps the first entry to descriptor 3, matching --seccomp 3 below.
 	cmd.Env = []string{}
 	cmd.ExtraFiles = []*os.File{filter}
 
@@ -273,6 +291,8 @@ func parseOptions(args []string) (options, error) {
 			index++
 
 		case arg == "--":
+			// Without an explicit -e, the first value after -- is the entrypoint;
+			// otherwise every remaining value belongs to that entrypoint.
 			index++
 			if !entrypointExplicit && index < len(args) {
 				opts.entrypoint = args[index]
@@ -301,6 +321,8 @@ func parseOptions(args []string) (options, error) {
 	return opts, nil
 }
 
+// addEnvironment records a variable name, never its value. The value is read
+// immediately before launch so secrets do not appear in argv.
 func addEnvironment(opts *options, name string) error {
 	if !validEnvironmentName(name) {
 		return fmt.Errorf("invalid environment variable name: %s", name)
@@ -334,6 +356,8 @@ func isEnvironmentStart(character byte) bool {
 	return character == '_' || character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z'
 }
 
+// enableToolState accumulates explicit state requests. "none" also disables
+// entrypoint-based automatic state selection.
 func enableToolState(opts *options, state string) error {
 	switch state {
 	case "pi", "codex", "opencode":
@@ -367,6 +391,8 @@ func resolveHome() (string, error) {
 	return resolved, nil
 }
 
+// resolveExistingPath canonicalizes bind sources and destinations before
+// entering the mount namespace, including resolving user-controlled symlinks.
 func resolveExistingPath(path string) (string, error) {
 	absolute, err := filepath.Abs(path)
 	if err != nil {
@@ -405,6 +431,8 @@ func toolStateMounts(home string, enabled map[string]bool) ([]mount, error) {
 		} else if err != nil {
 			return nil, fmt.Errorf("inspect tool state %s: %w", target, err)
 		}
+		// Preserve the conventional path inside the sandbox while binding the
+		// canonical host source in case the state directory itself is a symlink.
 		source, err := resolveExistingPath(target)
 		if err != nil {
 			return nil, err
@@ -414,6 +442,8 @@ func toolStateMounts(home string, enabled map[string]bool) ([]mount, error) {
 	return mounts, nil
 }
 
+// bubblewrapArgs is the complete sandbox policy. Keep security-sensitive
+// defaults here so their ordering is visible and reviewable in one place.
 func bubblewrapArgs(home, overlay string, opts options, stateMounts []mount) []string {
 	userName := currentUserName()
 	args := []string{
@@ -507,6 +537,8 @@ func seccompFilterPipe() (*os.File, error) {
 		statement(bpfLD|bpfW|bpfABS, seccompOffsetSyscall),
 	}
 	if runtime.GOARCH == "amd64" {
+		// x32 uses the x86-64 audit architecture with a syscall-number bit, so
+		// both native and x32 ioctl numbers must reach the TIOCSTI check.
 		filters = append(filters,
 			jump(bpfJMP|bpfJEQ|bpfK, ioctlNumber, 1, 0),
 			jump(bpfJMP|bpfJEQ|bpfK, ioctlNumber|x32SyscallBit, 0, 3),
@@ -521,6 +553,8 @@ func seccompFilterPipe() (*os.File, error) {
 		statement(bpfRET|bpfK, seccompRetAllow),
 	)
 
+	// A pipe avoids writing a persistent filter file. The read end is inherited
+	// by Bubblewrap as descriptor 3 and consumed before the payload starts.
 	reader, writer, err := os.Pipe()
 	if err != nil {
 		return nil, fmt.Errorf("create seccomp pipe: %w", err)
@@ -546,6 +580,9 @@ func jump(code uint16, value uint32, onTrue, onFalse uint8) sockFilter {
 }
 
 func runCommand(cmd *exec.Cmd) int {
+	// Catch termination signals so they can reach the payload while run returns
+	// normally and executes deferred overlay cleanup. SIGWINCH is deliberately
+	// not caught: the foreground process group receives terminal resizes itself.
 	signals := make(chan os.Signal, 8)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	defer signal.Stop(signals)
@@ -583,6 +620,8 @@ func runCommand(cmd *exec.Cmd) int {
 }
 
 func cleanupOverlay(root string) {
+	// Nix store objects are commonly read-only. Restore owner permissions before
+	// RemoveAll, but never chmod symlinks because that would affect their targets.
 	_ = os.Chmod(root, 0o700)
 	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil || entry.Type()&os.ModeSymlink != 0 {
