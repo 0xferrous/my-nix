@@ -171,6 +171,7 @@
           inherit (pkgs)
             fr-frame-summon
             fr-kbd-backlight
+            dev-essentials
             git-hunk
             ironclaw
             jj-hunk
@@ -181,6 +182,7 @@
             obscura
             pi
             piDev
+            abwrap
             pi-acp
             takopi
             terminal-control
@@ -202,6 +204,10 @@
           piDev = {
             type = "app";
             program = "${pkgs.piDev}/bin/pi";
+          };
+          abwrap = {
+            type = "app";
+            program = "${pkgs.abwrap}/bin/abwrap";
           };
           takopi = {
             type = "app";

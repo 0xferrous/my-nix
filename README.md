@@ -80,8 +80,9 @@ Packages provided by the overlay:
 
 | package | description |
 | --- | --- |
-| `pi`, `pi-acp` | `pi` (llm-agents CLI) wrapped with default CLI args plus bundled extensions/theme and AI tooling; `pi-acp` is the Agent Client Protocol adapter |
+| `pi`, `abwrap`, `pi-acp` | `pi` wraps the llm-agents CLI with bundled extensions/theme and AI tooling; `abwrap` launches Nushell—or a directly selected entrypoint such as `pi`, `codex`, or `opencode`—inside Bubblewrap with a per-invocation writable Nix local-overlay store; `pi-acp` is the Agent Client Protocol adapter |
 | `herdr` | agent multiplexer that lives in your terminal |
+| `dev-essentials` | combined package exposing the shared development essentials on one `PATH` |
 | `git-hunk`, `jj-hunk` | non-interactive hunk staging for `git` and `jj` |
 | `takopi` | Telegram bridge for Codex, Claude Code, and other agent CLIs |
 | `terminal-control` | control, inspect, test, and capture real terminal applications for agents and TUI review |
@@ -102,6 +103,8 @@ Packages provided by the overlay:
 | `ashWrappers` | guest-side wrappers for the Ash Portal |
 | `plannotator-pi-extension` | interactive plan and code review extension for Pi |
 | `frsNvimPackage` | the [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md) package |
+
+`abwrap` starts with a clean environment and forwards only terminal/locale metadata by default. Use `--env NAME` for additional variables. A directly selected `pi`, `codex`, or `opencode` entrypoint automatically receives only its own state directory; use `--tool-state TOOL` when launching a tool later from the default Nushell. It also blocks `TIOCSTI` terminal injection and nested user namespaces while retaining native terminal resizing.
 
 `packages.<system>.*` exposes all of the above except the overlay-only entries `herdr`, `ashWrappers`, `hints`, `plannotator-pi-extension`, and `frsNvimPackage`.
 

@@ -1,6 +1,7 @@
 {
   AIPackages,
   config ? null,
+  includeAbwrap ? true,
   pkgs,
   ...
 }:
@@ -29,8 +30,7 @@ let
     '';
   };
 in
-with pkgs;
-[
+(with pkgs; [
   # Version control and GitHub workflows
   gitPackage
   jjPackage
@@ -90,4 +90,5 @@ with pkgs;
 
   # AI agent tooling
   prime-agent
-]
+])
+++ pkgs.lib.optional includeAbwrap pkgs.abwrap

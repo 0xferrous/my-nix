@@ -19,6 +19,9 @@ final: prev: {
   # `chatgpt` package is macOS-only and OpenAI publishes the Linux builds only
   # as .deb/.rpm under a moving `latest/` URL (see codex-desktop.nix).
   codex-desktop = final.callPackage ./codex-desktop.nix { };
+  dev-essentials = final.callPackage ./dev-essentials.nix {
+    AIPackages = inputs.llm-agents.packages.${system};
+  };
   obscura = final.callPackage ./obscura/package.nix { };
   nash = final.callPackage ./nash.nix { };
   google-authenticator-transfer-decode =
@@ -47,6 +50,11 @@ final: prev: {
   };
   piDev = final.pi.override {
     agentStuffPath = "~/dev/fr/agent-stuff";
+  };
+  abwrap = final.callPackage ./abwrap.nix {
+    AIPackages = inputs.llm-agents.packages.${system};
+    codex = inputs.llm-agents.packages.${system}.codex;
+    opencode = inputs.llm-agents.packages.${system}.opencode;
   };
   pi-acp = final.callPackage ./pi-acp.nix { };
 
