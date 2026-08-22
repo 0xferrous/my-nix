@@ -18,7 +18,8 @@ abwrap --env OPENAI_API_KEY --rw "$PWD" codex
 Nushell is the default entrypoint. A positional command or
 `--entrypoint COMMAND` selects another entrypoint. A Nix-provided Bash is also
 available on `PATH` and mounted at `/bin/sh` for tools, including Pi's bash tool,
-that assume a conventional POSIX shell path exists.
+that assume a conventional POSIX shell path exists. Bundled terminfo data covers
+Kitty and common terminals, so pagers retain the host's `TERM` value.
 
 ### Host access
 
@@ -52,6 +53,8 @@ automatic state mounting.
 isolation. It also:
 
 - starts with a cleared environment;
+- mounts the host TLS CA bundle read-only, with a Nix-provided fallback;
+- supplies Kitty and ncurses terminfo through `TERMINFO_DIRS`;
 - mounts the lower Nix store and database read-only;
 - uses per-invocation temporary upper, work, and state directories;
 - blocks `TIOCSTI` with a seccomp filter while preserving terminal resizing;

@@ -5,7 +5,10 @@
   AIPackages,
   bash,
   bubblewrap,
+  cacert,
   coreutils,
+  kitty,
+  ncurses,
   nix,
   pkgs,
   nushell,
@@ -25,6 +28,7 @@ let
   sandboxPackages = devEssentialPackages ++ [
     bash
     coreutils
+    ncurses
     nix
     nushell
     pi
@@ -39,6 +43,8 @@ let
     "-w"
     "-X main.bwrapPath=${lib.getExe bubblewrap}"
     "-X main.posixShellPath=${lib.getExe bash}"
+    "-X main.fallbackCABundlePath=${cacert}/etc/ssl/certs/ca-bundle.crt"
+    "-X main.terminfoDirs=${kitty.terminfo}/share/terminfo:${ncurses}/share/terminfo"
     "-X main.defaultEntrypoint=${lib.getExe nushell}"
     "-X main.sandboxPath=${lib.makeBinPath sandboxPackages}"
   ];

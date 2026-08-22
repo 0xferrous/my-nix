@@ -20,10 +20,12 @@ import (
 // package.nix replaces these defaults at link time with immutable Nix store
 // paths. Keeping them as variables also makes local development builds useful.
 var (
-	bwrapPath         = "bwrap"
-	posixShellPath    = "/bin/sh"
-	defaultEntrypoint = "nu"
-	sandboxPath       = ""
+	bwrapPath            = "bwrap"
+	posixShellPath       = "/bin/sh"
+	fallbackCABundlePath = "/etc/ssl/certs/ca-bundle.crt"
+	terminfoDirs         = "/usr/share/terminfo"
+	defaultEntrypoint    = "nu"
+	sandboxPath          = ""
 )
 
 const (
@@ -76,14 +78,18 @@ var (
 	// Bubblewrap receives authoritative values for these names. Refusing to
 	// forward them prevents a caller from bypassing the clean environment.
 	managedEnvironment = map[string]bool{
-		"HOME":       true,
-		"USER":       true,
-		"LOGNAME":    true,
-		"SHELL":      true,
-		"PATH":       true,
-		"TMPDIR":     true,
-		"NIX_REMOTE": true,
-		"NIX_CONFIG": true,
+		"HOME":              true,
+		"USER":              true,
+		"LOGNAME":           true,
+		"SHELL":             true,
+		"PATH":              true,
+		"TMPDIR":            true,
+		"NIX_REMOTE":        true,
+		"NIX_CONFIG":        true,
+		"SSL_CERT_FILE":     true,
+		"NIX_SSL_CERT_FILE": true,
+		"TERMINFO":          true,
+		"TERMINFO_DIRS":     true,
 	}
 )
 
@@ -146,6 +152,10 @@ func run(args []string) int {
 	if err != nil {
 		return fail(err)
 	}
+	caBundle, err := resolveCABundle()
+	if err != nil {
+		return fail(err)
+	}
 
 	overlay, err := os.MkdirTemp("/tmp", "abwrap-nix.")
 	if err != nil {
@@ -165,7 +175,7 @@ func run(args []string) int {
 	}
 	defer filter.Close()
 
-	bwrapArgs := bubblewrapArgs(home, overlay, opts, stateMounts)
+	bwrapArgs := bubblewrapArgs(home, overlay, caBundle, opts, stateMounts)
 	cmd := exec.Command(bwrapPath, bwrapArgs...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -362,6 +372,34 @@ func resolveExistingPath(path string) (string, error) {
 	return resolved, nil
 }
 
+// resolveCABundle prefers the host's configured bundle so custom trust roots
+// remain available, then falls back to the immutable bundle injected by Nix.
+func resolveCABundle() (string, error) {
+	candidates := []string{
+		os.Getenv("SSL_CERT_FILE"),
+		os.Getenv("NIX_SSL_CERT_FILE"),
+		"/etc/ssl/certs/ca-bundle.crt",
+		"/etc/ssl/certs/ca-certificates.crt",
+		fallbackCABundlePath,
+	}
+	seen := make(map[string]bool)
+	for _, candidate := range candidates {
+		if candidate == "" || seen[candidate] {
+			continue
+		}
+		seen[candidate] = true
+		resolved, err := resolveExistingPath(candidate)
+		if err != nil {
+			continue
+		}
+		info, err := os.Stat(resolved)
+		if err == nil && !info.IsDir() {
+			return resolved, nil
+		}
+	}
+	return "", errors.New("no usable TLS CA bundle found")
+}
+
 func toolStateMounts(home string, enabled map[string]bool) ([]mount, error) {
 	paths := make([]string, 0, 5)
 	if enabled["pi"] {
@@ -398,7 +436,7 @@ func toolStateMounts(home string, enabled map[string]bool) ([]mount, error) {
 
 // bubblewrapArgs is the complete sandbox policy. Keep security-sensitive
 // defaults here so their ordering is visible and reviewable in one place.
-func bubblewrapArgs(home, overlay string, opts options, stateMounts []mount) []string {
+func bubblewrapArgs(home, overlay, caBundle string, opts options, stateMounts []mount) []string {
 	userName := currentUserName()
 	args := []string{
 		"--unshare-all",
@@ -415,6 +453,9 @@ func bubblewrapArgs(home, overlay string, opts options, stateMounts []mount) []s
 		"--ro-bind-try", "/etc/resolv.conf", "/etc/resolv.conf",
 		"--ro-bind-try", "/etc/hosts", "/etc/hosts",
 		"--ro-bind-try", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
+		// Use the host bundle when available so locally installed trust roots, such
+		// as an intercepting proxy CA, remain valid inside the sandbox.
+		"--ro-bind", caBundle, "/etc/ssl/certs/ca-bundle.crt",
 		// Pi's bash tool and many build scripts expect /bin/sh even on NixOS.
 		"--ro-bind", posixShellPath, "/bin/sh",
 		"--proc", "/proc",
@@ -430,6 +471,9 @@ func bubblewrapArgs(home, overlay string, opts options, stateMounts []mount) []s
 		"--setenv", "TMPDIR", "/tmp",
 		"--setenv", "NIX_REMOTE", overlayStore,
 		"--setenv", "NIX_CONFIG", nixConfig,
+		"--setenv", "SSL_CERT_FILE", "/etc/ssl/certs/ca-bundle.crt",
+		"--setenv", "NIX_SSL_CERT_FILE", "/etc/ssl/certs/ca-bundle.crt",
+		"--setenv", "TERMINFO_DIRS", terminfoDirs,
 	}
 
 	seenEnvironment := make(map[string]bool)
