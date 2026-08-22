@@ -2,6 +2,7 @@
   lib,
   stdenv,
   go,
+  systemdMinimal,
   AIPackages,
   bash,
   bubblewrap,
@@ -34,6 +35,7 @@ let
     pi
     codex
     opencode
+    systemdMinimal
   ];
 
   # Embed exact store paths so the Go binary needs no wrapper script. These

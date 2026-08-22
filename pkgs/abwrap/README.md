@@ -13,6 +13,7 @@ abwrap --rw "$PWD" pi --model openai/gpt-5
 abwrap --rw "$PWD" codex
 abwrap --rw "$PWD" opencode
 abwrap --env OPENAI_API_KEY --rw "$PWD" codex
+abwrap --journal journalctl --no-pager -n 100
 ```
 
 Nushell is the default entrypoint. A positional command or
@@ -47,6 +48,14 @@ A bare `abwrap` Nushell receives none. Use `--tool-state pi`,
 agent will be launched later from that shell. `--tool-state none` disables
 automatic state mounting.
 
+### System journal
+
+`--journal` exposes `/var/log/journal` and `/run/log/journal` read-only and puts
+`journalctl` on `PATH`. It also exposes the host machine ID needed to select the
+local journal. Journald and D-Bus sockets remain hidden, and host file ownership
+and ACLs still determine which entries are readable. Journal access is opt-in
+because service logs may contain sensitive data.
+
 ## Security model
 
 `abwrap` provides filesystem, process, IPC, user, UTS, and cgroup namespace
@@ -55,6 +64,7 @@ isolation. It also:
 - starts with a cleared environment;
 - mounts the host TLS CA bundle read-only, with a Nix-provided fallback;
 - supplies Kitty and ncurses terminfo through `TERMINFO_DIRS`;
+- optionally exposes journal files read-only without service sockets;
 - mounts the lower Nix store and database read-only;
 - uses per-invocation temporary upper, work, and state directories;
 - blocks `TIOCSTI` with a seccomp filter while preserving terminal resizing;

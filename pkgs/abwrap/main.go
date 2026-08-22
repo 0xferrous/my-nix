@@ -109,6 +109,7 @@ type options struct {
 	forwardEnv    []string
 	autoToolState bool
 	toolState     map[string]bool
+	journal       bool
 	showHelp      bool
 }
 
@@ -206,6 +207,7 @@ Options:
   --rw PATH              expose an existing host path read-write
   --env NAME             forward an environment variable if set
   --tool-state TOOL      mount pi, codex, opencode, all, or none state
+  --journal              expose host system journals read-only
   -e, --entrypoint CMD   use CMD instead of Nushell
   -h, --help             show this help
 
@@ -262,6 +264,7 @@ func parseOptions(args []string) (options, error) {
 	flags.Func("tool-state", "mount pi, codex, opencode, all, or none state", func(state string) error {
 		return enableToolState(&opts, state)
 	})
+	flags.BoolVar(&opts.journal, "journal", false, "expose host system journals read-only")
 	flags.Func("e", "use a command instead of Nushell", setEntrypoint)
 	flags.Func("entrypoint", "use a command instead of Nushell", setEntrypoint)
 
@@ -491,6 +494,17 @@ func bubblewrapArgs(home, overlay, caBundle string, opts options, stateMounts []
 	}
 	for _, name := range opts.forwardEnv {
 		appendEnvironment(name)
+	}
+
+	if opts.journal {
+		// Journal files remain governed by host ownership and ACLs. Do not expose
+		// journald or D-Bus sockets, which would permit active service operations.
+		args = append(args,
+			"--ro-bind-try", "/etc/machine-id", "/etc/machine-id",
+			"--ro-bind-try", "/run/machine-id", "/run/machine-id",
+			"--ro-bind-try", "/var/log/journal", "/var/log/journal",
+			"--ro-bind-try", "/run/log/journal", "/run/log/journal",
+		)
 	}
 
 	for _, item := range append(stateMounts, opts.mounts...) {
