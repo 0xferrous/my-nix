@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -103,14 +104,22 @@ type mount struct {
 // options is the fully parsed wrapper policy before Bubblewrap arguments are
 // constructed. commandArgs are never interpreted by a shell.
 type options struct {
-	entrypoint    string
-	commandArgs   []string
-	mounts        []mount
-	forwardEnv    []string
-	autoToolState bool
-	toolState     map[string]bool
-	journal       bool
-	showHelp      bool
+	entrypoint        string
+	commandArgs       []string
+	mounts            []mount
+	forwardEnv        []string
+	autoToolState     bool
+	toolState         map[string]bool
+	journal           bool
+	allowNestedUserns bool
+	showHelp          bool
+}
+
+// nixLowerStore describes the read-only layers and metadata database that form
+// the store visible to the wrapper before its own writable layer is added.
+type nixLowerStore struct {
+	sources  []string
+	database string
 }
 
 // sockFilter matches Linux's eight-byte struct sock_filter layout. binary.Write
@@ -157,6 +166,10 @@ func run(args []string) int {
 	if err != nil {
 		return fail(err)
 	}
+	lowerStore, err := resolveLowerStore()
+	if err != nil {
+		return fail(err)
+	}
 
 	overlay, err := os.MkdirTemp("/tmp", "abwrap-nix.")
 	if err != nil {
@@ -164,10 +177,14 @@ func run(args []string) int {
 	}
 	defer cleanupOverlay(overlay)
 
-	for _, name := range []string{"upper", "work", "state"} {
+	for _, name := range []string{"upper", "work", "state", "state/db"} {
 		if err := os.Mkdir(filepath.Join(overlay, name), 0o700); err != nil {
 			return fail(fmt.Errorf("create overlay %s directory: %w", name, err))
 		}
+	}
+	systemMounts, err := snapshotSystemFiles(overlay, opts.journal)
+	if err != nil {
+		return fail(err)
 	}
 
 	filter, err := seccompFilterPipe()
@@ -176,7 +193,7 @@ func run(args []string) int {
 	}
 	defer filter.Close()
 
-	bwrapArgs := bubblewrapArgs(home, overlay, caBundle, opts, stateMounts)
+	bwrapArgs := bubblewrapArgs(home, overlay, caBundle, lowerStore, opts, systemMounts, stateMounts)
 	cmd := exec.Command(bwrapPath, bwrapArgs...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -208,6 +225,7 @@ Options:
   --env NAME             forward an environment variable if set
   --tool-state TOOL      mount pi, codex, opencode, all, or none state
   --journal              expose host system journals read-only
+  --allow-nested-userns  allow nested Bubblewrap and abwrap processes
   -e, --entrypoint CMD   use CMD instead of Nushell
   -h, --help             show this help
 
@@ -265,6 +283,7 @@ func parseOptions(args []string) (options, error) {
 		return enableToolState(&opts, state)
 	})
 	flags.BoolVar(&opts.journal, "journal", false, "expose host system journals read-only")
+	flags.BoolVar(&opts.allowNestedUserns, "allow-nested-userns", false, "allow nested Bubblewrap and abwrap processes")
 	flags.Func("e", "use a command instead of Nushell", setEntrypoint)
 	flags.Func("entrypoint", "use a command instead of Nushell", setEntrypoint)
 
@@ -403,6 +422,106 @@ func resolveCABundle() (string, error) {
 	return "", errors.New("no usable TLS CA bundle found")
 }
 
+// resolveLowerStore uses the host store directly at the top level. Inside an
+// existing local-overlay store it reconstructs the parent's merged view from
+// the original lower directory and parent upper directory, avoiding an
+// unsupported overlay-on-overlay mount.
+func resolveLowerStore() (nixLowerStore, error) {
+	result := nixLowerStore{sources: []string{"/nix/store"}}
+	databaseCandidates := []string{"/nix/var/nix/db"}
+
+	if remote, err := url.Parse(os.Getenv("NIX_REMOTE")); err == nil && remote.Scheme == "local-overlay" {
+		query := remote.Query()
+		if state := query.Get("state"); state != "" {
+			databaseCandidates = append(databaseCandidates, filepath.Join(state, "db"))
+		}
+		if lowerStore := query.Get("lower-store"); lowerStore != "" {
+			if lower, err := url.Parse(lowerStore); err == nil && lower.Path != "" {
+				lowerSource := filepath.Join(lower.Path, "nix", "store")
+				if upperSource := query.Get("upper-layer"); upperSource != "" {
+					if lowerResolved, err := resolveExistingPath(lowerSource); err == nil {
+						if upperResolved, err := resolveExistingPath(upperSource); err == nil {
+							result.sources = []string{lowerResolved, upperResolved}
+						}
+					}
+				}
+				databaseCandidates = append(databaseCandidates, filepath.Join(lower.Path, "nix", "var", "nix", "db"))
+			}
+		}
+	}
+
+	for index, source := range result.sources {
+		resolved, err := resolveExistingPath(source)
+		if err != nil {
+			return nixLowerStore{}, fmt.Errorf("resolve lower Nix store layer: %w", err)
+		}
+		info, err := os.Stat(resolved)
+		if err != nil || !info.IsDir() {
+			return nixLowerStore{}, fmt.Errorf("lower Nix store layer is not a directory: %s", source)
+		}
+		result.sources[index] = resolved
+	}
+
+	seen := make(map[string]bool)
+	for _, candidate := range databaseCandidates {
+		if seen[candidate] {
+			continue
+		}
+		seen[candidate] = true
+		resolved, err := resolveExistingPath(candidate)
+		if err != nil {
+			continue
+		}
+		info, err := os.Stat(resolved)
+		if err == nil && info.IsDir() {
+			if databaseInfo, err := os.Stat(filepath.Join(resolved, "db.sqlite")); err == nil && !databaseInfo.IsDir() {
+				result.database = resolved
+				return result, nil
+			}
+		}
+	}
+	return nixLowerStore{}, errors.New("no usable lower Nix store database found")
+}
+
+// snapshotSystemFiles avoids re-binding file mounts from a parent sandbox,
+// which is not reliable for files such as its generated resolv.conf. Each
+// invocation receives an immutable snapshot instead.
+func snapshotSystemFiles(root string, includeMachineID bool) ([]mount, error) {
+	sources := []string{"/etc/resolv.conf", "/etc/hosts", "/etc/nsswitch.conf"}
+	if includeMachineID {
+		for _, candidate := range []string{"/etc/machine-id", "/run/machine-id"} {
+			if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+				sources = append(sources, candidate)
+				break
+			}
+		}
+	}
+
+	mounts := make([]mount, 0, len(sources))
+	for _, source := range sources {
+		contents, err := os.ReadFile(source)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read system file %s: %w", source, err)
+		}
+		target := source
+		if source == "/run/machine-id" {
+			target = "/etc/machine-id"
+		}
+		snapshot := filepath.Join(root, "files", target[1:])
+		if err := os.MkdirAll(filepath.Dir(snapshot), 0o700); err != nil {
+			return nil, fmt.Errorf("create snapshot directory for %s: %w", source, err)
+		}
+		if err := os.WriteFile(snapshot, contents, 0o400); err != nil {
+			return nil, fmt.Errorf("snapshot system file %s: %w", source, err)
+		}
+		mounts = append(mounts, mount{source: snapshot, target: target, readOnly: true})
+	}
+	return mounts, nil
+}
+
 func toolStateMounts(home string, enabled map[string]bool) ([]mount, error) {
 	paths := make([]string, 0, 5)
 	if enabled["pi"] {
@@ -439,23 +558,40 @@ func toolStateMounts(home string, enabled map[string]bool) ([]mount, error) {
 
 // bubblewrapArgs is the complete sandbox policy. Keep security-sensitive
 // defaults here so their ordering is visible and reviewable in one place.
-func bubblewrapArgs(home, overlay, caBundle string, opts options, stateMounts []mount) []string {
+func bubblewrapArgs(home, overlay, caBundle string, lowerStore nixLowerStore, opts options, systemMounts, stateMounts []mount) []string {
 	userName := currentUserName()
 	args := []string{
 		"--unshare-all",
 		"--unshare-user",
 		"--share-net",
-		"--disable-userns",
+	}
+	if !opts.allowNestedUserns {
+		args = append(args, "--disable-userns")
+	}
+	args = append(args,
 		"--die-with-parent",
 		"--seccomp", "3",
-		"--ro-bind", "/nix/store", "/run/abwrap/lower/nix/store",
-		"--ro-bind", "/nix/var/nix/db", "/run/abwrap/lower/nix/var/nix/db",
-		"--overlay-src", "/nix/store",
+	)
+	if len(lowerStore.sources) == 1 {
+		args = append(args, "--ro-bind", lowerStore.sources[0], "/run/abwrap/lower/nix/store")
+	} else {
+		for _, source := range lowerStore.sources {
+			args = append(args, "--overlay-src", source)
+		}
+		args = append(args, "--ro-overlay", "/run/abwrap/lower/nix/store")
+	}
+	args = append(args,
+		"--ro-bind", lowerStore.database, "/run/abwrap/lower/nix/var/nix/db",
+		// Expose the merged overlay database at the conventional path. A nested
+		// abwrap can then use the parent overlay as its complete lower store.
+		"--ro-bind", filepath.Join(overlay, "state", "db"), "/nix/var/nix/db",
+	)
+	for _, source := range lowerStore.sources {
+		args = append(args, "--overlay-src", source)
+	}
+	args = append(args,
 		"--overlay", filepath.Join(overlay, "upper"), filepath.Join(overlay, "work"), "/nix/store",
 		"--bind", overlay, "/run/abwrap/overlay",
-		"--ro-bind-try", "/etc/resolv.conf", "/etc/resolv.conf",
-		"--ro-bind-try", "/etc/hosts", "/etc/hosts",
-		"--ro-bind-try", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
 		// Use the host bundle when available so locally installed trust roots, such
 		// as an intercepting proxy CA, remain valid inside the sandbox.
 		"--ro-bind", caBundle, "/etc/ssl/certs/ca-bundle.crt",
@@ -477,7 +613,7 @@ func bubblewrapArgs(home, overlay, caBundle string, opts options, stateMounts []
 		"--setenv", "SSL_CERT_FILE", "/etc/ssl/certs/ca-bundle.crt",
 		"--setenv", "NIX_SSL_CERT_FILE", "/etc/ssl/certs/ca-bundle.crt",
 		"--setenv", "TERMINFO_DIRS", terminfoDirs,
-	}
+	)
 
 	seenEnvironment := make(map[string]bool)
 	appendEnvironment := func(name string) {
@@ -496,12 +632,14 @@ func bubblewrapArgs(home, overlay, caBundle string, opts options, stateMounts []
 		appendEnvironment(name)
 	}
 
+	for _, item := range systemMounts {
+		args = append(args, "--ro-bind", item.source, item.target)
+	}
+
 	if opts.journal {
 		// Journal files remain governed by host ownership and ACLs. Do not expose
 		// journald or D-Bus sockets, which would permit active service operations.
 		args = append(args,
-			"--ro-bind-try", "/etc/machine-id", "/etc/machine-id",
-			"--ro-bind-try", "/run/machine-id", "/run/machine-id",
 			"--ro-bind-try", "/var/log/journal", "/var/log/journal",
 			"--ro-bind-try", "/run/log/journal", "/run/log/journal",
 		)

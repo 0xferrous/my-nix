@@ -14,6 +14,7 @@ abwrap --rw "$PWD" codex
 abwrap --rw "$PWD" opencode
 abwrap --env OPENAI_API_KEY --rw "$PWD" codex
 abwrap --journal journalctl --no-pager -n 100
+abwrap --allow-nested-userns --rw "$PWD" pi
 ```
 
 Nushell is the default entrypoint. A positional command or
@@ -56,6 +57,21 @@ local journal. Journald and D-Bus sockets remain hidden, and host file ownership
 and ACLs still determine which entries are readable. Journal access is opt-in
 because service logs may contain sensitive data.
 
+### Nested sandbox testing
+
+`--allow-nested-userns` lets child processes launch Bubblewrap and `abwrap`, so
+an agent can build and functionally test `abwrap` from inside its sandbox:
+
+```sh
+abwrap --allow-nested-userns --rw "$PWD" pi
+# Inside the agent session:
+nix run .#abwrap -- --rw "$PWD" sh -c 'echo nested-abwrap-ok'
+```
+
+Without this option, nested user namespaces remain disabled. Enable it only for
+trusted agent sessions: any process in the sandbox can create additional user
+namespaces while it is active.
+
 ## Security model
 
 `abwrap` provides filesystem, process, IPC, user, UTS, and cgroup namespace
@@ -68,7 +84,7 @@ isolation. It also:
 - mounts the lower Nix store and database read-only;
 - uses per-invocation temporary upper, work, and state directories;
 - blocks `TIOCSTI` with a seccomp filter while preserving terminal resizing;
-- disables nested user namespaces; and
+- disables nested user namespaces unless explicitly enabled for testing; and
 - removes temporary overlay state after normal or handled-signal exits.
 
 Networking remains shared with the host, explicitly mounted paths remain
