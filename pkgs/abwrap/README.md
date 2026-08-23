@@ -70,7 +70,10 @@ nix run .#abwrap -- --rw "$PWD" sh -c 'echo nested-abwrap-ok'
 
 Without this option, nested user namespaces remain disabled. Enable it only for
 trusted agent sessions: any process in the sandbox can create additional user
-namespaces while it is active.
+namespaces while it is active. Nested `abwrap` processes reuse the outer
+sandbox's writable Nix overlay instead of stacking OverlayFS mounts, so their
+store changes remain isolated from the host but are shared with the outer
+session.
 
 ## Security model
 

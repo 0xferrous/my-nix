@@ -118,8 +118,12 @@ type options struct {
 // nixLowerStore describes the read-only layers and metadata database that form
 // the store visible to the wrapper before its own writable layer is added.
 type nixLowerStore struct {
-	sources  []string
-	database string
+	sources          []string
+	database         string
+	parentRemote     string
+	parentLowerStore string
+	parentUpperLayer string
+	parentState      string
 }
 
 // sockFilter matches Linux's eight-byte struct sock_filter layout. binary.Write
@@ -423,29 +427,32 @@ func resolveCABundle() (string, error) {
 }
 
 // resolveLowerStore uses the host store directly at the top level. Inside an
-// existing local-overlay store it reconstructs the parent's merged view from
-// the original lower directory and parent upper directory, avoiding an
-// unsupported overlay-on-overlay mount.
+// existing local-overlay store it records the parent paths so the nested
+// sandbox can reuse that mounted store instead of stacking OverlayFS mounts.
 func resolveLowerStore() (nixLowerStore, error) {
 	result := nixLowerStore{sources: []string{"/nix/store"}}
 	databaseCandidates := []string{"/nix/var/nix/db"}
 
-	if remote, err := url.Parse(os.Getenv("NIX_REMOTE")); err == nil && remote.Scheme == "local-overlay" {
+	remoteValue := os.Getenv("NIX_REMOTE")
+	if remote, err := url.Parse(remoteValue); err == nil && remote.Scheme == "local-overlay" {
 		query := remote.Query()
-		if state := query.Get("state"); state != "" {
-			databaseCandidates = append(databaseCandidates, filepath.Join(state, "db"))
-		}
-		if lowerStore := query.Get("lower-store"); lowerStore != "" {
-			if lower, err := url.Parse(lowerStore); err == nil && lower.Path != "" {
-				lowerSource := filepath.Join(lower.Path, "nix", "store")
-				if upperSource := query.Get("upper-layer"); upperSource != "" {
-					if lowerResolved, err := resolveExistingPath(lowerSource); err == nil {
-						if upperResolved, err := resolveExistingPath(upperSource); err == nil {
-							result.sources = []string{lowerResolved, upperResolved}
-						}
-					}
-				}
-				databaseCandidates = append(databaseCandidates, filepath.Join(lower.Path, "nix", "var", "nix", "db"))
+		state := query.Get("state")
+		upperLayer := query.Get("upper-layer")
+		lowerStoreValue := query.Get("lower-store")
+		if lower, err := url.Parse(lowerStoreValue); err == nil && lower.Path != "" && state != "" && upperLayer != "" {
+			lowerStore, lowerErr := resolveExistingPath(filepath.Join(lower.Path, "nix", "store"))
+			upper, upperErr := resolveExistingPath(upperLayer)
+			resolvedState, stateErr := resolveExistingPath(state)
+			if lowerErr == nil && upperErr == nil && stateErr == nil {
+				result.sources = nil
+				result.parentRemote = remoteValue
+				result.parentLowerStore = lowerStore
+				result.parentUpperLayer = upper
+				result.parentState = resolvedState
+				databaseCandidates = append(databaseCandidates,
+					filepath.Join(resolvedState, "db"),
+					filepath.Join(lower.Path, "nix", "var", "nix", "db"),
+				)
 			}
 		}
 	}
@@ -572,26 +579,34 @@ func bubblewrapArgs(home, overlay, caBundle string, lowerStore nixLowerStore, op
 		"--die-with-parent",
 		"--seccomp", "3",
 	)
-	if len(lowerStore.sources) == 1 {
-		args = append(args, "--ro-bind", lowerStore.sources[0], "/run/abwrap/lower/nix/store")
+	nixRemote := overlayStore
+	if lowerStore.parentRemote != "" {
+		// Nested test sandboxes reuse the parent's writable overlay. Stacking a new
+		// OverlayFS mount on the parent's mounted store is rejected by the kernel,
+		// and reusing its upper directory as a lower layer is undefined behavior.
+		nixRemote = lowerStore.parentRemote
+		parentLowerDB := filepath.Join(lowerStore.parentLowerStore, "..", "var", "nix", "db")
+		args = append(args,
+			"--bind", "/nix/store", "/nix/store",
+			"--ro-bind", lowerStore.parentLowerStore, lowerStore.parentLowerStore,
+			"--ro-bind", parentLowerDB, parentLowerDB,
+			"--bind", lowerStore.parentUpperLayer, lowerStore.parentUpperLayer,
+			"--bind", lowerStore.parentState, lowerStore.parentState,
+			"--ro-bind", lowerStore.database, "/nix/var/nix/db",
+		)
 	} else {
-		for _, source := range lowerStore.sources {
-			args = append(args, "--overlay-src", source)
-		}
-		args = append(args, "--ro-overlay", "/run/abwrap/lower/nix/store")
+		args = append(args,
+			"--ro-bind", lowerStore.sources[0], "/run/abwrap/lower/nix/store",
+			"--ro-bind", lowerStore.database, "/run/abwrap/lower/nix/var/nix/db",
+			// Expose the merged overlay database at the conventional path. A nested
+			// abwrap can then use the parent overlay as its complete lower store.
+			"--ro-bind", filepath.Join(overlay, "state", "db"), "/nix/var/nix/db",
+			"--overlay-src", lowerStore.sources[0],
+			"--overlay", filepath.Join(overlay, "upper"), filepath.Join(overlay, "work"), "/nix/store",
+			"--bind", overlay, "/run/abwrap/overlay",
+		)
 	}
 	args = append(args,
-		"--ro-bind", lowerStore.database, "/run/abwrap/lower/nix/var/nix/db",
-		// Expose the merged overlay database at the conventional path. A nested
-		// abwrap can then use the parent overlay as its complete lower store.
-		"--ro-bind", filepath.Join(overlay, "state", "db"), "/nix/var/nix/db",
-	)
-	for _, source := range lowerStore.sources {
-		args = append(args, "--overlay-src", source)
-	}
-	args = append(args,
-		"--overlay", filepath.Join(overlay, "upper"), filepath.Join(overlay, "work"), "/nix/store",
-		"--bind", overlay, "/run/abwrap/overlay",
 		// Use the host bundle when available so locally installed trust roots, such
 		// as an intercepting proxy CA, remain valid inside the sandbox.
 		"--ro-bind", caBundle, "/etc/ssl/certs/ca-bundle.crt",
@@ -608,7 +623,7 @@ func bubblewrapArgs(home, overlay, caBundle string, lowerStore nixLowerStore, op
 		"--setenv", "SHELL", defaultEntrypoint,
 		"--setenv", "PATH", sandboxPath,
 		"--setenv", "TMPDIR", "/tmp",
-		"--setenv", "NIX_REMOTE", overlayStore,
+		"--setenv", "NIX_REMOTE", nixRemote,
 		"--setenv", "NIX_CONFIG", nixConfig,
 		"--setenv", "SSL_CERT_FILE", "/etc/ssl/certs/ca-bundle.crt",
 		"--setenv", "NIX_SSL_CERT_FILE", "/etc/ssl/certs/ca-bundle.crt",
