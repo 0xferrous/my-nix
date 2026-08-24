@@ -179,6 +179,11 @@ in
           name = "gh_fr";
           identityFile = "~/.ssh/ferrous.pub";
         }
+        {
+          name = "tngl_fr";
+          hostName = "tangled.org";
+          identityFile = "~/.ssh/ferrous.pub";
+        }
       ];
     };
 
