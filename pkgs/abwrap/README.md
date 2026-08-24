@@ -13,6 +13,7 @@ abwrap --rw "$PWD" pi --model openai/gpt-5
 abwrap --rw "$PWD" codex
 abwrap --rw "$PWD" opencode
 abwrap --env OPENAI_API_KEY --rw "$PWD" codex
+abwrap --share-vm --rw "$PWD" nix shell nixpkgs#qemu_kvm --command qemu-system-x86_64
 abwrap --journal journalctl --no-pager -n 100
 abwrap --allow-nested-userns --rw "$PWD" pi
 ```
@@ -49,6 +50,21 @@ A bare `abwrap` Nushell receives none. Use `--tool-state pi`,
 agent will be launched later from that shell. `--tool-state none` disables
 automatic state mounting.
 
+### QEMU virtualization
+
+`--share-vm` exposes available host virtualization devices to the sandbox:
+`/dev/kvm`, `/dev/net/tun`, `/dev/vhost-net`, and `/dev/vhost-vsock`. Missing
+optional devices are ignored. The host user still needs permission to access
+them, typically through the `kvm` group. Disk images and other host files must
+be exposed separately with `--ro` or `--rw`.
+
+For example:
+
+```sh
+abwrap --share-vm --rw "$PWD" \
+  nix shell nixpkgs#qemu_kvm --command qemu-system-x86_64 -enable-kvm
+```
+
 ### System journal
 
 `--journal` exposes `/var/log/journal` and `/run/log/journal` read-only and puts
@@ -84,6 +100,7 @@ isolation. It also:
 - mounts the host TLS CA bundle read-only, with a Nix-provided fallback;
 - supplies Kitty and ncurses terminfo through `TERMINFO_DIRS`;
 - optionally exposes journal files read-only without service sockets;
+- optionally exposes QEMU virtualization devices;
 - mounts the lower Nix store and database read-only;
 - uses per-invocation temporary upper, work, and state directories;
 - blocks `TIOCSTI` with a seccomp filter while preserving terminal resizing;

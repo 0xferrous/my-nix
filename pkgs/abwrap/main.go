@@ -112,6 +112,7 @@ type options struct {
 	toolState         map[string]bool
 	journal           bool
 	allowNestedUserns bool
+	shareVM           bool
 	showHelp          bool
 }
 
@@ -229,6 +230,7 @@ Options:
   --env NAME             forward an environment variable if set
   --tool-state TOOL      mount pi, codex, opencode, all, or none state
   --journal              expose host system journals read-only
+  --share-vm             expose host virtualization devices to QEMU
   --allow-nested-userns  allow nested Bubblewrap and abwrap processes
   -e, --entrypoint CMD   use CMD instead of Nushell
   -h, --help             show this help
@@ -287,6 +289,7 @@ func parseOptions(args []string) (options, error) {
 		return enableToolState(&opts, state)
 	})
 	flags.BoolVar(&opts.journal, "journal", false, "expose host system journals read-only")
+	flags.BoolVar(&opts.shareVM, "share-vm", false, "expose host virtualization devices to QEMU")
 	flags.BoolVar(&opts.allowNestedUserns, "allow-nested-userns", false, "allow nested Bubblewrap and abwrap processes")
 	flags.Func("e", "use a command instead of Nushell", setEntrypoint)
 	flags.Func("entrypoint", "use a command instead of Nushell", setEntrypoint)
@@ -649,6 +652,20 @@ func bubblewrapArgs(home, overlay, caBundle string, lowerStore nixLowerStore, op
 
 	for _, item := range systemMounts {
 		args = append(args, "--ro-bind", item.source, item.target)
+	}
+
+	if opts.shareVM {
+		// These are optional because not every host has KVM, vhost, or TUN
+		// devices. --dev-bind is required for device nodes; ordinary --bind
+		// mounts them with nodev and QEMU cannot use them.
+		for _, path := range []string{
+			"/dev/kvm",
+			"/dev/net/tun",
+			"/dev/vhost-net",
+			"/dev/vhost-vsock",
+		} {
+			args = append(args, "--dev-bind-try", path, path)
+		}
 	}
 
 	if opts.journal {
