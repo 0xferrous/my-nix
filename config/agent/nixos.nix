@@ -5,7 +5,6 @@
   impermanence,
   myNixInputs,
   nix-index-database,
-  utils,
   ...
 }:
 let
@@ -13,16 +12,7 @@ let
   AIPackages = myNixInputs.llm-agents.packages.${system};
   agentPortalWrappers = myNixInputs.ash.packages.${system}.agent-portal-wrappers;
   impermanenceRoot = "/persist";
-  lowerStoreUri = "local?real=/nix/.ro-store&state=/run/ash/shares/ro/guest-store-state&read-only=true";
-  upperStoreState = "/run/ash/shares/rw/guest-store-state";
   ashHostCacheUrl = "http://192.168.127.1:5000";
-  # Keep the writable store database beside its upper layer. Both must have the
-  # same lifetime; persisting the database in /nix/var/nix while rebuilding the
-  # Ash shares leaves Nix believing deleted upper-layer paths are still valid.
-  # The store overlay is mounted in stage 1, so /proc/mounts records its layer
-  # paths with /sysroot prefixes. Nix compares them against the post-switch-root
-  # paths and incorrectly rejects the otherwise matching mount.
-  agentStoreUri = "local-overlay://?state=${lib.escapeURL upperStoreState}&lower-store=${lib.escapeURL lowerStoreUri}&upper-layer=${lib.escapeURL "/run/ash/shares/rw/guest-store-upper"}&check-mount=false";
   binaryCaches = [
     {
       url = "${ashHostCacheUrl}?priority=30";
@@ -59,9 +49,20 @@ in
 {
   imports = [
     ../../modules/nixos/ash-vm-mdns.nix
+    myNixInputs.ash-stable.nixosModules.ashGuest
     impermanence.nixosModules.impermanence
     nix-index-database.nixosModules.nix-index
   ];
+
+  virtualisation.ash-guest = {
+    enable = true;
+    user = "agent";
+    emptyPassword = false;
+    sshReadySignal = {
+      afterUnits = [ "agent-home-switch.service" ];
+      requiredUnits = [ "agent-home-switch.service" ];
+    };
+  };
 
   nixpkgs.overlays = [
     (import ../../pkgs/overlay.nix {
@@ -94,8 +95,6 @@ in
     # share, which backs the local-overlay store state database.
     use-sqlite-wal = false;
   };
-
-  environment.etc."ash/local-overlay-store".text = "";
 
   # nix (via libgit2) refuses to open git repos not owned by the current user.
   # The my-nix workspace share is owned by `agent`, but agent-auto-switch runs
@@ -162,31 +161,6 @@ in
     }
   ];
 
-  # Select the daemon store implementation from the transport Ash records on
-  # the kernel command line. Shared mode uses the host-backed local-overlay
-  # store; image mode uses the regular local store inside the ext4 image.
-  environment.etc."ash/nix-daemon".source = pkgs.writeShellScript "ash-nix-daemon" ''
-    store_strategy=shared
-    for parameter in $(cat /proc/cmdline); do
-      case "$parameter" in
-        ash.nix-store=shared) store_strategy=shared ;;
-        ash.nix-store=image) store_strategy=image ;;
-      esac
-    done
-
-    if [ "$store_strategy" = image ]; then
-      exec ${pkgs.nix}/bin/nix-daemon --daemon
-    fi
-
-    # nix-daemon removes NIX_REMOTE from its process environment, so pass the
-    # local-overlay store as an explicit Nix setting.
-    exec ${pkgs.nix}/bin/nix-daemon --daemon --option store ${lib.escapeShellArg agentStoreUri}
-  '';
-  systemd.services.nix-daemon.serviceConfig.ExecStart = lib.mkForce [
-    ""
-    "/etc/ash/nix-daemon"
-  ];
-
   environment.systemPackages = with pkgs; [
     kitty.terminfo
     poetry
@@ -221,43 +195,6 @@ in
   services.openssh = {
     enable = true;
     settings = opensshSettings;
-  };
-
-  systemd.services.virtle-ssh-signal = {
-    # Do not start at boot (multi-user.target); the home-manager switch pulls
-    # this in via Wants and we order after it, so SSH-READY is only signalled
-    # once the agent home config is in place.
-    wantedBy = [ "agent-home-switch.service" ];
-    requires = [ "sshd.service" ];
-    after = [
-      "sshd.service"
-      "agent-home-switch.service"
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      TimeoutStartSec = "130s";
-    };
-    script = ''
-      deadline=$(( $(${pkgs.coreutils}/bin/date +%s) + 120 ))
-      attempts=0
-      while [ "$(${pkgs.coreutils}/bin/date +%s)" -lt "$deadline" ]; do
-        if [ -e /dev/virtio-ports/virtle.ready ]; then
-          # Writing to this virtio console port blocks forever if the host side
-          # is not currently reading it (e.g. during nixos-rebuild switch), so
-          # bound each attempt and keep retrying until the host picks the
-          # token up.
-          if ${pkgs.coreutils}/bin/timeout 2s ${pkgs.bash}/bin/bash -c \
-            '${pkgs.coreutils}/bin/echo SSH-READY > /dev/virtio-ports/virtle.ready'; then
-            exit 0
-          fi
-          attempts=$((attempts + 1))
-          echo "virtle ready port write timed out (attempt $attempts); retrying" >&2
-        fi
-        ${pkgs.coreutils}/bin/sleep 1
-      done
-      echo "virtle ready port write did not succeed within 2 minutes" >&2
-      exit 0
-    '';
   };
 
   # Self-update: rebuild this VM from the my-nix flake right after boot so
@@ -420,12 +357,6 @@ in
     '';
   };
 
-  services.getty.autologinUser = "agent";
-  services.qemuGuest.enable = true;
-
-  # Virtle's SSH autoprovision action asks QGA to execute `sh` by name.
-  systemd.services.qemu-guest-agent.path = [ pkgs.bash ];
-
   # dbus-broker live-reloads policy when the Nix store overlay changes during a
   # switch. In the agent VM this can briefly observe missing config symlinks and
   # leave the bus with a policy that denies even root's systemd calls.
@@ -492,28 +423,6 @@ in
     };
   };
 
-  boot.loader.grub.enable = false;
-
-  # Keep stage-1 failures debuggable from Ash's interactive serial console.
-  boot.initrd.systemd.emergencyAccess = true;
-
-  boot.initrd.availableKernelModules = [
-    "virtio_pci"
-    "virtio_blk"
-    "virtiofs"
-    "overlay"
-    "virtio_console"
-    "vsock"
-    "vmw_vsock_virtio_transport"
-    "ext4"
-  ];
-
-  boot.kernelModules = [
-    "virtio_console"
-    "vsock"
-    "vmw_vsock_virtio_transport"
-  ];
-
   boot.kernel.sysctl = {
     "fs.inotify.max_queued_events" = 65536;
     "fs.inotify.max_user_instances" = 1048576;
@@ -521,150 +430,6 @@ in
     "kernel.unprivileged_userns_clone" = 1;
     "vm.vfs_cache_pressure" = 1000;
   };
-
-  fileSystems."/" = {
-    device = "tmpfs";
-    fsType = "tmpfs";
-    options = [
-      "mode=0755"
-      "size=5G"
-    ];
-  };
-
-  # Ash appends ash.nix-store=shared|image to the kernel command line. Enable
-  # only the matching root mount during stage 1. The image mount unit must not
-  # exist in shared mode: systemd otherwise makes mounts below /sysroot/nix
-  # depend implicitly on that parent mount and its block device.
-  boot.initrd.systemd.contents."/etc/systemd/system-generators/ash-nix-store-generator".source =
-    pkgs.writeShellScript "ash-nix-store-generator" ''
-      store_strategy=shared
-      for parameter in $(cat /proc/cmdline); do
-        case "$parameter" in
-          ash.nix-store=shared) store_strategy=shared ;;
-          ash.nix-store=image) store_strategy=image ;;
-        esac
-      done
-
-      case "$store_strategy" in
-        shared)
-          mount_unit=sysroot-nix-store.mount
-          mount_unit_path="/etc/systemd/system/$mount_unit"
-          ;;
-        image)
-          mount_unit=sysroot-nix.mount
-          mount_unit_path="$1/$mount_unit"
-          cat > "$mount_unit_path" <<'EOF'
-      [Unit]
-      DefaultDependencies=false
-      Before=initrd-fs.target
-
-      [Mount]
-      What=/dev/disk/by-label/nix-store
-      Where=/sysroot/nix
-      Type=ext4
-      EOF
-          ;;
-      esac
-
-      wants_dir="$1/initrd-fs.target.requires"
-      mkdir -p "$wants_dir"
-      ln -s "$mount_unit_path" "$wants_dir/$mount_unit"
-    '';
-
-  boot.initrd.systemd.mounts =
-    let
-      sharedCondition = [ "ash.nix-store=shared" ];
-      initrdMount =
-        condition: mount:
-        {
-          unitConfig = {
-            DefaultDependencies = false;
-            ConditionKernelCommandLine = condition;
-          };
-          before = [ "initrd-fs.target" ];
-        }
-        // mount;
-      sharedMountPaths = [
-        "/sysroot/nix/.ro-store"
-        "/sysroot/run/ash/shares/ro"
-        "/sysroot/run/ash/shares/rw"
-      ];
-      sharedMountUnits = map (path: "${utils.escapeSystemdPath path}.mount") sharedMountPaths;
-    in
-    [
-      (initrdMount sharedCondition {
-        what = "ro-store";
-        where = "/sysroot/nix/.ro-store";
-        type = "virtiofs";
-        options = "ro";
-      })
-      (initrdMount sharedCondition {
-        what = "shares-ro";
-        where = "/sysroot/run/ash/shares/ro";
-        type = "virtiofs";
-        options = "ro";
-      })
-      (initrdMount sharedCondition {
-        what = "shares-rw";
-        where = "/sysroot/run/ash/shares/rw";
-        type = "virtiofs";
-      })
-      (initrdMount sharedCondition {
-        what = "overlay";
-        where = "/sysroot/nix/store";
-        type = "overlay";
-        options = lib.concatStringsSep "," [
-          "lowerdir=/sysroot/nix/.ro-store"
-          "upperdir=/sysroot/run/ash/shares/rw/guest-store-upper"
-          "workdir=/sysroot/run/ash/shares/rw/guest-store-work"
-          "userxattr"
-        ];
-        requires = sharedMountUnits;
-        after = sharedMountUnits;
-      })
-    ];
-
-  fileSystems.${impermanenceRoot} = {
-    device = "/dev/disk/by-label/persist";
-    fsType = "ext4";
-    neededForBoot = true;
-  };
-
-  # Shared mode keeps /nix on tmpfs, so persist its regular Nix state. Image
-  # mode must leave /nix/var/nix on the Nix store image; otherwise this bind
-  # mount shadows the image database that Ash initializes after boot.
-  systemd.services.ash-prepare-shared-nix-state = {
-    requiredBy = [ "nix-var-nix.mount" ];
-    requires = [ "persist.mount" ];
-    after = [ "persist.mount" ];
-    before = [ "nix-var-nix.mount" ];
-    unitConfig = {
-      ConditionKernelCommandLine = [ "ash.nix-store=shared" ];
-      DefaultDependencies = false;
-    };
-    serviceConfig.Type = "oneshot";
-    script = ''
-      ${pkgs.coreutils}/bin/install -d -m 0755 \
-        ${impermanenceRoot}/nix/var/nix /nix/var/nix
-    '';
-  };
-
-  systemd.mounts = [
-    {
-      wantedBy = [ "local-fs.target" ];
-      requires = [ "ash-prepare-shared-nix-state.service" ];
-      after = [ "ash-prepare-shared-nix-state.service" ];
-      before = [ "local-fs.target" ];
-      where = "/nix/var/nix";
-      what = "${impermanenceRoot}/nix/var/nix";
-      type = "none";
-      options = "bind";
-      unitConfig = {
-        ConditionKernelCommandLine = [ "ash.nix-store=shared" ];
-        DefaultDependencies = false;
-      };
-    }
-  ];
 
   services.journald.storage = "persistent";
 
