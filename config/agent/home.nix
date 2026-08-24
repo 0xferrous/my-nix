@@ -49,7 +49,7 @@ in
       HTTP_PROXY = "http://192.168.127.1:8080";
       HTTPS_PROXY = "http://192.168.127.1:8080";
       ALL_PROXY = "http://192.168.127.1:8080";
-      NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
+      NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
       # rustls-based tools (e.g. obscura) ignore the system trust store and
       # default to bundled webpki roots; the NixOS bundle includes the
       # iron-proxy CA (security.pki.certificateFiles), so proxied HTTPS

@@ -14,7 +14,7 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
   - Guest side wired: `security.pki.certificateFiles` trusts the committed
     `modules/nixos/iron-proxy-ca.crt` (10y CA generated 2026-08-09), and
     `HTTP_PROXY/HTTPS_PROXY/ALL_PROXY=http://192.168.127.1:8080` with
-    `NO_PROXY=localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10`
+    `NO_PROXY=localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10`
     are set for both the system and Home Manager sessions. Nix-daemon and
     agent-auto-switch intentionally bypass the proxy (no system-wide env).
   - Live on the host: guest audit entries show

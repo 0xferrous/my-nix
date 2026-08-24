@@ -120,8 +120,8 @@ in
     http_proxy = "http://192.168.127.1:8080";
     https_proxy = "http://192.168.127.1:8080";
     all_proxy = "http://192.168.127.1:8080";
-    NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
-    no_proxy = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,100.64.0.0/10";
+    NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
+    no_proxy = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
     # rustls-based tools (obscura, etc.) ignore the system trust store and
     # default to bundled webpki roots; point them at the NixOS bundle, which
     # includes the iron-proxy CA via security.pki.certificateFiles below, so
