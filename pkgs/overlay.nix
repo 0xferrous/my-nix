@@ -31,6 +31,7 @@ final: prev: {
   oh-my-pi = final.callPackage ./oh-my-pi.nix { };
   takopi = final.callPackage ./takopi.nix { };
   terminal-control = final.callPackage ./terminal-control.nix { };
+  iroh-ssh = final.callPackage ./iroh-ssh.nix { };
   prime-agent = final.callPackage ./prime-agent.nix { };
   hints = final.callPackage ./hints.nix {
     source = inputs.hints;

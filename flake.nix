@@ -186,6 +186,7 @@
             pi-acp
             takopi
             terminal-control
+            iroh-ssh
             prime-agent
             flake-utils
             qwen3-server
