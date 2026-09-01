@@ -164,6 +164,9 @@
         # desktop app (codex-desktop) so `nix build .#codex-desktop` and
         # `nix run .#codex-desktop` work from the flake.
         config.allowUnfreePredicate = pkg: (pkg.pname or "") == "codex-desktop";
+        # gradle 7.x (needed by tron-wallet-cli-java's shadow-jar plugin) is marked
+        # insecure in nixpkgs due to unfixed CVEs; required to build it.
+        config.permittedInsecurePackages = [ "gradle-7.6.6" ];
       };
       lib = pkgs.lib;
     in
@@ -189,8 +192,11 @@
             abwrap
             pi-acp
             takopi
+            tron-wallet-cli
+            tron-wallet-cli-java
             terminal-control
             iroh-ssh
+            ssh-tmp
             prime-agent
             flake-utils
             qwen3-server
