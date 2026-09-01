@@ -5,8 +5,9 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
 ## In progress / queued
 
 - [ ] iron-proxy × ash — token injection on the Ash VM bridge:
-  - Host package `packages.iron-proxy` (v0.49.0 release binary, not in
-    nixpkgs) and NixOS module `fr.iron-proxy` (tunnel listener on
+  - Host package `packages.iron-proxy` (v0.49.0 source build with the
+    expired-certificate cache patch from upstream PR #235, not in nixpkgs)
+    and NixOS module `fr.iron-proxy` (tunnel listener on
     `192.168.127.1:8080`, MITM CA in `/var/lib/iron-proxy`, loopback high
     ports for the always-on http/https/metrics listeners to avoid Caddy on
     `:80`/`:443`). Verified end-to-end: inject mode and swap mode both
