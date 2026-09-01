@@ -457,6 +457,7 @@ in
       ".config/jj"
       ".config/pypoetry"
       ".config/sops"
+      ".config/nushell"
       ".foundry"
       ".ironclaw"
       ".local/state/nix"
