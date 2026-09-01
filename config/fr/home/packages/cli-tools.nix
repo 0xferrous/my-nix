@@ -94,6 +94,9 @@ with pkgs;
   # Music daemon and client
   mpd
 
+  # SSH with an ephemeral key and empty configuration
+  ssh-tmp
+
   # TUI communication
   himalaya
   iamb

@@ -14,6 +14,7 @@ final: prev: {
   git-hunk = final.callPackage ./git-hunk.nix { };
   ironclaw = final.callPackage ./ironclaw.nix { };
   iron-proxy = final.callPackage ./iron-proxy.nix { };
+  ssh-tmp = final.callPackage ./ssh-tmp.nix { };
   jj-hunk = final.callPackage ./jj-hunk.nix { };
   # ChatGPT/Codex Linux desktop app (preview). Not in nixpkgs: the upstream
   # `chatgpt` package is macOS-only and OpenAI publishes the Linux builds only
