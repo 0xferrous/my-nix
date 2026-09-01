@@ -68,6 +68,7 @@ in
     ./home/wofi.nix
     ./home/zed.nix
     myNixInputs.nix-index-database.homeModules.default
+    myNixInputs.vicinae.homeManagerModules.default
     myNixInputs.dms.homeModules.dank-material-shell
     myNixInputs.dms-plugin-registry.homeModules.default
     myNixInputs.voxtype.homeManagerModules.default

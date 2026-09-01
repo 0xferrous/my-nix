@@ -402,6 +402,7 @@ binds {
     Mod+T hotkey-overlay-title="Open a Terminal" { spawn "kitty" "--single-instance"; }
     Mod+Shift+T hotkey-overlay-title="Open terminal without rc" { spawn-sh "kitty --single-instance -e nu -n"; }
     Mod+D hotkey-overlay-title="Open rofi" { spawn-sh "rofi -show drun"; }
+    Mod+Shift+V repeat=false hotkey-overlay-title="Toggle Vicinae" { spawn "vicinae" "toggle"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn-sh "systemctl --user start lock.target"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
@@ -626,8 +627,7 @@ binds {
     Mod+Shift+Equal { set-window-height "+10%"; }
 
     // Move the focused window between the floating and the tiling layout.
-    Mod+V       { toggle-window-floating; }
-    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+    Mod+V { toggle-window-floating; }
 
     // Toggle tabbed column display mode.
     // Windows in this column will appear as vertical tabs,

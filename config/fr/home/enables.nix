@@ -1,4 +1,12 @@
-{ lib, ... }:
+{
+  lib,
+  myNixInputs,
+  pkgs,
+  ...
+}:
+let
+  vicinaePackage = myNixInputs.vicinae.packages.${pkgs.stdenv.hostPlatform.system}.default;
+in
 {
   programs = {
     devenv = {
@@ -41,6 +49,11 @@
         updates.auto_update = true;
       };
     };
+    vicinae = {
+      enable = true;
+      package = vicinaePackage;
+      systemd.enable = true;
+    };
     # television = {
     #   enable = true;
     #   enableZshIntegration = true;
@@ -64,4 +77,7 @@
     #   # };
     # };
   };
+
+  home.file.".config/net.imput.helium/NativeMessagingHosts/com.vicinae.vicinae.json".source =
+    "${vicinaePackage}/etc/chromium/native-messaging-hosts/com.vicinae.vicinae.json";
 }
