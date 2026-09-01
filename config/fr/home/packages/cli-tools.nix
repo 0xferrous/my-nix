@@ -83,6 +83,14 @@ with pkgs;
   exiftool
   spotdl
 
+  # OCR an image from the Wayland clipboard and open the text in Neovim
+  (pkgs.writeTextFile {
+    name = "ocr-clipboard";
+    destination = "/bin/ocr-clipboard";
+    executable = true;
+    text = builtins.readFile ../../../../pkgs/ocr-clipboard.nu;
+  })
+
   # Music daemon and client
   mpd
 
