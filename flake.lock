@@ -250,11 +250,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783406237,
-        "narHash": "sha256-NdHbLFLLuJR2GNUr9+N9euj4DkhS40UBDl62vx2m5yQ=",
+        "lastModified": 1787543082,
+        "narHash": "sha256-TlBGxjSdyvvoCYSmXNHwT0VeDTdZ9yDtVxJVw1oTJGw=",
         "owner": "0xferrous",
         "repo": "CodexBar-flake",
-        "rev": "066f84c8995fb335764fe5eae34d487c015d000b",
+        "rev": "9c8443853dbab85474ce2e6b27474227bd77b1a5",
         "type": "github"
       },
       "original": {
