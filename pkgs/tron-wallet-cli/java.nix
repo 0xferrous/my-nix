@@ -55,7 +55,7 @@ let
   };
 in
 pkgs.stdenv.mkDerivation (finalAttrs: {
-  pname = "wallet-cli-java";
+  pname = "tron-wallet-cli-java";
   inherit version;
 
   src = pkgs.fetchgit {

@@ -85,6 +85,8 @@ Packages provided by the overlay:
 | `dev-essentials` | combined package exposing the shared development essentials on one `PATH` |
 | `git-hunk`, `jj-hunk` | non-interactive hunk staging for `git` and `jj` |
 | `takopi` | Telegram bridge for Codex, Claude Code, and other agent CLIs |
+| `tron-wallet-cli` | agent-first TRON command-line wallet (TypeScript), built from source |
+| `tron-wallet-cli-java` | original interactive TRON wallet REPL (Java, Gradle fat jar) |
 | `terminal-control` | control, inspect, test, and capture real terminal applications for agents and TUI review |
 | `iroh-ssh` | SSH to machines behind NATs and firewalls using Iroh, without port forwarding or VPN setup |
 | `prime-agent` | self-improving RLM agent for coding workflows and long-running autonomous tasks |

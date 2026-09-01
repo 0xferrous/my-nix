@@ -31,6 +31,8 @@ final: prev: {
   opensrc = final.callPackage ./opensrc.nix { };
   oh-my-pi = final.callPackage ./oh-my-pi.nix { };
   takopi = final.callPackage ./takopi.nix { };
+  tron-wallet-cli = final.callPackage ./tron-wallet-cli { };
+  tron-wallet-cli-java = final.callPackage ./tron-wallet-cli/java.nix { };
   terminal-control = final.callPackage ./terminal-control.nix { };
   iroh-ssh = final.callPackage ./iroh-ssh.nix { };
   prime-agent = final.callPackage ./prime-agent.nix { };

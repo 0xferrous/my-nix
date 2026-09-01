@@ -11,7 +11,7 @@
 }:
 
 pkgs.buildNpmPackage rec {
-  pname = "wallet-cli";
+  pname = "tron-wallet-cli";
   inherit version;
 
   src = pkgs.fetchgit {
