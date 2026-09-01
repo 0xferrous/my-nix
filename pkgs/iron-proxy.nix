@@ -1,30 +1,42 @@
 {
   lib,
-  stdenvNoCC,
-  fetchurl,
+  buildGoModule,
+  fetchFromGitHub,
+  fetchpatch,
 }:
 let
   version = "0.49.0";
 in
-stdenvNoCC.mkDerivation {
+buildGoModule {
   pname = "iron-proxy";
   inherit version;
 
-  # iron-proxy is not in nixpkgs. Upstream publishes statically linked
-  # (CGO_ENABLED=0) release binaries, so fetch those instead of building the
-  # Go module tree locally; this mirrors the ironclaw packaging pattern.
-  src = fetchurl {
-    url = "https://github.com/ironsh/iron-proxy/releases/download/v${version}/iron-proxy_${version}_linux_amd64.tar.gz";
-    sha256 = "sha256-vnMJDvrJ4gyX4RjECOZc2UIeFBsAFqcd/YPTXYg4KK0=";
+  # iron-proxy is not in nixpkgs. Build the release source locally so we can
+  # carry the expired-certificate cache fix until it lands in an upstream
+  # release.
+  src = fetchFromGitHub {
+    owner = "paradigmxyz";
+    repo = "iron-proxy";
+    tag = "v${version}";
+    hash = "sha256-bZC3u4V2q9T/URgGbxzfizLbGUt4ERCAxWRidNQ4g8I=";
   };
 
-  sourceRoot = ".";
+  patches = [
+    (fetchpatch {
+      name = "regenerate-expired-cached-certificates.patch";
+      url = "https://github.com/paradigmxyz/iron-proxy/commit/15c72756cc7133bdd22aa72e68776efc439c6d00.patch";
+      hash = "sha256-hmUoPTUzsGNoS7nzanSjj8TAvOLzyUNvIVQE2GnbxKQ=";
+    })
+  ];
 
-  installPhase = ''
-    runHook preInstall
-    install -Dm755 iron-proxy -t $out/bin
-    runHook postInstall
-  '';
+  vendorHash = "sha256-6KUQeShcgeOJwlP/aE8RlgfmtmGNC9MJjJtJ1BMREe4=";
+
+  subPackages = [ "cmd/iron-proxy" ];
+
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
   meta = {
     description = "MITM egress proxy with DNS server, secret injection, and audit logging";
