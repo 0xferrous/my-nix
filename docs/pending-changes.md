@@ -24,6 +24,8 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
     entry (commit 3f70c85) verified working — guest sees
     `Authorization: Bearer sk-test-verify-123` upstream and the audit shows
     the `injected` annotation.
+  - GitHub swap rules map `proxy-gh-personal` and `proxy-gh-work` to
+    `GITHUB_PERSONAL_TOKEN` and `GITHUB_WORK_TOKEN` for GitHub API requests.
   - Remaining: point agent tools (codex/opencode/gh) at placeholders (inject
     mode) or proxy tokens (swap mode) for the actual secrets to swap.
   - Open question: per-VM token isolation and whether to add an `allowlist`

@@ -65,6 +65,34 @@ in
                 }
               ];
             }
+            {
+              source = {
+                type = "env";
+                var = "GITHUB_PERSONAL_TOKEN";
+              };
+              replace = {
+                proxy_value = "proxy-gh-personal";
+                match_headers = [ "Authorization" ];
+              };
+              rules = [
+                { host = "api.github.com"; }
+                { host = "github.com"; }
+              ];
+            }
+            {
+              source = {
+                type = "env";
+                var = "GITHUB_WORK_TOKEN";
+              };
+              replace = {
+                proxy_value = "proxy-gh-work";
+                match_headers = [ "Authorization" ];
+              };
+              rules = [
+                { host = "api.github.com"; }
+                { host = "github.com"; }
+              ];
+            }
           ];
         }
       ];
