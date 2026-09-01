@@ -7,11 +7,9 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
-  devEssentialsPackages = lib.remove pkgs.gh (
-    import ../shared/packages/dev-essentials.nix {
-      inherit pkgs AIPackages;
-    }
-  );
+  devEssentialsPackages = import ../shared/packages/dev-essentials.nix {
+    inherit pkgs AIPackages;
+  };
   zjRadar = myNixInputs.zj-radar.packages.${system};
   zjRadarPlugin =
     pkgs.runCommand "zellij-plugin-zj-radar.wasm"
@@ -23,6 +21,11 @@ let
         cp ${zjRadar.default}/bin/zj_radar.wasm "$out"
       '';
   ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
+  agentPortalWrappers = pkgs.runCommand "agent-portal-wrappers" { } ''
+    cp -R ${myNixInputs.ash.packages.${system}.agent-portal-wrappers} "$out"
+    chmod -R u+w "$out"
+    mv "$out/bin/gh" "$out/bin/gh-portal"
+  '';
 in
 {
   imports = [
@@ -39,7 +42,7 @@ in
       pkgs.obscura
       pkgs.piDev
       myNixInputs.codexbar.packages.${system}.default
-      myNixInputs.ash.packages.${system}.agent-portal-wrappers
+      agentPortalWrappers
       myNixInputs.ash.packages.${system}."ash-dbus-proxy"
     ]
     ++ devEssentialsPackages;
