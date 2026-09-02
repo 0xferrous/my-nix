@@ -39,8 +39,11 @@ in
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
     packages = [
+      AIPackages.chatgpt
       pkgs.obscura
       pkgs.piDev
+      pkgs.waypipe
+      pkgs.xwayland-satellite
       myNixInputs.codexbar.packages.${system}.default
       agentPortalWrappers
       myNixInputs.ash.packages.${system}."ash-dbus-proxy"
@@ -49,6 +52,8 @@ in
     # Same iron-proxy tunnel as the system session, so user systemd services
     # and shells started outside a login session also route egress through it.
     sessionVariables = {
+      # Enable upstream ChatGPT's Wayland flags; waypipe supplies WAYLAND_DISPLAY.
+      NIXOS_OZONE_WL = "1";
       HTTP_PROXY = "http://192.168.127.1:8080";
       HTTPS_PROXY = "http://192.168.127.1:8080";
       ALL_PROXY = "http://192.168.127.1:8080";
