@@ -450,31 +450,55 @@ in
     users.agent.files = [
     ];
     users.agent.directories = [
-      ".cache/pypoetry"
-      ".cache/uv"
+      # cargo / rust
       ".cargo"
+      # codex
       ".codex"
       ".config/Codex"
-      ".config/gh"
-      ".config/git"
-      ".config/herdr"
-      # IronClaw generates and enables its user unit in this directory.
-      ".config/systemd/user"
-      ".config/jj"
-      ".config/pypoetry"
-      ".config/sops"
-      ".config/nushell"
+      # foundry
       ".foundry"
+      # gh
+      ".config/gh"
+      # git
+      ".config/git"
+      # herdr
+      ".config/herdr"
+      # ironclaw
       ".ironclaw"
+      ".config/systemd/user"
+      # jj
+      ".config/jj"
+      # nix
       ".local/state/nix"
-      ".local/share/pypoetry"
-      ".local/share/uv"
-      ".local/share/zoxide"
+      # nushell
+      ".config/nushell"
+      # oh-my-pi
       ".omp"
+      # opencode (CLI + desktop)
+      ".config/opencode"
+      ".config/ai.opencode.desktop"
+      ".local/share/opencode"
+      ".local/state/opencode"
+      ".cache/opencode"
+      # pi
       ".pi"
+      # poetry
+      ".cache/pypoetry"
+      ".config/pypoetry"
+      ".local/share/pypoetry"
+      # prime
       ".prime"
+      # sops
+      ".config/sops"
+      # ssh
       ".ssh"
+      # supermaven
       ".supermaven"
+      # uv
+      ".cache/uv"
+      ".local/share/uv"
+      # zoxide
+      ".local/share/zoxide"
     ];
   };
 
