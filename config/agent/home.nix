@@ -7,6 +7,15 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
+  chatgpt = pkgs.symlinkJoin {
+    name = "chatgpt-wrapped";
+    paths = [ AIPackages.chatgpt ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/chatgpt" \
+        --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}"
+    '';
+  };
   devEssentialsPackages = import ../shared/packages/dev-essentials.nix {
     inherit pkgs AIPackages;
   };
@@ -39,7 +48,7 @@ in
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
     packages = [
-      AIPackages.chatgpt
+      chatgpt
       pkgs.obscura
       pkgs.piDev
       pkgs.waypipe
