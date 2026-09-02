@@ -449,6 +449,7 @@ in
       ".cache/uv"
       ".cargo"
       ".codex"
+      ".config/Codex"
       ".config/gh"
       ".config/git"
       ".config/herdr"
