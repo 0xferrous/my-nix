@@ -161,6 +161,11 @@ in
     }
   ];
 
+  fonts.packages = with pkgs; [
+    recursive
+    nerd-fonts.recursive-mono
+  ];
+
   environment.systemPackages = with pkgs; [
     kitty.terminfo
     poetry
