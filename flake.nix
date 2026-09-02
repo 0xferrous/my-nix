@@ -30,6 +30,14 @@
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
+    # OpenCode source flake; exposes the `opencode-desktop` Electron app built
+    # from source (see ./nix/desktop.nix upstream). Pinned to a release tag so
+    # desktop builds are reproducible; follows this flake's nixpkgs so the
+    # electron_41/bun pins resolve here.
+    opencode = {
+      url = "github:anomalyco/opencode/v1.18.26";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     libgit2-patched = {
       url = "github:0xferrous/libgit2?ref=fix/read-only-mmap-private";
       flake = false;
@@ -202,6 +210,7 @@
             qwen3-server
             codex-desktop
             ;
+          opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
           "install-bin" = pkgs."install-bin";
           iron-proxy = pkgs.iron-proxy;
         };

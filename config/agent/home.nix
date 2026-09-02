@@ -56,6 +56,7 @@ in
       myNixInputs.codexbar.packages.${system}.default
       agentPortalWrappers
       myNixInputs.ash.packages.${system}."ash-dbus-proxy"
+      myNixInputs.opencode.packages.${system}.opencode-desktop
     ]
     ++ devEssentialsPackages;
     # Same iron-proxy tunnel as the system session, so user systemd services
