@@ -162,14 +162,19 @@ stdenv.mkDerivation (finalAttrs: {
     # copy via the app's own promisified execFile helper (`lne`) with
     # --no-preserve=mode instead of fs.cp. Also drop the bundled Sentry
     # GpuContext integration: getGPUInfo() rejects unhandled when the launcher
-    # passes --disable-gpu in GPU-less VMs. Keep replacements the same length
-    # so the asar's file offsets stay valid.
+    # passes --disable-gpu in GPU-less VMs. @parcel/watcher's detect-libc also
+    # calls process.report.getReport() from its Git worker; Electron's bundled
+    # Node crashes there with a deliberate UD1 trap, so force detect-libc to
+    # use its command-based fallback. Keep replacements the same length so the
+    # asar's file offsets stay valid.
     perl -0777pi -e '
       $pluginCopy = s/\Qawait y.default.cp(e,t,{recursive:!0,verbatimSymlinks:!0});return\E/await lne(`cp`,[`-r`,`--no-preserve=mode`,`--`,e,t]);return      /g;
       $gpuContext = s/\QTR(),FR(),iz()\E/TR(),     iz()/g;
+      $detectLibcReport = s/\QisLinux() && process.report\E/false                      /g;
       END {
         die "unexpected bundled plugin copy count: $pluginCopy\n" unless $pluginCopy == 1;
         die "unexpected Sentry GPU context integration count: $gpuContext\n" unless $gpuContext == 1;
+        die "unexpected detect-libc process.report count: $detectLibcReport\n" unless $detectLibcReport == 1;
       }
     ' "$out/lib/chatgpt/resources/app.asar"
 
