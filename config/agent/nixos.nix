@@ -477,6 +477,7 @@ in
       # opencode (CLI + desktop)
       ".config/opencode"
       ".config/ai.opencode.desktop"
+      ".config/ai.opencode.desktop.dev"
       ".local/share/opencode"
       ".local/state/opencode"
       ".cache/opencode"
