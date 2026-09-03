@@ -203,6 +203,11 @@ in
     enableNushellIntegration = true;
   };
 
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+
   programs.fzf = {
     enable = true;
     enableNushellIntegration = true;
