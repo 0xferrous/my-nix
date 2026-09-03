@@ -82,6 +82,7 @@ in
       myNixInputs.codexbar.packages.${system}.default
       agentPortalWrappers
       myNixInputs.ash.packages.${system}."ash-dbus-proxy"
+      AIPackages.opencode2
       opencodeDesktop
     ]
     ++ devEssentialsPackages;
