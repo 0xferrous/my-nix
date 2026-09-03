@@ -66,6 +66,7 @@ in
   imports = [
     ../../modules/home/programs/direnv.nix
     ../../modules/home/programs/foundry.nix
+    ../../modules/home/programs/nushell-session-vars.nix
     ../fr/home/hunk.nix
   ];
 
@@ -231,6 +232,8 @@ in
     # Load after the fzf/zoxide snippets supplied by Home Manager.
     extraConfig = lib.mkAfter (builtins.readFile ../shared/nushell/kitty-ssh-cwd.nu);
   };
+
+  fr.nushell-session-vars.enable = true;
 
   programs.zoxide = {
     enable = true;
