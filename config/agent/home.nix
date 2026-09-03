@@ -7,6 +7,32 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
+  upstreamOpenCode = myNixInputs.opencode.packages.${system}.opencode;
+  opencode = upstreamOpenCode.override {
+    node_modules = upstreamOpenCode.node_modules.override {
+      hash = "sha256-SVvFPO+KuS67+6XGPhaB3cIuc3XUyM0XVccy5v8afS4=";
+    };
+  };
+  opencodeDesktop =
+    (myNixInputs.opencode.packages.${system}.opencode-desktop.override {
+      inherit opencode;
+    }).overrideAttrs
+      (old: {
+        # The new-session workspace picker is omitted from production builds, while
+        # the bundled server requires this runtime flag for workspace operations.
+        env = old.env // {
+          OPENCODE_CHANNEL = "beta";
+        };
+        # The beta build generates only its channel-specific AppStream file,
+        # while upstream's Nix install phase always installs the production one.
+        postBuild = (old.postBuild or "") + ''
+          bun ./scripts/copy-metainfo.ts prod
+        '';
+        postInstall = (old.postInstall or "") + ''
+          wrapProgram "$out/bin/opencode-desktop" \
+            --set OPENCODE_EXPERIMENTAL_WORKSPACES true
+        '';
+      });
   chatgpt = pkgs.symlinkJoin {
     name = "chatgpt-wrapped";
     paths = [ AIPackages.chatgpt ];
@@ -56,7 +82,7 @@ in
       myNixInputs.codexbar.packages.${system}.default
       agentPortalWrappers
       myNixInputs.ash.packages.${system}."ash-dbus-proxy"
-      myNixInputs.opencode.packages.${system}.opencode-desktop
+      opencodeDesktop
     ]
     ++ devEssentialsPackages;
     # Same iron-proxy tunnel as the system session, so user systemd services
