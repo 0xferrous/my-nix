@@ -465,6 +465,11 @@ in
       ".config/herdr"
       # ironclaw
       ".ironclaw"
+      # t3code (server state, credentials, runtime, tools, and worktrees)
+      ".t3"
+      # t3code desktop (current and legacy production Electron profiles)
+      ".config/T3 Code (Alpha)"
+      ".config/t3code"
       ".config/systemd/user"
       # jj
       ".config/jj"
