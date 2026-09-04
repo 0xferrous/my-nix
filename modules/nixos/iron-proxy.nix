@@ -42,7 +42,17 @@ let
         // cfg.extraConfig
       );
   configFile = yaml.generate "iron-proxy.yaml" yamlConfig;
-  caCertFile = if cfg.caCertificate != null then toString cfg.caCertificate else "";
+  caCertFile =
+    if cfg.caCertificate != null then
+      builtins.path {
+        path = cfg.caCertificate;
+        name = "iron-proxy-ca.crt";
+      }
+    else
+      null;
+  installCaCert = lib.optionalString (caCertFile != null) ''
+    install -m 0600 ${lib.escapeShellArg caCertFile} "$state_dir/ca.crt"
+  '';
   # The module builds its own package instance so it does not depend on the
   # flake overlay being applied to the host's nixpkgs.
   ironProxy = pkgs.callPackage ../../pkgs/iron-proxy.nix { };
@@ -179,13 +189,13 @@ in
           state_dir=${lib.escapeShellArg cfg.stateDir}
           mkdir -p "$state_dir"
           chmod 0700 "$state_dir"
-          if [ -n "${lib.escapeShellArg caCertFile}" ]; then
+          if [ -n "${lib.optionalString (caCertFile != null) "1"}" ]; then
             if [ ! -f "$state_dir/ca.key" ]; then
               echo "iron-proxy: caCertificate is set but $state_dir/ca.key is missing;" >&2
               echo "place the matching private key there (0600) before starting." >&2
               exit 1
             fi
-            install -m 0600 ${lib.escapeShellArg caCertFile} "$state_dir/ca.crt"
+            ${installCaCert}
           elif [ ! -f "$state_dir/ca.crt" ] || [ ! -f "$state_dir/ca.key" ]; then
             ${ironProxy}/bin/iron-proxy generate-ca -outdir "$state_dir"
             chmod 0600 "$state_dir/ca.key" "$state_dir/ca.crt"
