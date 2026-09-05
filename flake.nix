@@ -108,6 +108,14 @@
       url = "github:AvengeMedia/DankMaterialShell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Noctalia shell, replacing DMS in config/fr/home/noctalia.nix.
+    # Deliberately NOT following this flake's nixpkgs: Noctalia pins a
+    # nixpkgs tarball and publishes Cachix binaries against it, so following
+    # would force a local Qt/C++ rebuild of the shell. Track the `cachix`
+    # branch (latest commit with prebuilt binaries) for guaranteed cache hits.
+    noctalia = {
+      url = "github:noctalia-dev/noctalia/cachix";
+    };
     dms-plugin-registry = {
       url = "github:AvengeMedia/dms-plugin-registry";
       inputs.nixpkgs.follows = "nixpkgs";

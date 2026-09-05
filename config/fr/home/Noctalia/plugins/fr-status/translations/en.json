@@ -1,0 +1,6 @@
+{
+  "settings.symbols.label": "Ticker symbols",
+  "settings.symbols.description": "Binance USDT ticker symbols shown in order.",
+  "settings.refresh.label": "Refresh interval (seconds)",
+  "settings.percentages.label": "Show 24-hour percentage changes"
+}

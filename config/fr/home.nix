@@ -52,7 +52,7 @@ in
     ./home/gpg.nix
     ./home/gtk.nix
     ./home/desktop-entries.nix
-    ./home/dank-material-shell.nix
+    ./home/noctalia.nix
     ./home/helix.nix
     ./home/hunk.nix
     ./home/jujutsu.nix
@@ -69,8 +69,7 @@ in
     ./home/zed.nix
     myNixInputs.nix-index-database.homeModules.default
     myNixInputs.vicinae.homeManagerModules.default
-    myNixInputs.dms.homeModules.dank-material-shell
-    myNixInputs.dms-plugin-registry.homeModules.default
+    myNixInputs.noctalia.homeModules.default
     myNixInputs.voxtype.homeManagerModules.default
   ];
 

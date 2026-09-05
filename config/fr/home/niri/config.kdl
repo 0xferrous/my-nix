@@ -403,7 +403,7 @@ binds {
     Mod+Shift+T hotkey-overlay-title="Open terminal without rc" { spawn-sh "kitty --single-instance -e nu -n"; }
     Mod+D hotkey-overlay-title="Open rofi" { spawn-sh "rofi -show drun"; }
     Mod+Shift+V repeat=false hotkey-overlay-title="Toggle Vicinae" { spawn "vicinae" "toggle"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn-sh "systemctl --user start lock.target"; }
+    Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn-sh "noctalia msg session lock"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
@@ -716,14 +716,8 @@ window-rule {
 layer-rule {
     match namespace="waybar"
     match namespace="notifications"
-    match namespace="dms:bar"
 
     block-out-from "screen-capture"
 }
 
-include "dms/cursor.kdl"
-include "dms/binds.kdl"
-
-include "dms/outputs.kdl"
-
-include "dms/windowrules.kdl"
+include "noctalia.kdl"

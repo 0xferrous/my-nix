@@ -1,0 +1,58 @@
+id = "fr/status"
+name = "fr Status Widgets"
+version = "1.0.0"
+plugin_api = 24
+author = "fr"
+license = "MIT"
+icon = "chart-bar"
+description = "Crypto prices, AI usage, and active Tailscale account widgets."
+dependencies = ["codexbar", "tailscale"]
+
+[[widget]]
+id = "crypto"
+entry = "crypto.luau"
+
+  [[widget.setting]]
+  key = "symbols"
+  type = "string_list"
+  label_key = "settings.symbols.label"
+  description_key = "settings.symbols.description"
+  default = ["ETHUSDT", "BTCUSDT", "SOLUSDT"]
+
+  [[widget.setting]]
+  key = "refresh_seconds"
+  type = "int"
+  label_key = "settings.refresh.label"
+  default = 5
+  min = 5
+  max = 3600
+
+  [[widget.setting]]
+  key = "show_percentages"
+  type = "bool"
+  label_key = "settings.percentages.label"
+  default = true
+
+[[widget]]
+id = "ai-usage"
+entry = "ai-usage.luau"
+
+  [[widget.setting]]
+  key = "refresh_seconds"
+  type = "int"
+  label_key = "settings.refresh.label"
+  default = 60
+  min = 15
+  max = 3600
+
+[[widget]]
+id = "tailscale"
+entry = "tailscale.luau"
+
+  [[widget.setting]]
+  key = "refresh_seconds"
+  type = "int"
+  label_key = "settings.refresh.label"
+  default = 60
+  min = 10
+  max = 3600
