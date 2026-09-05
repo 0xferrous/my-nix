@@ -217,6 +217,7 @@
             ssh-tmp
             prime-agent
             flake-utils
+            gruvbox-gtk-theme
             qwen3-server
             codex-desktop
             ;

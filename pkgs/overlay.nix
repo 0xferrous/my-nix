@@ -43,6 +43,7 @@ final: prev: {
   };
   "install-bin" = final.callPackage ./install-bin.nix { };
   flake-utils = final.callPackage ./flake-utils.nix { };
+  gruvbox-gtk-theme = final.callPackage ./gruvbox-gtk-theme.nix { };
   plannotator-pi-extension = final.callPackage ./plannotator-pi-extension.nix { };
   pi = final.callPackage ./pi.nix {
     piPackage = inputs.llm-agents.packages.${system}.pi;

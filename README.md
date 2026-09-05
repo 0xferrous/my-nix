@@ -100,6 +100,7 @@ Packages provided by the overlay:
 | `hints` | click, scroll, and drag with your keyboard |
 | `opensrc` | fetch and cache source code for packages and repos |
 | `flake-utils` | synchronize selected flake input locks across local flakes with `sync` and `intersection` subcommands; use `sync --update` to refresh the canonical flake first |
+| `gruvbox-gtk-theme` | GTK 3/4 and icon theme based on the Gruvbox color palette, packaged without the obsolete GTK 2 Murrine dependency |
 | `google-authenticator-transfer-decode` | decode Google Authenticator transfer QR payloads to standard `otpauth` URIs |
 | `fr-frame-summon` | summon the Frame extension via local JSON-RPC WebSocket |
 | `fr-kbd-backlight` | Nushell helper for managing keyboard backlight brightness |
