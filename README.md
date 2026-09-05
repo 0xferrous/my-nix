@@ -99,7 +99,7 @@ Packages provided by the overlay:
 | `codex-desktop` | ChatGPT/Codex Linux desktop app (preview): closed-source Electron bundle of the Apache-2.0 `codex` CLI; ships as `.deb` from OpenAI's apt repository (versioned pool URL, pinned via `pkgs/codex-desktop-source.nix`), unpacked and patched here (unfree, `--no-sandbox`, Wayland-aware wrapper with X11 fallback) |
 | `hints` | click, scroll, and drag with your keyboard |
 | `opensrc` | fetch and cache source code for packages and repos |
-| `flake-utils` | synchronize selected flake input locks across local flakes |
+| `flake-utils` | synchronize selected flake input locks across local flakes with `sync` and `intersection` subcommands; use `sync --update` to refresh the canonical flake first |
 | `google-authenticator-transfer-decode` | decode Google Authenticator transfer QR payloads to standard `otpauth` URIs |
 | `fr-frame-summon` | summon the Frame extension via local JSON-RPC WebSocket |
 | `fr-kbd-backlight` | Nushell helper for managing keyboard backlight brightness |

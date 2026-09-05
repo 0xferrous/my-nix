@@ -8,12 +8,15 @@
 # considered:
 #   flake-utils intersection . ./pkgs/frs-nvim
 #
-# Update comma-separated inputs in the canonical flake, then lock those exact
-# revisions in every target flake:
-#   flake-utils nixpkgs,nix-wrapper-modules . ./pkgs/frs-nvim
+# Synchronize the currently locked comma-separated inputs in the canonical
+# flake to every target flake:
+#   flake-utils sync nixpkgs,nix-wrapper-modules . ./pkgs/frs-nvim
 #
-# Arguments are INPUTS CANONICAL_FLAKE TARGET_FLAKE..., where INPUTS is a
-# comma-separated list. The canonical input must resolve directly from
+# Update those inputs in the canonical flake first, then synchronize them:
+#   flake-utils sync --update nixpkgs,nix-wrapper-modules . ./pkgs/frs-nvim
+#
+# `sync` arguments are INPUTS CANONICAL_FLAKE TARGET_FLAKE..., where INPUTS is
+# a comma-separated list. The canonical input must resolve directly from
 # nodes.root.inputs in its flake.lock. Only GitHub-locked inputs are supported.
 
 # Return the root input names from a flake's lockfile.
@@ -78,8 +81,17 @@ def "main intersection" [first_flake: string, ...other_flakes: string] {
   $common | sort
 }
 
-# Update canonical inputs, then synchronize each one to target flakes.
-def main [input_names: string, canonical_flake: string, ...target_flakes: string] {
+# Keep the root command explicit: synchronization is available only through
+# the `sync` subcommand.
+def main [] {
+  error make {
+    msg: "a subcommand is required"
+    help: "use `sync` to synchronize locks or `intersection` to compare flakes"
+  }
+}
+
+# Synchronize canonical inputs to target flakes, optionally updating them first.
+def "main sync" [--update, input_names: string, canonical_flake: string, ...target_flakes: string] {
   if ($target_flakes | is-empty) {
     error make {
       msg: "at least one target flake is required"
@@ -101,11 +113,13 @@ def main [input_names: string, canonical_flake: string, ...target_flakes: string
   }
 
   for input in $inputs {
-    print $"updating canonical input: ($canonical_flake)::($input)"
-    ^nix flake update --flake $canonical_flake $input
+    if $update {
+      print $"updating canonical input: ($canonical_flake)::($input)"
+      ^nix flake update --flake $canonical_flake $input
+    }
 
     let source_url = (locked-github-url $canonical_flake $input)
-    print $"synchronizing targets to ($source_url)"
+    print $"synchronizing targets from ($canonical_flake)::($input) to ($source_url)"
 
     for target_flake in $target_flakes {
       print $"locking ($target_flake)::($input)"
