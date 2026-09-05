@@ -23,7 +23,7 @@ with pkgs;
   # System monitoring
   htop
   btop
-  glances
+  # glances
   bottom
   bandwhich
   gping
