@@ -59,6 +59,24 @@ let
     show_media = false;
     show_weather = false;
   };
+  # Main-bar lanes, single source: the eDP-1 override derives trimmed
+  # lanes from these via filter/map, so base changes propagate.
+  mainBarStart = [
+    "launcher"
+    "taskbar"
+    "active-window"
+  ];
+  mainBarEnd = [
+    "media"
+    "weather"
+    "clock"
+    "battery"
+    "group:connectivity"
+    "tray"
+    "control-center"
+    "privacy"
+    "notifications"
+  ];
 in
 {
   # Noctalia shell config, mirroring config/fr/home/dank-material-shell.nix
@@ -247,8 +265,26 @@ in
         bar.main = {
           position = "top";
           font_scale = 1.1;
+          # Full-width bars on all screens: zeroed end/edge margins and
+          # square corners (bar `capsule` only toggles per-widget pills,
+          # which stay on). eDP-1 inherits this; its override below only
+          # carries small-screen budgeting (font scale, lanes).
           capsule = true;
           capsule_border = "outline";
+          margin_ends = 0;
+          margin_edge = 0;
+          radius = 0;
+          monitor."eDP-1" = {
+            # Small-screen relief, laptop only (widget settings like
+            # display/max_length are global; lanes and font scale are
+            # per-monitor). Drops weather from the laptop bar, derived
+            # from mainBarEnd so base changes propagate, and swaps in
+            # the compact active-window; taskbar width budgets (below)
+            # apply everywhere.
+            font_scale = 1.0;
+            start = map (w: if w == "active-window" then "active-window-compact" else w) mainBarStart;
+            end = builtins.filter (w: w != "weather") mainBarEnd;
+          };
           capsule_group = [
             {
               id = "connectivity";
@@ -259,23 +295,12 @@ in
               border = "outline";
             }
           ];
-          start = [
-            "launcher"
-            "taskbar"
-            "active-window"
-          ];
+          start = mainBarStart;
           center = [ ];
-          end = [
-            "media"
-            "weather"
-            "clock"
-            "battery"
-            "group:connectivity"
-            "tray"
-            "control-center"
-            "privacy"
-            "notifications"
-          ];
+          end = mainBarEnd;
+        };
+
+        bar.bottom = {
         };
 
         bar.bottom = {
@@ -283,6 +308,9 @@ in
           font_scale = 1.1;
           capsule = true;
           capsule_border = "outline";
+          margin_ends = 0;
+          margin_edge = 0;
+          radius = 0;
           start = [ ];
           center = [ ];
           end = [
@@ -300,7 +328,19 @@ in
         };
 
         widget = {
-          "active-window".type = "active_window";
+          # Full title on externals; the laptop lane swaps in the compact
+          # variant below (widget settings are global-only, lanes are
+          # per-monitor).
+          "active-window" = {
+            type = "active_window";
+          };
+          # Laptop variant: icon only with a tight width budget so the top
+          # bar fits small screens (no wrapping upstream).
+          "active-window-compact" = {
+            type = "active_window";
+            max_length = 120;
+            display = "icon_only";
+          };
           # DMS-style workspace pills: one capsule per workspace holding that
           # workspace's window icons (needs per-window workspace info from
           # the compositor; stays flat if unavailable).
@@ -308,8 +348,13 @@ in
             type = "taskbar";
             group_by_workspace = true;
             show_workspace_label = true;
+            # Keep "icons"; switch to "dots" if the bar still overflows on
+            # small screens (upstream has no wrapping).
             workspace_group_content = "icons";
             show_active_indicator = true;
+            # Width budgets so titles shrink/vanish instead of overflowing.
+            taskbar_max_width = 400;
+            window_title_max_width = 100;
           };
           "crypto-prices" = {
             type = "fr/status:crypto";
