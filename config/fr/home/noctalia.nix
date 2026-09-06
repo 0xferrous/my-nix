@@ -107,6 +107,22 @@ in
           enabled = true;
         };
 
+        # Noctalia-internal idle handling via ext-idle-notify (no swayidle:
+        # do NOT add swayidle to the niri config). Standard flow:
+        # lock -> screen-off -> suspend (mirrors the retired swayidle
+        # 300/330/600 timeouts).
+        idle.behavior."screen-off" = {
+          timeout = 330;
+          action = "screen_off";
+          enabled = true;
+        };
+
+        idle.behavior.suspend = {
+          timeout = 600;
+          action = "suspend";
+          enabled = true;
+        };
+
         lockscreen = {
           enabled = true;
         };
