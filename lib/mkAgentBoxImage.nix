@@ -30,7 +30,8 @@ let
   gitHunk = import ../pkgs/git-hunk.nix {
     inherit pkgs lib;
   };
-  slimYazi = pkgs.yazi.override {
+  slimYazi = import ./slim-yazi.nix {
+    inherit pkgs;
     optionalDeps = with pkgs; [
       jq
       fd

@@ -165,6 +165,10 @@ in
       enable = true;
       desktop = "niri";
       tui.program = "yazi";
+      # Shared slim build (see lib/slim-yazi.nix): must resolve to the same
+      # derivation as dev-essentials or home-manager buildEnv collides on
+      # /bin/yazi.
+      tui.package = import ../../lib/slim-yazi.nix { inherit pkgs; };
       terminal.command = [
         "kitty"
         "--title"

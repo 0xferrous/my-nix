@@ -15,11 +15,12 @@ let
     else
       pkgs.jujutsu;
 
-  yaziPackage = pkgs.yazi.override {
-    # Keep yazi itself, without the heavy preview/archive helpers pulled in by
-    # nixpkgs' default optionalDeps (ffmpeg, imagemagick, poppler, resvg, etc.).
-    optionalDeps = [ ];
-  };
+  # Slim build without the heavy preview/archive helpers pulled in by
+  # nixpkgs' default optionalDeps (ffmpeg, imagemagick, poppler, resvg,
+  # etc.). Shared via lib/slim-yazi.nix so all call sites with the same
+  # args resolve to one derivation (see config/fr/home.nix termfilechooser
+  # pin: duplicates collide on /bin/yazi in home-manager buildEnv).
+  yaziPackage = import ../../../lib/slim-yazi.nix { inherit pkgs; };
 
   hunkPackage = pkgs.symlinkJoin {
     name = "wrapped-hunk";
