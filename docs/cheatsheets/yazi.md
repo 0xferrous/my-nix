@@ -9,6 +9,33 @@ Checked on 2026-07-15 against:
 
 Inside Yazi, press `~` or `<F1>` for the authoritative live help/keymap.
 
+## Essentials
+
+The minimum to survive Yazi, including file-chooser portal dialogs
+(where selection *is* confirmation):
+
+| Key | Action |
+| --- | --- |
+| `<Space>` | Select file (multi-select for portal open). |
+| `<Enter>` | Open / confirm. In a portal dialog this submits the choice. |
+| `q` | Quit. In a portal dialog this cancels — except folder-pick, where quitting submits the current directory. Never use `Q` for a folder-pick (it suppresses the cwd output). |
+| `h` / `l` | Parent directory / enter directory. |
+| `Z` | Jump to a directory via zoxide. (`z` jumps via fzf instead.) |
+| `g <Space>` | Type a path to jump to, with `<Tab>` completion. (`:` runs a shell command — it is not a command mode.) |
+| `a` | Create file (also how to save under a new name in a portal save dialog: create it empty, hover it, `<Enter>`). |
+| `x` / `p` | Cut / paste (move a file). |
+| `y` / `p` | Yank (copy) / paste. |
+| `r` | Rename. |
+| `d` / `D` | Trash / delete permanently. |
+| `-` | Symlink yanked files (absolute targets). |
+| `.` | Toggle hidden files. |
+| `c c` | Copy full path. |
+| `~` | Help. |
+
+Portal save dialogs cannot type a new filename: hover the pre-created
+file and press `<Enter>` to confirm (it gets overwritten with the real
+content).
+
 ## Starting Yazi
 
 ```sh
