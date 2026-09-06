@@ -7,6 +7,58 @@
 let
   noctaliaDir = ./Noctalia;
   statusPluginDir = noctaliaDir + "/plugins/fr-status";
+  # One entry per connector used across kanshi profiles. Clocks share a
+  # 1920x1080 reference canvas (rescaled per real output); login geometry
+  # is the editor-captured center on the same basis.
+  lockscreenOutputs = [
+    {
+      short = "edp";
+      output = "eDP-1";
+      loginCx = 720.0;
+      loginCy = 627.0;
+      width = 1440.0;
+      height = 900.0;
+    }
+    {
+      short = "dp1";
+      output = "DP-1";
+      loginCx = 960.0;
+      loginCy = 898.0;
+      width = 1920.0;
+      height = 1080.0;
+    }
+    {
+      short = "dp2";
+      output = "DP-2";
+      loginCx = 960.0;
+      loginCy = 898.0;
+      width = 1920.0;
+      height = 1080.0;
+    }
+    {
+      short = "hdmi";
+      output = "HDMI-A-1";
+      loginCx = 960.0;
+      loginCy = 898.0;
+      width = 1920.0;
+      height = 1080.0;
+    }
+  ];
+  lockscreenClock = output: {
+    type = "clock";
+    inherit output;
+    cx = 960.0;
+    cy = 150.0;
+    placement_width = 1920.0;
+    placement_height = 1080.0;
+    settings.format = "{:%a %b %d %H:%M:%S}";
+  };
+  # Only non-default keys; the shell backfills the rest. No media or
+  # weather info row on the lock screen.
+  lockscreenLoginSettings = {
+    show_media = false;
+    show_weather = false;
+  };
 in
 {
   # Noctalia shell config, mirroring config/fr/home/dank-material-shell.nix
@@ -68,6 +120,9 @@ in
           mode = "dark";
           source = "custom";
           custom_palette = "gruvbox-material";
+          # UI-chosen extras, captured here so nix stays the source.
+          community_palette = "Oxocarbon";
+          wallpaper_scheme = "m3-content";
         };
 
         theme.templates = {
@@ -127,12 +182,60 @@ in
           enabled = true;
         };
 
+        # Lockscreen layout owned here (nix is the source). Login boxes
+        # need explicit entries only to change their settings (no media or
+        # weather info row); everything else is defaulted and auto-sized.
+        # Positions ride on reference canvases that Noctalia rescales
+        # proportionally to the real output (see PlacementMapper), so
+        # center-top stays center-top on any size. One entry per connector
+        # is still required (a widget renders on exactly one surface;
+        # unknown output names are silently skipped). NOTE: applies only
+        # while settings.toml has no [lockscreen_widgets] section — the
+        # startup round-trip (loadSnapshotFromConfig ->
+        # saveSnapshotToConfig) re-pins a stated enabled flag and
+        # widget_order over these; see the activation pruning below.
+        lockscreen_widgets = {
+          enabled = true;
+          widget_order =
+            (map (o: "lockscreen-login-box@${o.output}") lockscreenOutputs)
+            ++ (map (o: "clock-${o.short}") lockscreenOutputs);
+          widget = builtins.listToAttrs (
+            builtins.concatMap (o: [
+              {
+                name = "lockscreen-login-box@${o.output}";
+                value = {
+                  type = "login_box";
+                  inherit (o) output;
+                  cx = o.loginCx;
+                  cy = o.loginCy;
+                  placement_width = o.width;
+                  placement_height = o.height;
+                  settings = lockscreenLoginSettings;
+                };
+              }
+              {
+                name = "clock-${o.short}";
+                value = lockscreenClock o.output;
+              }
+            ]) lockscreenOutputs
+          );
+        };
+
+        osd = {
+          position = "bottom_center";
+          position_vertical = "bottom_center";
+          offset_y = 20;
+        };
+
         dock = {
           enabled = false;
         };
 
         plugins = {
-          enabled = [ "fr/status" ];
+          enabled = [
+            "fr/status"
+            "noctalia/notes"
+          ];
           auto_update = "none";
         };
 
@@ -192,6 +295,7 @@ in
             "caffeine"
             "ai-usage"
             "tailscale-active"
+            "notes"
           ];
         };
 
@@ -249,6 +353,9 @@ in
             capsule_border = "tertiary";
             refresh_seconds = 60;
           };
+          "notes" = {
+            type = "noctalia/notes:notes";
+          };
           clock = {
             format = "{:%a %b %d %H:%M:%S}";
             tooltip_format = "{:%A, %B %d, %Y}";
@@ -260,6 +367,22 @@ in
         gruvbox-material = noctaliaDir + "/palettes/gruvbox-material.json";
       };
     };
+
+    # Noctalia round-trips the effective lockscreen layout back into
+    # settings.toml on startup/output change (loadSnapshotFromConfig ->
+    # saveSnapshotToConfig): tables deep-merge but the stated enabled flag
+    # and widget_order replace the declarative ones, so a stale state
+    # section would shadow lockscreen_widgets above forever. Prune it on
+    # every switch so nix stays the source; Noctalia re-seeds state from
+    # these values on next start (it watches both files and hot-reloads).
+    # Consequence: Toggle Editor arrangements are reverted by the next
+    # switch — rearrange in nix instead.
+    home.activation.noctaliaPruneLockscreenState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      stateFile="${config.home.homeDirectory}/.local/state/noctalia/settings.toml"
+      if [ -f "$stateFile" ] && grep -q '^\[lockscreen_widgets\]' "$stateFile"; then
+        ${pkgs.gnused}/bin/sed -i '/^\[lockscreen_widgets\]/,/^\[/ { /^\[/!d; /^\[lockscreen_widgets\]/d }' "$stateFile"
+      fi
+    '';
 
     xdg.dataFile."noctalia/plugins/fr-status" = {
       source = statusPluginDir;
