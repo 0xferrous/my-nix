@@ -113,14 +113,18 @@ in
     # can inject real credentials; the proxy is configured with secrets-only
     # transforms (no allowlist), so nothing is blocked. The Ash bridge, host
     # cache (192.168.127.1:5000), mDNS, and Tailscale stay in NO_PROXY.
+    # NOTE: keep literal 127.0.0.1/::1 entries, not just the 127.0.0.0/8
+    # CIDR. Bun-based tools (e.g. opencode2) do not honor CIDR ranges in
+    # NO_PROXY, so without the literals their localhost traffic goes through
+    # the proxy and the opencode2 TUI hangs at "Starting background server...".
     HTTP_PROXY = "http://192.168.127.1:8080";
     HTTPS_PROXY = "http://192.168.127.1:8080";
     ALL_PROXY = "http://192.168.127.1:8080";
     http_proxy = "http://192.168.127.1:8080";
     https_proxy = "http://192.168.127.1:8080";
     all_proxy = "http://192.168.127.1:8080";
-    NO_PROXY = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
-    no_proxy = "localhost,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
+    NO_PROXY = "localhost,127.0.0.1,::1,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
+    no_proxy = "localhost,127.0.0.1,::1,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
     # rustls-based tools (obscura, etc.) ignore the system trust store and
     # default to bundled webpki roots; point them at the NixOS bundle, which
     # includes the iron-proxy CA via security.pki.certificateFiles below, so
