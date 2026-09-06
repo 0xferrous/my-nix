@@ -127,7 +127,7 @@ in
 
         bar.main = {
           position = "top";
-          font_scale = 1.2;
+          font_scale = 1.1;
           capsule = true;
           capsule_border = "outline";
           capsule_group = [
@@ -161,7 +161,7 @@ in
 
         bar.bottom = {
           position = "bottom";
-          font_scale = 1.2;
+          font_scale = 1.1;
           capsule = true;
           capsule_border = "outline";
           start = [ ];
