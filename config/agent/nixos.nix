@@ -13,6 +13,7 @@ let
   agentPortalWrappers = myNixInputs.ash.packages.${system}.agent-portal-wrappers;
   impermanenceRoot = "/persist";
   ashHostCacheUrl = "http://192.168.127.1:5000";
+  proxy = import ./proxy.nix;
   binaryCaches = [
     {
       url = "${ashHostCacheUrl}?priority=30";
@@ -104,36 +105,22 @@ in
       directory = /home/agent/dev/fr/my-nix
   '';
 
-  environment.sessionVariables = {
+  # Route agent-tool HTTP(S) egress through the host iron-proxy tunnel so it
+  # can inject real credentials; the proxy is configured with secrets-only
+  # transforms (no allowlist), so nothing is blocked. The Ash bridge, host
+  # cache (192.168.127.1:5000), mDNS, and Tailscale stay in NO_PROXY.
+  # Shared tunnel env comes from proxy.nix; the lowercase variants and
+  # login-only extras below are system-session-only (Home Manager sets
+  # uppercase only — see config/agent/home.nix).
+  environment.sessionVariables = proxy.sessionEnv // {
     EDITOR = "nvim";
     HARMONIA_CACHE_URL = ashHostCacheUrl;
     PLANNOTATOR_REMOTE = "1";
     PLANNOTATOR_PORT = "19432";
-    # Route agent-tool HTTP(S) egress through the host iron-proxy tunnel so it
-    # can inject real credentials; the proxy is configured with secrets-only
-    # transforms (no allowlist), so nothing is blocked. The Ash bridge, host
-    # cache (192.168.127.1:5000), mDNS, and Tailscale stay in NO_PROXY.
-    # NOTE: keep literal 127.0.0.1/::1 entries, not just the 127.0.0.0/8
-    # CIDR. Bun-based tools (e.g. opencode2) do not honor CIDR ranges in
-    # NO_PROXY, so without the literals their localhost traffic goes through
-    # the proxy and the opencode2 TUI hangs at "Starting background server...".
-    HTTP_PROXY = "http://192.168.127.1:8080";
-    HTTPS_PROXY = "http://192.168.127.1:8080";
-    ALL_PROXY = "http://192.168.127.1:8080";
-    http_proxy = "http://192.168.127.1:8080";
-    https_proxy = "http://192.168.127.1:8080";
-    all_proxy = "http://192.168.127.1:8080";
-    NO_PROXY = "localhost,127.0.0.1,::1,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
-    no_proxy = "localhost,127.0.0.1,::1,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
-    # rustls-based tools (obscura, etc.) ignore the system trust store and
-    # default to bundled webpki roots; point them at the NixOS bundle, which
-    # includes the iron-proxy CA via security.pki.certificateFiles below, so
-    # HTTPS through the MITM tunnel verifies.
-    SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
-    # Node does not consult the system trust store; point it at the iron-proxy
-    # MITM CA so bundled/proxied HTTPS (and injected credentials) verify in
-    # Node-based tooling too (e.g. the codex-desktop bundled node runtime).
-    NODE_EXTRA_CA_CERTS = ../../modules/nixos/iron-proxy-ca.crt;
+    http_proxy = proxy.url;
+    https_proxy = proxy.url;
+    all_proxy = proxy.url;
+    no_proxy = proxy.noProxy;
   };
 
   # Trust the host iron-proxy MITM CA so proxied HTTPS (and the injected

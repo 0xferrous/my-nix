@@ -56,6 +56,7 @@ let
         cp ${zjRadar.default}/bin/zj_radar.wasm "$out"
       '';
   ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
+  proxy = import ./proxy.nix;
   agentPortalWrappers = pkgs.runCommand "agent-portal-wrappers" { } ''
     cp -R ${myNixInputs.ash.packages.${system}.agent-portal-wrappers} "$out"
     chmod -R u+w "$out"
@@ -87,24 +88,12 @@ in
       opencodeDesktop
     ]
     ++ devEssentialsPackages;
-    # Same iron-proxy tunnel as the system session, so user systemd services
-    # and shells started outside a login session also route egress through it.
-    sessionVariables = {
+    # Same iron-proxy tunnel as the system session (proxy.sessionEnv), so
+    # user systemd services and shells started outside a login session also
+    # route egress through it.
+    sessionVariables = proxy.sessionEnv // {
       # Enable upstream ChatGPT's Wayland flags; waypipe supplies WAYLAND_DISPLAY.
       NIXOS_OZONE_WL = "1";
-      HTTP_PROXY = "http://192.168.127.1:8080";
-      HTTPS_PROXY = "http://192.168.127.1:8080";
-      ALL_PROXY = "http://192.168.127.1:8080";
-      NO_PROXY = "localhost,127.0.0.1,::1,127.0.0.0/8,192.168.127.0/24,.ash.local,.ts.net,100.64.0.0/10";
-      # rustls-based tools (e.g. obscura) ignore the system trust store and
-      # default to bundled webpki roots; the NixOS bundle includes the
-      # iron-proxy CA (security.pki.certificateFiles), so proxied HTTPS
-      # verifies through the MITM tunnel.
-      SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
-      # Bun/Node ignore the system trust store; point them at the iron-proxy
-      # MITM CA so proxied HTTPS (and injected credentials) verify in user
-      # systemd services and non-login shells too.
-      NODE_EXTRA_CA_CERTS = ../../modules/nixos/iron-proxy-ca.crt;
     };
   };
 
