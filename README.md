@@ -47,7 +47,7 @@ Root flake exports them separately:
 
 Public `fr` config should be gated behind `fr.public.enable` and use `lib.mkDefault` for values that a private repo may override. Generic modules should expose narrowly-scoped options and let users configure upstream Home Manager/NixOS modules directly where possible.
 
-Current public `fr` Home Manager defaults enable the reusable `direnv` module with devenv and Poetry stdlib helpers, plus the reusable `termfilechooser` module with `superfile` running inside `kitty`.
+Current public `fr` Home Manager defaults enable the reusable `direnv` module with devenv and Poetry stdlib helpers, plus the reusable `termfilechooser` module with `yazi` running inside `kitty`.
 
 ## Overlay & packages
 

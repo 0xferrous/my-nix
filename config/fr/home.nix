@@ -164,7 +164,7 @@ in
     fr.termfilechooser = {
       enable = true;
       desktop = "niri";
-      tui.program = "superfile";
+      tui.program = "yazi";
       terminal.command = [
         "kitty"
         "--title"
