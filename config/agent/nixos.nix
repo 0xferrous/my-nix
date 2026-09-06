@@ -109,19 +109,17 @@ in
   # can inject real credentials; the proxy is configured with secrets-only
   # transforms (no allowlist), so nothing is blocked. The Ash bridge, host
   # cache (192.168.127.1:5000), mDNS, and Tailscale stay in NO_PROXY.
-  # Shared tunnel env comes from proxy.nix; the lowercase variants and
-  # login-only extras below are system-session-only (Home Manager sets
-  # uppercase only — see config/agent/home.nix).
-  environment.sessionVariables = proxy.sessionEnv // {
-    EDITOR = "nvim";
-    HARMONIA_CACHE_URL = ashHostCacheUrl;
-    PLANNOTATOR_REMOTE = "1";
-    PLANNOTATOR_PORT = "19432";
-    http_proxy = proxy.url;
-    https_proxy = proxy.url;
-    all_proxy = proxy.url;
-    no_proxy = proxy.noProxy;
-  };
+  # Shared tunnel env comes from proxy.nix (both cases); only login-only
+  # extras are defined inline below.
+  environment.sessionVariables =
+    proxy.sessionEnv
+    // proxy.sessionEnvLower
+    // {
+      EDITOR = "nvim";
+      HARMONIA_CACHE_URL = ashHostCacheUrl;
+      PLANNOTATOR_REMOTE = "1";
+      PLANNOTATOR_PORT = "19432";
+    };
 
   # Trust the host iron-proxy MITM CA so proxied HTTPS (and the injected
   # credentials) verify cleanly in the guest. The cert is committed next to

@@ -14,8 +14,11 @@ in
 {
   inherit url noProxy;
   # Env shared by both sessions. Each side merges its own extras on top
-  # (lowercase variants + login-only vars on the system side, NIXOS_OZONE_WL
-  # on the Home Manager side).
+  # (login-only vars on the system side, NIXOS_OZONE_WL on the Home
+  # Manager side). Lowercase variants stay here too: Bun/Node and many
+  # other tools only honor lowercase `no_proxy`, so both cases must be
+  # set everywhere or loopback bypass silently breaks (opencode2 TUI
+  # hangs at "Starting background server...").
   sessionEnv = {
     HTTP_PROXY = url;
     HTTPS_PROXY = url;
@@ -28,5 +31,15 @@ in
     # Bun/Node ignore the system trust store; point them at the iron-proxy
     # MITM CA so proxied HTTPS (and injected credentials) verify too.
     NODE_EXTRA_CA_CERTS = ../../modules/nixos/iron-proxy-ca.crt;
+  };
+  # Lowercase variants for tools that only honor lowercase names
+  # (Bun/Node `no_proxy`, curl, wget, etc.). Kept here so the system
+  # session (nixos.nix) and the Home Manager session (home.nix) cannot
+  # drift out of sync.
+  sessionEnvLower = {
+    http_proxy = url;
+    https_proxy = url;
+    all_proxy = url;
+    no_proxy = noProxy;
   };
 }

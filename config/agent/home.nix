@@ -7,6 +7,7 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
+  proxy = import ./proxy.nix;
   upstreamOpenCode = myNixInputs.opencode.packages.${system}.opencode;
   opencode = upstreamOpenCode.override {
     node_modules = upstreamOpenCode.node_modules.override {
@@ -56,7 +57,6 @@ let
         cp ${zjRadar.default}/bin/zj_radar.wasm "$out"
       '';
   ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
-  proxy = import ./proxy.nix;
   agentPortalWrappers = pkgs.runCommand "agent-portal-wrappers" { } ''
     cp -R ${myNixInputs.ash.packages.${system}.agent-portal-wrappers} "$out"
     chmod -R u+w "$out"
@@ -88,14 +88,27 @@ in
       opencodeDesktop
     ]
     ++ devEssentialsPackages;
-    # Same iron-proxy tunnel as the system session (proxy.sessionEnv), so
-    # user systemd services and shells started outside a login session also
-    # route egress through it.
-    sessionVariables = proxy.sessionEnv // {
-      # Enable upstream ChatGPT's Wayland flags; waypipe supplies WAYLAND_DISPLAY.
-      NIXOS_OZONE_WL = "1";
-    };
+    # Same iron-proxy tunnel as the system session (proxy.sessionEnv plus
+    # lowercase proxy.sessionEnvLower — Bun/Node only honor lowercase
+    # `no_proxy`), so shells, TUI-spawned background servers, and desktop
+    # entries started outside a login session also route egress through it
+    # while loopback still bypasses (literals required, Bun ignores CIDR).
+    sessionVariables =
+      proxy.sessionEnv
+      // proxy.sessionEnvLower
+      // {
+        # Enable upstream ChatGPT's Wayland flags; waypipe supplies WAYLAND_DISPLAY.
+        NIXOS_OZONE_WL = "1";
+      };
   };
+
+  # systemd user manager (user services, desktop entries, TUI-spawned
+  # background server) does not source login-shell sessionVariables, so
+  # export the same tunnel env there explicitly. Values must be strings
+  # (unlike home.sessionVariables, paths are not coerced), hence toString.
+  systemd.user.sessionVariables = lib.mapAttrs (_: v: toString v) (
+    proxy.sessionEnv // proxy.sessionEnvLower
+  );
 
   # Nushell creates a starter config when this file is absent. Remove it before
   # Home Manager links its declarative replacement.
