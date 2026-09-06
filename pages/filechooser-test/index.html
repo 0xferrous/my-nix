@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileChooser portal test</title>
+<style>
+  body { font-family: monospace; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+  section { border: 1px solid #888; padding: 1rem; margin-bottom: 1rem; }
+  output { display: block; white-space: pre-wrap; margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+<h1>FileChooser portal test</h1>
+
+<section>
+  <h2>1. Open file (single)</h2>
+  <input type="file" id="single">
+  <output id="out-single">(none)</output>
+</section>
+
+<section>
+  <h2>2. Open files (multi-select)</h2>
+  <input type="file" id="multi" multiple>
+  <output id="out-multi">(none)</output>
+</section>
+
+<section>
+  <h2>3. Open folder (directory picker)</h2>
+  <input type="file" id="dir" webkitdirectory>
+  <output id="out-dir">(none)</output>
+</section>
+
+<section>
+  <h2>4. Save file (Save dialog)</h2>
+  <p>Note: a plain anchor <code>download</code> never opens a Save dialog — the
+  browser downloads straight to its download folder. This uses the File
+  System Access API (<code>showSaveFilePicker</code>), which opens a real
+  Save dialog in Chromium/Helium.</p>
+  <p>Completing a save in yazi: TUI managers cannot type a new filename.
+  The portal pre-creates the suggested file, so hover
+  <code>test.txt</code> and press <code>Enter</code> to confirm
+  (overwrites it with the real content). Quitting with
+  <code>q</code> writes nothing and reports <code>(cancelled)</code> —
+  picking a directory is not enough in save mode, the file itself must
+  be confirmed. To save under a different name: navigate to the target
+  directory, create an empty file with that name (yazi <code>a</code>),
+  hover it and press <code>Enter</code>.</p>
+  <button id="save">Save test.txt…</button>
+  <output id="out-save">Click to trigger a Save dialog.</output>
+</section>
+
+<script>
+function show(out, files) {
+  document.getElementById(out).textContent =
+    files.length
+      ? [...files].map(f => `${f.name} (${f.size} bytes, ${f.type || 'n/a'})`).join('\n')
+      : '(cancelled / none)';
+}
+document.getElementById('single').addEventListener('change', e => show('out-single', e.target.files));
+document.getElementById('multi').addEventListener('change', e => show('out-multi', e.target.files));
+document.getElementById('dir').addEventListener('change', e => show('out-dir', e.target.files));
+document.getElementById('save').addEventListener('click', async () => {
+  const out = document.getElementById('out-save');
+  if (!window.showSaveFilePicker) {
+    out.textContent = 'showSaveFilePicker not supported in this browser — try Chromium/Helium.';
+    return;
+  }
+  try {
+    const handle = await window.showSaveFilePicker({ suggestedName: 'test.txt' });
+    const writable = await handle.createWritable();
+    await writable.write('portal save test\n');
+    await writable.close();
+    out.textContent = `Saved to ${handle.name}.`;
+  } catch (e) {
+    out.textContent = e.name === 'AbortError' ? '(cancelled)' : `Error: ${e.message}`;
+  }
+});
+</script>
+</body>
+</html>
