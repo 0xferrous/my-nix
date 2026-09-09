@@ -29,6 +29,7 @@ final: prev: {
     electron = final.electron_41;
     pi = final.pi;
   };
+  tolaria = final.callPackage ./tolaria/source.nix { };
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${system};
   };

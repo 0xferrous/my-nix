@@ -224,6 +224,7 @@
             qwen3-server
             codex-desktop
             bb
+            tolaria
             ;
           "bb-source" = pkgs.bbSource;
           opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
