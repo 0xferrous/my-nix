@@ -76,6 +76,7 @@ in
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
     packages = [
+      pkgs.bb
       chatgpt
       pkgs.obscura
       pkgs.piDev

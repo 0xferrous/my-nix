@@ -97,6 +97,7 @@ Packages provided by the overlay:
 | `iron-proxy` | MITM egress proxy with DNS server, secret injection, and audit logging |
 | `obscura` | headless browser engine in Rust: V8, real DOM, CDP, stealth |
 | `codex-desktop` | ChatGPT/Codex Linux desktop app (preview): closed-source Electron bundle of the Apache-2.0 `codex` CLI; ships as `.deb` from OpenAI's apt repository (versioned pool URL, pinned via `pkgs/codex-desktop-source.nix`), unpacked and patched here (unfree, `--no-sandbox`, Wayland-aware wrapper with X11 fallback) |
+| `bb` | bb desktop package with `bb-desktop`, `bb`, and `bb-app` entrypoints; runs the published Linux AppImage through Nix with deterministic Codex/Pi provider paths and Electron-compatible server runtime |
 | `hints` | click, scroll, and drag with your keyboard |
 | `opensrc` | fetch and cache source code for packages and repos |
 | `flake-utils` | synchronize selected flake input locks across local flakes with `sync` and `intersection` subcommands; use `sync --update` to refresh the canonical flake first |

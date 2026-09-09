@@ -220,6 +220,7 @@
             gruvbox-gtk-theme
             qwen3-server
             codex-desktop
+            bb
             ;
           opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
           "install-bin" = pkgs."install-bin";
@@ -267,6 +268,11 @@
           qwen3-bench = {
             type = "app";
             program = "${pkgs.qwen3-server}/bin/qwen3-bench";
+          };
+          bb = {
+            type = "app";
+            program = "${pkgs.bb}/bin/bb-desktop";
+            meta = pkgs.bb.meta;
           };
         };
       };

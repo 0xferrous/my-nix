@@ -20,6 +20,10 @@ final: prev: {
   # `chatgpt` package is macOS-only and OpenAI publishes the Linux builds only
   # as .deb/.rpm under a moving `latest/` URL (see codex-desktop.nix).
   codex-desktop = final.callPackage ./codex-desktop.nix { };
+  bb = final.callPackage ./bb.nix {
+    codex = inputs.llm-agents.packages.${system}.codex;
+    pi = final.pi;
+  };
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${system};
   };
