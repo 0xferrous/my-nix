@@ -403,6 +403,7 @@ binds {
     Mod+Shift+T hotkey-overlay-title="Open terminal without rc" { spawn-sh "kitty --single-instance -e nu -n"; }
     Mod+D hotkey-overlay-title="Open rofi" { spawn-sh "rofi -show drun"; }
     Mod+Shift+V repeat=false hotkey-overlay-title="Toggle Vicinae" { spawn "vicinae" "toggle"; }
+    Mod+Space repeat=false hotkey-overlay-title="Open Noctalia Launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn-sh "noctalia msg session lock"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
