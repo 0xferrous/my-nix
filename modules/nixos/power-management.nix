@@ -118,7 +118,7 @@ in
 
       lidSwitchExternalPower = lib.mkOption {
         type = lib.types.str;
-        default = "lock";
+        default = "suspend";
         description = "logind HandleLidSwitchExternalPower value.";
       };
 
