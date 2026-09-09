@@ -172,6 +172,16 @@ in
   };
 
   systemd.user.services = {
+    bb-app = {
+      Unit.Description = "bb agent server";
+      Service = {
+        ExecStart = "${pkgs.bb}/bin/bb-app --server-bind-host 0.0.0.0";
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+
     herdr = {
       Unit.Description = "Herdr agent multiplexer server";
       Service = {
