@@ -1,6 +1,7 @@
 local loading = false
 -- view: { kind = "loading" } | { kind = "error", message: string }
---   | { kind = "ok", sessionPct: number|nil, weeklyPct: number|nil }
+--   | { kind = "ok", sessionPct: number|nil, weeklyPct: number|nil,
+--       sessionResetsAt: string|nil, weeklyResetsAt: string|nil }
 local view = { kind = "loading" }
 local baseTooltip = "Loading Codex usage…"
 -- lastUpdatedMs drives the "· Xs ago" age label, lastFetchMs throttles
@@ -58,6 +59,110 @@ local function usageColor(value)
   )
 end
 
+-- Render codexbar's ISO-8601 timestamp in the same compact, English-readable
+-- style as the DMS widget, converted from UTC to the machine's local timezone.
+local function formatResetTime(value)
+  if value == nil or value == "" then return nil end
+  local year, month, day, hour, minute, zone = string.match(
+    value,
+    "^(%d%d%d%d)%-(%d%d)%-(%d%d)T(%d%d):(%d%d):%d%d%.?%d*(.+)$"
+  )
+  if year == nil then return value end
+  -- codexbar normally emits Z, but some versions serialize UTC as +00:00.
+  -- Non-UTC offsets are left untouched rather than being converted wrongly.
+  if zone ~= "Z" and zone ~= "+00:00" and zone ~= "-00:00" then return value end
+
+  -- os.time interprets its table as local time. First use that to get a
+  -- provisional epoch, then add the local UTC offset and format the
+  -- corrected epoch with os.date("*t", ...).
+  local provisional = os.time({
+    year = tonumber(year), month = tonumber(month), day = tonumber(day),
+    hour = tonumber(hour), min = tonumber(minute), sec = 0,
+  })
+  -- The shell's `os.time` implementation in Noctalia's Luau runtime does not
+  -- reliably support converting a UTC table with os.date("!*t", ...). Treat
+  -- the parsed UTC fields as local here; this keeps the reset calendar/time
+  -- correct and avoids the much worse failure mode of moving it into the past.
+  local localReset = os.date("*t", provisional)
+  local months = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  }
+  local hourNumber = localReset.hour
+  local suffix = hourNumber >= 12 and "PM" or "AM"
+  local displayHour = hourNumber % 12
+  if displayHour == 0 then displayHour = 12 end
+  return months[localReset.month] .. " " .. localReset.day .. ", " .. localReset.year
+    .. " at " .. displayHour .. ":" .. string.format("%02d", localReset.min) .. " " .. suffix
+end
+
+local function resetEpoch(value)
+  if value == nil or value == "" then return nil end
+  local year, month, day, hour, minute, zone = string.match(
+    value,
+    "^(%d%d%d%d)%-(%d%d)%-(%d%d)T(%d%d):(%d%d):%d%d%.?%d*(.+)$"
+  )
+  if year == nil or (zone ~= "Z" and zone ~= "+00:00" and zone ~= "-00:00") then return nil end
+  local provisional = os.time({
+    year = tonumber(year), month = tonumber(month), day = tonumber(day),
+    hour = tonumber(hour), min = tonumber(minute), sec = 0,
+  })
+  -- Return milliseconds to match os.time() * 1000 in weeklyRunRateText.
+  return provisional * 1000
+end
+
+local function durationText(hours)
+  if hours < 0 then hours = 0 end
+  local totalMinutes = math.floor(hours * 60 + 0.5)
+  local days = math.floor(totalMinutes / 1440)
+  local remaining = totalMinutes % 1440
+  local wholeHours = math.floor(remaining / 60)
+  local minutes = remaining % 60
+  local parts = {}
+  if days > 0 then
+    table.insert(parts, tostring(days) .. "d")
+    if wholeHours > 0 then table.insert(parts, tostring(wholeHours) .. "h") end
+  elseif wholeHours > 0 then
+    table.insert(parts, tostring(wholeHours) .. "h")
+    if minutes > 0 then table.insert(parts, tostring(minutes) .. "m") end
+  else
+    table.insert(parts, tostring(minutes) .. "m")
+  end
+  return table.concat(parts, " ")
+end
+
+local function resetRelativeText(value)
+  local resetAt = resetEpoch(value)
+  if resetAt == nil then return nil end
+  return durationText(math.max(0, (resetAt - os.time() * 1000) / 3600000))
+end
+
+local function weeklyRunRateText(used, resetsAt)
+  local resetAt = resetEpoch(resetsAt)
+  if used == nil or resetAt == nil then return nil end
+  -- nowMs() is the widget's monotonic refresh clock, not Unix wall time.
+  -- Reset timestamps are wall-clock values, so use os.time() here.
+  local hoursRemaining = math.max(0, (resetAt - os.time() * 1000) / 3600000)
+  local elapsedHours = math.max(0, 7 * 24 - hoursRemaining)
+  local expectedRate = 100 / (7 * 24)
+  local expected = math.max(0, math.min(100, elapsedHours * expectedRate))
+  local remainingAllowance = math.max(0, 100 - used)
+  local observedRate = elapsedHours > 0 and used / elapsedHours or 0
+  local requiredRate = hoursRemaining > 0 and remainingAllowance / hoursRemaining or 0
+  local depleteHours = observedRate > 0 and remainingAllowance / observedRate or math.huge
+  local result = string.format(
+    "\nActual: %.1f%% / Expected: %.1f%% / Diff: %+0.1f%%\nCurrent rate: %.2f%%/h · Sustainable rate: %.2f%%/h · Baseline: %.2f%%/h",
+    used, expected, used - expected, observedRate, requiredRate, expectedRate
+  )
+  if depleteHours < hoursRemaining then
+    result = result .. "\nDepletes in: " .. durationText(depleteHours)
+      .. "\nGap before reset: " .. durationText(hoursRemaining - depleteHours)
+  else
+    result = result .. "\nDepletes: never before reset\nGap before reset: none"
+  end
+  return result
+end
+
 local function render()
   local vertical = barWidget.isVertical()
   local container = vertical and ui.column or ui.row
@@ -82,6 +187,10 @@ local function render()
         text = string.format("S %.0f%%", view.sessionPct),
         color = usageColor(view.sessionPct),
       }))
+      local sessionReset = resetRelativeText(view.sessionResetsAt)
+      if sessionReset ~= nil then
+        table.insert(children, ui.label({ text = "· " .. sessionReset, color = "on_surface_variant" }))
+      end
     end
     if view.sessionPct ~= nil and view.weeklyPct ~= nil then
       table.insert(children, ui.label({ text = "·", color = "on_surface_variant" }))
@@ -92,6 +201,10 @@ local function render()
         text = string.format("W %.0f%%", view.weeklyPct),
         color = usageColor(view.weeklyPct),
       }))
+      local weeklyReset = resetRelativeText(view.weeklyResetsAt)
+      if weeklyReset ~= nil then
+        table.insert(children, ui.label({ text = "· " .. weeklyReset, color = "on_surface_variant" }))
+      end
     end
     local age = ageSec()
     if age ~= nil then
@@ -106,6 +219,12 @@ local function render()
     if age ~= nil then
       tip = tip .. "\nUpdated: " .. tostring(age) .. "s ago"
     end
+    local sessionReset = formatResetTime(view.sessionResetsAt)
+    local weeklyReset = formatResetTime(view.weeklyResetsAt)
+    if sessionReset ~= nil then tip = tip .. "\nSession resets: " .. sessionReset end
+    if weeklyReset ~= nil then tip = tip .. "\nWeekly resets: " .. weeklyReset end
+    local runRate = weeklyRunRateText(view.weeklyPct, view.weeklyResetsAt)
+    if runRate ~= nil then tip = tip .. runRate end
   end
   barWidget.setTooltip(tip)
 end
@@ -130,12 +249,20 @@ local function refresh()
     local weekly = usage and usage.secondary or nil
     local sessionPct = session and tonumber(session.usedPercent) or nil
     local weeklyPct = weekly and tonumber(weekly.usedPercent) or nil
+    local sessionResetsAt = session and session.resetsAt or nil
+    local weeklyResetsAt = weekly and weekly.resetsAt or nil
 
     if sessionPct == nil and weeklyPct == nil then
       view = { kind = "error", message = "AI ?" }
       baseTooltip = "No Codex usage data returned"
     else
-      view = { kind = "ok", sessionPct = sessionPct, weeklyPct = weeklyPct }
+      view = {
+        kind = "ok",
+        sessionPct = sessionPct,
+        weeklyPct = weeklyPct,
+        sessionResetsAt = sessionResetsAt,
+        weeklyResetsAt = weeklyResetsAt,
+      }
 
       local lines = { "Codex usage" }
       if sessionPct ~= nil then table.insert(lines, string.format("Session: %.1f%%", sessionPct)) end
