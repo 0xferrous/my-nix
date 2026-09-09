@@ -148,6 +148,41 @@ stdenv.mkDerivation (finalAttrs: {
     cat > $out/bin/bb-desktop <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+
+if [ -n "''${BB_DESKTOP_REMOTE_URL:-}" ]; then
+  remote_target_file="''${XDG_CONFIG_HOME:-$HOME/.config}/bb/server-target.json"
+  mkdir -p "$(dirname "$remote_target_file")"
+  ${nodejs}/bin/node - "$remote_target_file" <<'NODE'
+const fs = require("node:fs");
+const path = require("node:path");
+
+const rawUrl = (process.env.BB_DESKTOP_REMOTE_URL ?? "").trim();
+let parsedUrl;
+try {
+  parsedUrl = new URL(rawUrl);
+} catch {
+  process.stderr.write("BB_DESKTOP_REMOTE_URL must be a valid http(s) URL\n");
+  process.exit(2);
+}
+if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+  process.stderr.write("BB_DESKTOP_REMOTE_URL must be a valid http(s) URL\n");
+  process.exit(2);
+}
+parsedUrl.hash = "";
+const targetFile = process.argv[2];
+fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+fs.writeFileSync(
+  targetFile,
+  `''${JSON.stringify({
+    connectServer: null,
+    customServerUrl: parsedUrl.toString().replace(/\/$/u, ""),
+    target: "custom",
+  })}\n`,
+  "utf8",
+);
+NODE
+fi
+
 flags=(--no-sandbox)
 if [ ! -e /dev/dri ]; then
   flags+=(--use-gl=angle --use-angle=swiftshader)

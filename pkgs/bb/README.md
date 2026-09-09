@@ -12,6 +12,17 @@ The wrapper preserves `HOME`, `PATH`, `XDG_CONFIG_HOME`, `CODEX_HOME`,
 the packaged Codex and Pi executables to `PATH` instead of replacing the user's
 path, which lets the provider bridges find the Nix-installed CLIs.
 
+For a client-only desktop launch against a directly reachable remote bb server,
+set `BB_DESKTOP_REMOTE_URL` before starting `bb-desktop`:
+
+```bash
+BB_DESKTOP_REMOTE_URL=https://bb.example.test bb-desktop
+```
+
+The wrapper writes BB's existing custom-server target file before Electron
+starts. This skips the local server and host-daemon startup; Electron still
+keeps its normal client state under `XDG_CONFIG_HOME`.
+
 The app's own plugin host reads bundled official plugins from the release and
 user-installed plugins from `BB_DATA_DIR` (normally `~/.bb`). The package does
 not relocate or overwrite `~/.bb`, `~/.codex`, `~/.pi`, `~/.claude`, project
