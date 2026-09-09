@@ -184,7 +184,10 @@
         config.allowUnfreePredicate = pkg: (pkg.pname or "") == "codex-desktop";
         # gradle 7.x (needed by tron-wallet-cli-java's shadow-jar plugin) is marked
         # insecure in nixpkgs due to unfixed CVEs; required to build it.
-        config.permittedInsecurePackages = [ "gradle-7.6.6" ];
+        config.permittedInsecurePackages = [
+          "gradle-7.6.6"
+          "pnpm-9.15.9"
+        ];
       };
       lib = pkgs.lib;
     in
@@ -222,6 +225,7 @@
             codex-desktop
             bb
             ;
+          "bb-source" = pkgs.bbSource;
           opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
           "install-bin" = pkgs."install-bin";
           iron-proxy = pkgs.iron-proxy;
@@ -273,6 +277,11 @@
             type = "app";
             program = "${pkgs.bb}/bin/bb-desktop";
             meta = pkgs.bb.meta;
+          };
+          "bb-source" = {
+            type = "app";
+            program = "${pkgs.bbSource}/bin/bb-desktop";
+            meta = pkgs.bbSource.meta;
           };
         };
       };

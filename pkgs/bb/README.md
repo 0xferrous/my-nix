@@ -1,16 +1,16 @@
-# bb runtime contract
+# bb packages
 
-`bb` packages the published Linux x64 Electron AppImage and launches its
-server, host daemon, bridge workers, official plugins, and web UI from the same
-release. The Nix wrapper adds the runtime tools needed by those processes while
-leaving user state and provider configuration in place.
+The directory contains two Linux x86_64 bb packages. `bb` packages the
+published Electron AppImage; `bb-source` builds the same desktop from the
+pinned upstream source tag. Both expose `bb-desktop`, `bb`, and `bb-app`, and
+both launch the server, host daemon, bridge workers, official plugins, and web
+UI from the same release. The Nix wrappers add the runtime tools needed by
+those processes while leaving user state and provider configuration in place.
 
 The wrapper preserves `HOME`, `PATH`, `XDG_CONFIG_HOME`, `CODEX_HOME`,
 `PI_CODING_AGENT_DIR`, `BB_DATA_DIR`, and provider API credentials. It prepends
 the packaged Codex and Pi executables to `PATH` instead of replacing the user's
-path. The provider bridges also receive absolute command paths through
-`BB_CODEX_BRIDGE_APP_SERVER_COMMAND` and `BB_PI_BRIDGE_COMMAND` unless the user
-has already set those variables.
+path, which lets the provider bridges find the Nix-installed CLIs.
 
 The app's own plugin host reads bundled official plugins from the release and
 user-installed plugins from `BB_DATA_DIR` (normally `~/.bb`). The package does
@@ -19,18 +19,22 @@ skill roots, or provider configuration. `BB_BRIDGE_DIR` and `BB_CLI_DIR` remain
 owned by the packaged bb runtime, and the bundled CLI shebang points at the Nix
 Node runtime so it does not depend on a user-installed `node`.
 
-Nushell needs one special case: the packaged desktop's shell-path helper asks
-the configured shell for a POSIX-style `$PATH`, which Nushell reports literally
-inside the AppImage FHS environment. When `SHELL` points to Nushell, the
-launcher uses `/bin/bash` for the packaged process and retains the original
-value as `BB_NIX_ORIGINAL_SHELL`.
+The AppImage launcher retains one compatibility workaround for older upstream
+releases: when `SHELL` points to Nushell, it uses `/bin/bash` for the packaged
+process and retains the original value as `BB_NIX_ORIGINAL_SHELL`. The source
+package applies `patches/non-posix-shell-path-probe.patch` at build time so the
+upstream desktop and host daemon use `/bin/sh` for POSIX PATH probes whenever
+the configured shell is a known non-POSIX shell. The original `SHELL` remains
+available to child processes.
 
-The launcher adds `git` and Node to the AppImage FHS environment, passes
+The AppImage launcher adds `git` and Node to its FHS environment, passes
 `--no-sandbox`, and selects SwiftShader only when `/dev/dri` is absent. It
-selects Wayland when `WAYLAND_DISPLAY` is available. The `bb-app` launcher uses
-the AppImage's Electron runtime in Node mode so its native add-ons use the
-Electron ABI shipped by the release; the standalone `bb` CLI uses the Nix Node
-runtime.
+selects Wayland when `WAYLAND_DISPLAY` is available. The source launcher adds
+the required GTK/GSettings and C++ runtime libraries directly. In the AppImage
+package, `bb-app` uses the AppImage's Electron runtime in Node mode so its
+native add-ons use the release's Electron ABI; in the source package it uses
+the source-built Electron tree instead. The standalone `bb` CLI uses the Nix
+Node runtime in both variants.
 
 Run the desktop app, then use the packaged CLI entrypoint against its local
 server with:
@@ -39,6 +43,7 @@ server with:
 nix run github:0xferrous/my-nix#bb
 nix shell github:0xferrous/my-nix#bb -c bb provider list
 nix shell github:0xferrous/my-nix#bb -c bb thread list --json
+nix build github:0xferrous/my-nix#bb-source
 ```
 
 For provider smoke checks, select `codex` and `pi` with the `luna` model shown
@@ -84,8 +89,10 @@ persist the resulting paths instead of assuming these defaults.
 ## Update checklist
 
 When updating the release, change the version and AppImage hash together in
-`pkgs/bb.nix`. Confirm the artifact remains the x86_64 Linux desktop release,
-then check the unpacked paths used by the wrapper:
+`pkgs/bb/appimage.nix`. For the source package, update the version, upstream
+desktop tag, source hash, and `pnpmDeps` hash in `pkgs/bb/source.nix`. Confirm
+the artifact remains the x86_64 Linux desktop release, then check the unpacked
+paths used by both wrappers:
 
 ```text
 resources/app.asar.unpacked/node_modules/bb-app/dist/bb-app.js
@@ -99,14 +106,21 @@ using Nix Node for that launcher can break `better-sqlite3`, `node-pty`, or
 other native add-ons. The standalone `bb` CLI is different: its patched
 shebang intentionally uses Nix Node.
 
-After a package update, run the package and CLI smoke checks from the flake:
+The shell probe fix is general enough to upstream; until it lands upstream, the
+source package carries it as `patches/non-posix-shell-path-probe.patch`. The
+Electron/Nix wrappers, AppImage extraction, provider-path setup, and
+native-module build steps are packaging-specific. After a package update, run
+the package and CLI smoke checks from the flake:
 
 ```bash
 nix build .#bb
+nix build .#bb-source
 nix shell .#bb -c bb --help
 nix shell .#bb -c bb-app --help
 nix shell .#bb -c bb provider list --json
 nix shell .#bb -c bb status --json
+nix shell .#bb-source -c bb --help
+nix shell .#bb-source -c bb-app --help
 ```
 
 Start `bb-desktop` with isolated `HOME`, `BB_DATA_DIR`, and ports when testing
