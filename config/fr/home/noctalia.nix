@@ -76,13 +76,15 @@ let
     "control-center"
     "privacy"
     "notifications"
+    "notes"
   ];
 in
 {
   # Noctalia shell config, mirroring config/fr/home/dank-material-shell.nix
   # where Noctalia has an equivalent. Ported DMS behavior:
-  # - dark mode, gruvbox-material accents (custom palette file below; the
-  #   builtin "Gruvbox" palette stays available in the Settings UI)
+  # - dark mode, gruvbox-material accents (custom palette file wired under
+  #   customPalettes below; tried the builtin "Gruvbox" palette once — the
+  #   material tones won)
   # - Recursive Sans Casual Static UI font, 24-hour clock with seconds
   # - DMS dual-bar layout: launcher/workspaces/active window on the top-left;
   #   media, weather, clock, status on the top-right; clipboard,
@@ -323,7 +325,6 @@ in
             "caffeine"
             "ai-usage"
             "tailscale-active"
-            "notes"
           ];
         };
 
