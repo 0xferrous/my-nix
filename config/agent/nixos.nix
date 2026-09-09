@@ -444,6 +444,12 @@ in
       # codex
       ".codex"
       ".config/Codex"
+      # bb app/server/host daemon state, including the database, credentials, threads, worktrees, plugins, and logs
+      ".bb"
+      # bb desktop Electron user data, including the selected server, Connect credential, and window state
+      ".config/bb"
+      # host-daemon state for machines joined to remote bb servers
+      ".bb-machines"
       # foundry
       ".foundry"
       # gh
