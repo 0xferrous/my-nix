@@ -1,5 +1,6 @@
 {
   pkgs,
+  jq,
   piPackage,
   agentStuffSrc,
   agentStuffPath ? null,
@@ -101,8 +102,43 @@ pkgs.writeShellScriptBin "pi" ''
       gitHunk
       jjHunk
       zjRadarCli
+      jq
     ]
   }:$PATH
+
+  # Ensure ctrl+backspace kills a word like ctrl+w. pi has no CLI/env knob to
+  # inject bindings and the bundled binary is a compiled Bun executable that
+  # cannot be patched, so seed the user's keybindings.json instead. pi replaces
+  # a per-action default key list entirely with the user config, so the
+  # upstream defaults are preserved and ctrl+backspace is appended. The merge
+  # is idempotent, never clobbers unrelated user bindings, and leaves an
+  # unparsable file untouched (pi ignores those too).
+  keybindings_file="$HOME/.pi/agent/keybindings.json"
+  mkdir -p "$(dirname "$keybindings_file")"
+  if [[ -f "$keybindings_file" ]]; then
+    keybindings_tmp="$(mktemp)"
+    if jq '
+      if type == "object" then
+        if has("tui.editor.deleteWordBackward") then
+          .["tui.editor.deleteWordBackward"] =
+            (((.["tui.editor.deleteWordBackward"] // []) | if type == "array" then . else [.] end)
+             + ["ctrl+backspace"]
+             | unique)
+        else
+          .["tui.editor.deleteWordBackward"] = ["ctrl+w", "alt+backspace", "ctrl+backspace"]
+        end
+      else
+        .
+      end
+    ' "$keybindings_file" > "$keybindings_tmp" 2>/dev/null; then
+      mv "$keybindings_tmp" "$keybindings_file"
+    else
+      rm -f "$keybindings_tmp"
+    fi
+  else
+    printf '%s\n' '{"tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace", "ctrl+backspace"]}' \
+      > "$keybindings_file"
+  fi
 
   agent_stuff_root=${lib.escapeShellArg agentStuffRoot}
   if [[ "$agent_stuff_root" == "~/"* ]]; then
