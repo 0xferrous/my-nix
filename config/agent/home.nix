@@ -119,6 +119,21 @@ in
     fi
   '';
 
+  # Seed a per-VM bb-app environment drop-in without managing its contents.
+  # This lets each agent VM provide its own GitHub token independently.
+  home.activation.createBbAppGithubTokenDropin = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    token_dir="$HOME/.config/systemd/user/bb-app.service.d"
+    token_file="$token_dir/github-token.conf"
+    if [ ! -e "$token_file" ]; then
+      ${pkgs.coreutils}/bin/mkdir -p "$token_dir"
+      ${pkgs.coreutils}/bin/printf '%s\n' \
+        '[Service]' \
+        'Environment=GITHUB_TOKEN=replace-me' \
+        > "$token_file"
+      ${pkgs.coreutils}/bin/chmod 600 "$token_file"
+    fi
+  '';
+
   # virtiofs shares return ESTALE when git creates loose objects via its
   # default hardlink+unlink pattern (see fs/fuse inode handling). Rename-based
   # creation avoids it; see git config core.createobject.
