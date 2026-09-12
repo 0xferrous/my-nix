@@ -24,6 +24,8 @@
   gtk3,
   gtk4,
   libGL,
+  sourceOverride ? null,
+  pnpmDepsHashOverride ? null,
 }:
 
 let
@@ -53,13 +55,16 @@ let
   electronVersion = electron.version;
   nodejs = nodejs_22;
   runtimePath = lib.makeBinPath ([ git ] ++ providerPkgs);
-  source = fetchFromGitHub {
-    owner = "get-bb";
-    repo = "bb";
-    rev = "desktop-v${version}";
-    hash = "sha256-8bZcqbZ24rkIVpqjv18TTJcb4AOoihpsqtCHrAhkR/Y=";
-  };
-
+  source =
+    if sourceOverride == null then
+      fetchFromGitHub {
+        owner = "get-bb";
+        repo = "bb";
+        rev = "desktop-v${version}";
+        hash = "sha256-8bZcqbZ24rkIVpqjv18TTJcb4AOoihpsqtCHrAhkR/Y=";
+      }
+    else
+      sourceOverride;
   desktopItem = makeDesktopItem {
     name = "bb-desktop";
     desktopName = "bb";
@@ -83,7 +88,11 @@ stdenv.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname version src;
     inherit pnpm pnpmInstallFlags pnpmWorkspaces;
     fetcherVersion = 3;
-    hash = "sha256-7Y/7NK7nuK18ehgwcRr0qZRd0DJNhuPgRIV6m6za4DQ=";
+    hash =
+      if pnpmDepsHashOverride == null then
+        "sha256-7Y/7NK7nuK18ehgwcRr0qZRd0DJNhuPgRIV6m6za4DQ="
+      else
+        pnpmDepsHashOverride;
   };
 
   nativeBuildInputs = [
