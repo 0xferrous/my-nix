@@ -22,5 +22,6 @@
     (import ./ghmd.nix { inherit fenix ghmd; })
     ./incus.nix
     ./nix.nix
+    ./waydroid.nix
   ];
 }
