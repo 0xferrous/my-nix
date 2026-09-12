@@ -405,6 +405,7 @@
                         jujutsu
                         fd
                         ripgrep
+                        wl-clipboard
                       ]
                       ++ lspRuntimePackages
                       ++ extraRuntimePackages

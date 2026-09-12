@@ -44,6 +44,25 @@ vim.o.mouse = "a"
 -- Sync clipboard between OS and Neovim
 vim.o.clipboard = "unnamedplus"
 
+-- SSH sessions do not normally have access to the host's Wayland socket.
+-- Kitty (and other capable terminals) can carry clipboard operations over the
+-- SSH stream with OSC 52 instead.
+if vim.env.SSH_CONNECTION or vim.env.SSH_TTY then
+  local osc52 = require("vim.ui.clipboard.osc52")
+  vim.g.clipboard = {
+    name = "OSC 52",
+    copy = {
+      ["+"] = osc52.copy("+"),
+      ["*"] = osc52.copy("*"),
+    },
+    paste = {
+      ["+"] = osc52.paste("+"),
+      ["*"] = osc52.paste("*"),
+    },
+    cache_enabled = 0,
+  }
+end
+
 -- Enable break indent
 vim.o.breakindent = true
 
