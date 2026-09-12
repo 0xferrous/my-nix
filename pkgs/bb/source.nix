@@ -28,7 +28,7 @@
 
 let
   pname = "bb-source";
-  version = "0.42.1";
+  version = "0.43.0";
   pnpm = pnpm_9;
   pnpmWorkspaces = [
     "bb-app..."
@@ -57,7 +57,7 @@ let
     owner = "get-bb";
     repo = "bb";
     rev = "desktop-v${version}";
-    hash = "sha256-X/6LQcPfy/leY53+hFLLgxk3Xss5cfnAIozkWtxTCXY=";
+    hash = "sha256-8bZcqbZ24rkIVpqjv18TTJcb4AOoihpsqtCHrAhkR/Y=";
   };
 
   desktopItem = makeDesktopItem {
@@ -83,7 +83,7 @@ stdenv.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname version src;
     inherit pnpm pnpmInstallFlags pnpmWorkspaces;
     fetcherVersion = 3;
-    hash = "sha256-XZ6hp5lOmX8leUbx5CR3tXMQCQbRzmPWUC/LkLam7xw=";
+    hash = "sha256-7Y/7NK7nuK18ehgwcRr0qZRd0DJNhuPgRIV6m6za4DQ=";
   };
 
   nativeBuildInputs = [
