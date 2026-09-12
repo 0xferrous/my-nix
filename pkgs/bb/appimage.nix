@@ -71,74 +71,74 @@ let
   };
 
   desktopLauncher = writeShellScript "bb-desktop" ''
-    set -euo pipefail
+        set -euo pipefail
 
-    if [ -n "''${BB_DESKTOP_REMOTE_URL:-}" ]; then
-      remote_target_file="''${XDG_CONFIG_HOME:-$HOME/.config}/bb/server-target.json"
-      mkdir -p "$(dirname "$remote_target_file")"
-      ${nodejs}/bin/node - "$remote_target_file" <<'NODE'
-    const fs = require("node:fs");
-    const path = require("node:path");
+        if [ -n "''${BB_DESKTOP_REMOTE_URL:-}" ]; then
+          remote_target_file="''${XDG_CONFIG_HOME:-$HOME/.config}/bb/server-target.json"
+          mkdir -p "$(dirname "$remote_target_file")"
+          ${nodejs}/bin/node - "$remote_target_file" <<'NODE'
+        const fs = require("node:fs");
+        const path = require("node:path");
 
-    const rawUrl = (process.env.BB_DESKTOP_REMOTE_URL ?? "").trim();
-    let parsedUrl;
-    try {
-      parsedUrl = new URL(rawUrl);
-    } catch {
-      process.stderr.write("BB_DESKTOP_REMOTE_URL must be a valid http(s) URL\n");
-      process.exit(2);
-    }
-    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-      process.stderr.write("BB_DESKTOP_REMOTE_URL must be a valid http(s) URL\n");
-      process.exit(2);
-    }
-    parsedUrl.hash = "";
-    const targetFile = process.argv[2];
-    fs.mkdirSync(path.dirname(targetFile), { recursive: true });
-    fs.writeFileSync(
-      targetFile,
-      `''${JSON.stringify({
-        connectServer: null,
-        customServerUrl: parsedUrl.toString().replace(/\/$/u, ""),
-        target: "custom",
-      })}\n`,
-      "utf8",
-    );
-NODE
-    fi
+        const rawUrl = (process.env.BB_DESKTOP_REMOTE_URL ?? "").trim();
+        let parsedUrl;
+        try {
+          parsedUrl = new URL(rawUrl);
+        } catch {
+          process.stderr.write("BB_DESKTOP_REMOTE_URL must be a valid http(s) URL\n");
+          process.exit(2);
+        }
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+          process.stderr.write("BB_DESKTOP_REMOTE_URL must be a valid http(s) URL\n");
+          process.exit(2);
+        }
+        parsedUrl.hash = "";
+        const targetFile = process.argv[2];
+        fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+        fs.writeFileSync(
+          targetFile,
+          `''${JSON.stringify({
+            connectServer: null,
+            customServerUrl: parsedUrl.toString().replace(/\/$/u, ""),
+            target: "custom",
+          })}\n`,
+          "utf8",
+        );
+    NODE
+        fi
 
-    flags=(--no-sandbox)
-    if [ ! -e /dev/dri ]; then
-      flags+=(--use-gl=angle --use-angle=swiftshader)
-    fi
-    if [ -n "''${WAYLAND_DISPLAY:-}" ]; then
-      flags+=(--ozone-platform=wayland)
-    fi
+        flags=(--no-sandbox)
+        if [ ! -e /dev/dri ]; then
+          flags+=(--use-gl=angle --use-angle=swiftshader)
+        fi
+        if [ -n "''${WAYLAND_DISPLAY:-}" ]; then
+          flags+=(--ozone-platform=wayland)
+        fi
 
-    export BB_APP_SURFACE=desktop
+        export BB_APP_SURFACE=desktop
 
-    case "''${SHELL:-}" in
-      */nu|*/nushell)
-        export BB_NIX_ORIGINAL_SHELL="$SHELL"
-        export SHELL=/bin/bash
-        ;;
-    esac
+        case "''${SHELL:-}" in
+          */nu|*/nushell)
+            export BB_NIX_ORIGINAL_SHELL="$SHELL"
+            export SHELL=/bin/bash
+            ;;
+        esac
 
-    export PATH="${providerPath}:''${PATH:-/run/current-system/sw/bin:/usr/bin:/bin}"
+        export PATH="${providerPath}:''${PATH:-/run/current-system/sw/bin:/usr/bin:/bin}"
 
-    if [ -z "''${BB_CODEX_BRIDGE_APP_SERVER_COMMAND:-}" ]; then
-      if codex_command=$(command -v codex 2>/dev/null); then
-        export BB_CODEX_BRIDGE_APP_SERVER_COMMAND="$codex_command"
-      fi
-    fi
+        if [ -z "''${BB_CODEX_BRIDGE_APP_SERVER_COMMAND:-}" ]; then
+          if codex_command=$(command -v codex 2>/dev/null); then
+            export BB_CODEX_BRIDGE_APP_SERVER_COMMAND="$codex_command"
+          fi
+        fi
 
-    if [ -z "''${BB_PI_BRIDGE_COMMAND:-}" ]; then
-      if pi_command=$(command -v pi 2>/dev/null); then
-        export BB_PI_BRIDGE_COMMAND="$pi_command"
-      fi
-    fi
+        if [ -z "''${BB_PI_BRIDGE_COMMAND:-}" ]; then
+          if pi_command=$(command -v pi 2>/dev/null); then
+            export BB_PI_BRIDGE_COMMAND="$pi_command"
+          fi
+        fi
 
-    exec ${wrapped}/bin/${pname} "''${flags[@]}" "$@"
+        exec ${wrapped}/bin/${pname} "''${flags[@]}" "$@"
   '';
 
   cliLauncher = writeShellScript "bb" ''
