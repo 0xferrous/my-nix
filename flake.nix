@@ -178,10 +178,27 @@
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ overlay ];
-        # Mirror config/agent/nixos.nix: allow only the unfree ChatGPT/Codex
-        # desktop app (codex-desktop) so `nix build .#codex-desktop` and
-        # `nix run .#codex-desktop` work from the flake.
-        config.allowUnfreePredicate = pkg: (pkg.pname or "") == "codex-desktop";
+        # Mirror config/agent/nixos.nix: allow only the unfree packages needed
+        # by the ChatGPT/Codex desktop app and the Android SDK used for the
+        # bb mobile APK.
+        config.allowUnfreePredicate =
+          pkg:
+          builtins.elem (pkg.pname or "") [
+            "codex-desktop"
+            "android-sdk-build-tools"
+            "android-sdk-cmdline-tools"
+            "cmake"
+            "android-sdk-ndk"
+            "android-sdk-platform-tools"
+            "android-sdk-platforms"
+            "android-sdk-tools"
+            "build-tools"
+            "cmdline-tools"
+            "ndk"
+            "platform-tools"
+            "platforms"
+            "tools"
+          ];
         # gradle 7.x (needed by tron-wallet-cli-java's shadow-jar plugin) is marked
         # insecure in nixpkgs due to unfixed CVEs; required to build it.
         config.permittedInsecurePackages = [
@@ -227,6 +244,9 @@
             tolaria
             ;
           "bb-source" = pkgs.bbSource;
+          "bb-android" = pkgs."bb-android";
+          "bb-android-x86_64" = pkgs."bb-android-x86_64";
+          "bb-android-arm64-v8a" = pkgs."bb-android-arm64-v8a";
           opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
           "install-bin" = pkgs."install-bin";
           iron-proxy = pkgs.iron-proxy;

@@ -98,6 +98,7 @@ Packages provided by the overlay:
 | `obscura` | headless browser engine in Rust: V8, real DOM, CDP, stealth |
 | `codex-desktop` | ChatGPT/Codex Linux desktop app (preview): closed-source Electron bundle of the Apache-2.0 `codex` CLI; ships as `.deb` from OpenAI's apt repository (versioned pool URL, pinned via `pkgs/codex-desktop-source.nix`), unpacked and patched here (unfree, `--no-sandbox`, Wayland-aware wrapper with X11 fallback) |
 | `bb` | bb desktop package with `bb-desktop`, `bb`, and `bb-app` entrypoints; runs the published Linux AppImage through Nix with deterministic Codex/Pi provider paths and Electron-compatible server runtime |
+| `bb-android-x86_64` / `bb-android-arm64-v8a` | bb Android APK built for x86_64 Waydroid or ARM64 phones; `bb-android` aliases the x86_64 build |
 | `tolaria` | Tolaria markdown knowledge-base desktop app (Tauri 2); ships as `.deb` from GitHub releases (pinned via `pkgs/tolaria/source-lock.nix`), unpacked and wrapped here with `nodejs` on PATH for the bundled MCP server; bump with `pkgs/tolaria/update.sh` |
 | `hints` | click, scroll, and drag with your keyboard |
 | `opensrc` | fetch and cache source code for packages and repos |

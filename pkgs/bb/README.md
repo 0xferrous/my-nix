@@ -1,11 +1,14 @@
 # bb packages
 
-The directory contains two Linux x86_64 bb packages. `bb` packages the
-published Electron AppImage; `bb-source` builds the same desktop from the
-pinned upstream source tag. Both expose `bb-desktop`, `bb`, and `bb-app`, and
-both launch the server, host daemon, bridge workers, official plugins, and web
-UI from the same release. The Nix wrappers add the runtime tools needed by
-those processes while leaving user state and provider configuration in place.
+The directory contains two Linux x86_64 desktop packages and two Android APK
+variants. `bb` packages the published Electron AppImage; `bb-source` builds the
+same desktop from the pinned upstream source tag; `bb-android-x86_64` targets
+Waydroid, while `bb-android-arm64-v8a` targets current Android phones.
+`bb-android` remains an alias for the x86_64 build. The desktop packages expose
+`bb-desktop`, `bb`, and `bb-app`, and both launch the server, host daemon,
+bridge workers, official plugins, and web UI from the same release. The Nix
+wrappers add the runtime tools needed by those processes while leaving user
+state and provider configuration in place.
 
 The wrapper preserves `HOME`, `PATH`, `XDG_CONFIG_HOME`, `CODEX_HOME`,
 `PI_CODING_AGENT_DIR`, `BB_DATA_DIR`, and provider API credentials. It prepends
@@ -55,6 +58,8 @@ nix run github:0xferrous/my-nix#bb
 nix shell github:0xferrous/my-nix#bb -c bb provider list
 nix shell github:0xferrous/my-nix#bb -c bb thread list --json
 nix build github:0xferrous/my-nix#bb-source
+nix build github:0xferrous/my-nix#bb-android-x86_64
+nix build github:0xferrous/my-nix#bb-android-arm64-v8a
 ```
 
 For provider smoke checks, select `codex` and `pi` with the `luna` model shown
