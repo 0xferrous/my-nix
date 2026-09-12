@@ -289,6 +289,7 @@
 
       formatter.${system} = pkgs.nixfmt-tree;
 
+      lib.makeBbDesktopEntry = import ./lib/makeBbDesktopEntry.nix;
       lib.mkAgentBoxImage =
         args:
         import ./lib/mkAgentBoxImage.nix (
