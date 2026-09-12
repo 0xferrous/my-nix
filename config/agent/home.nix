@@ -67,6 +67,7 @@ in
   imports = [
     ../../modules/home/programs/direnv.nix
     ../../modules/home/programs/foundry.nix
+    ../../modules/home/programs/nushell.nix
     ../../modules/home/programs/nushell-session-vars.nix
     ../fr/home/hunk.nix
   ];

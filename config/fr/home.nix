@@ -41,6 +41,7 @@ in
     ../../modules/home/vcs.nix
     ../../modules/home/termfilechooser.nix
     ../../modules/home/programs/foundry.nix
+    ../../modules/home/programs/nushell.nix
     ../../modules/home/programs/pass.nix
     ../../modules/home/programs/direnv.nix
     ../../modules/home/programs/ssh.nix
