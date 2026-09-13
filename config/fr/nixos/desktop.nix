@@ -139,7 +139,9 @@ in
     };
 
     services.keyd = {
-      enable = lib.mkDefault true;
+      # Disabled by default: keyd aborts when another uinput service leaks enough
+      # virtual devices to exceed its fixed device limit.
+      enable = lib.mkDefault false;
       keyboards.default = {
         # Match only the laptop's built-in AT keyboard.
         ids = lib.mkDefault [ "0001:0001:09b4e68d" ];
