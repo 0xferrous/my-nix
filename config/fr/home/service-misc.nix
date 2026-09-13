@@ -81,9 +81,9 @@
       Wants = [ "atspi-enable.service" ];
       PartOf = [ "graphical-session.target" ];
     };
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
-    };
+    # Do not auto-start hintsd: it currently leaks uinput descriptors and can
+    # create hundreds of virtual mouse devices over a long-running session.
+    Install.WantedBy = [ ];
     Service = {
       ExecStart = "${pkgs.hints}/bin/hintsd";
       Restart = "on-failure";
