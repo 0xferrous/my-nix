@@ -3,12 +3,26 @@
   system,
 }:
 final: prev:
-(inputs.multiverse.lib.pinOverlay {
-  pins = {
-    nushell = "0.115.1";
+let
+  nushellSrc = final.fetchFromGitHub {
+    owner = "nushell";
+    repo = "nushell";
+    rev = "9a251561a90277d0af466ee845dff706bbf3c3d9";
+    hash = "sha256-aGmgsHfa35oGQJ+z6kxqHsM15QP03C9nSdv5g9hQwOA=";
   };
-} final prev)
-// {
+in
+{
+  # TODO: Remove this source build and use nixpkgs' Nushell 0.116.0 once it
+  # is released.
+  nushell = prev.nushell.overrideAttrs (_: {
+    version = "0.115.1-unstable";
+    src = nushellSrc;
+    cargoDeps = final.rustPlatform.fetchCargoVendor {
+      src = nushellSrc;
+      hash = "sha256-ZnaGMD+ONwFoJGEMQY3VX/J4BZSDnWajvgM2cBWR9M4=";
+    };
+  });
+
   herdr = inputs.llm-agents.packages.${system}.herdr;
 
   ashWrappers = import ./ash-portal-wrappers.nix {

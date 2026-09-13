@@ -56,7 +56,7 @@ Current public `fr` Home Manager defaults enable the reusable `direnv` module wi
 - `overlays.default` — apply the overlay to get every package under its plain name in `pkgs`
 - `packages.<system>.*` — the same packages as flake outputs, without applying the overlay
 
-The overlay is built from this flake's inputs (e.g. `pi` wraps the `llm-agents` CLI, `herdr` comes from `llm-agents`, and `hints` pulls in a pinned source), so consume it via the flake output rather than copying the file standalone. It also uses `nixpkgs-multiverse` to pin `nushell` to `0.115.1`.
+The overlay is built from this flake's inputs (e.g. `pi` wraps the `llm-agents` CLI, `herdr` comes from `llm-agents`, and `hints` pulls in a pinned source), so consume it via the flake output rather than copying the file standalone. It also builds Nushell from a pinned commit on the upstream `main` branch.
 
 Example — NixOS module:
 
@@ -112,8 +112,8 @@ Packages provided by the overlay:
 | `plannotator-pi-extension` | interactive plan and code review extension for Pi |
 | `frsNvimPackage` | the [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md) package |
 
-The default overlay currently resolves `pkgs.nushell` to version `0.115.1` through
-`nixpkgs-multiverse`; add future package pins in [`pkgs/overlay.nix`](./pkgs/overlay.nix).
+The default overlay currently builds `pkgs.nushell` from the upstream `main` branch;
+the temporary source override is documented in [`pkgs/overlay.nix`](./pkgs/overlay.nix).
 
 `abwrap` starts with a clean environment and forwards only terminal/locale metadata by default. Use `--env NAME` for additional variables. A directly selected `pi`, `codex`, or `opencode` entrypoint automatically receives only its own state directory; use `--tool-state TOOL` when launching a tool later from the default Nushell. It also blocks `TIOCSTI` terminal injection and nested user namespaces while retaining native terminal resizing. See the [abwrap documentation](./pkgs/abwrap/README.md) for usage and security details.
 
