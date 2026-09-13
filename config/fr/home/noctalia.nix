@@ -53,6 +53,14 @@ let
     placement_height = 1080.0;
     settings.format = "{:%a %b %d %H:%M:%S}";
   };
+  lockscreenBattery = output: {
+    type = "fr/status:battery";
+    inherit output;
+    cx = 960.0;
+    cy = 240.0;
+    placement_width = 1920.0;
+    placement_height = 1080.0;
+  };
   # Only non-default keys; the shell backfills the rest. No media or
   # weather info row on the lock screen.
   lockscreenLoginSettings = {
@@ -218,7 +226,8 @@ in
           enabled = true;
           widget_order =
             (map (o: "lockscreen-login-box@${o.output}") lockscreenOutputs)
-            ++ (map (o: "clock-${o.short}") lockscreenOutputs);
+            ++ (map (o: "clock-${o.short}") lockscreenOutputs)
+            ++ (map (o: "battery-${o.short}") lockscreenOutputs);
           widget = builtins.listToAttrs (
             builtins.concatMap (o: [
               {
@@ -236,6 +245,10 @@ in
               {
                 name = "clock-${o.short}";
                 value = lockscreenClock o.output;
+              }
+              {
+                name = "battery-${o.short}";
+                value = lockscreenBattery o.output;
               }
             ]) lockscreenOutputs
           );
