@@ -104,21 +104,13 @@
       url = "github:nothingnesses/agent-images";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    dms = {
-      url = "github:AvengeMedia/DankMaterialShell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    # Noctalia shell, replacing DMS in config/fr/home/noctalia.nix.
+    # Noctalia shell for the fr desktop configuration.
     # Deliberately NOT following this flake's nixpkgs: Noctalia pins a
     # nixpkgs tarball and publishes Cachix binaries against it, so following
     # would force a local Qt/C++ rebuild of the shell. Track the `cachix`
     # branch (latest commit with prebuilt binaries) for guaranteed cache hits.
     noctalia = {
       url = "github:noctalia-dev/noctalia/cachix";
-    };
-    dms-plugin-registry = {
-      url = "github:AvengeMedia/dms-plugin-registry";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     voxtype = {
       url = "github:peteonrails/voxtype";
@@ -162,7 +154,6 @@
   outputs =
     inputs@{
       frs-nvim,
-      dms,
       fenix,
       ghmd,
       impermanence,
@@ -356,7 +347,7 @@
 
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
-          inherit dms fenix ghmd;
+          inherit fenix ghmd;
         };
         agent = {
           imports = [ ./config/agent/nixos.nix ];

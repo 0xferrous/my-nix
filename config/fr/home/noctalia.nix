@@ -88,23 +88,21 @@ let
   ];
 in
 {
-  # Noctalia shell config, mirroring config/fr/home/dank-material-shell.nix
-  # where Noctalia has an equivalent. Ported DMS behavior:
+  # Noctalia shell configuration for the public fr desktop:
   # - dark mode, gruvbox-material accents (custom palette file wired under
   #   customPalettes below; tried the builtin "Gruvbox" palette once — the
   #   material tones won)
   # - Recursive Sans Casual Static UI font, 24-hour clock with seconds
-  # - DMS dual-bar layout: launcher/workspaces/active window on the top-left;
+  # - Dual-bar layout: launcher/workspaces/active window on the top-left;
   #   media, weather, clock, status on the top-right; clipboard,
   #   CPU/memory/temperature/disk, idle inhibitor, and custom status widgets
   #   on the bottom bar
   # - weather lookup, clipboard history, notification daemon, lock screen,
   #   system monitor sampling, UI sounds, 5-minute idle lock, no dock,
   #   terminal/compositor theme templates (niri/foot/alacritty/ghostty/
-  #   wezterm, matching the DMS matugen template selection)
-  # The DMS CryptoPrices, AiUsage, and TailscaleActive widgets are ported to
-  # the local fr/status Noctalia plugin (per-widget capsule borders stand in
-  # for the DMS outline styling). KDE Connect and per-widget transparency
+  #   wezterm, matching the selected matugen template)
+  # Crypto prices, AI usage, and Tailscale status are provided by the local
+  # fr/status Noctalia plugin. KDE Connect and per-widget transparency
   # have no direct equivalent.
   config = lib.mkIf pkgs.stdenv.isLinux {
     programs.noctalia = {
@@ -112,7 +110,7 @@ in
       # The package defaults to the noctalia flake output via
       # noctalia.homeModules.default (imported in ../home.nix).
       # Noctalia is now the primary shell: the systemd user service
-      # autostarts it on login (DMS has been retired from the fr config).
+      # autostarts it on login.
       systemd.enable = lib.mkDefault true;
       settings = {
         shell = {
@@ -355,7 +353,7 @@ in
             max_length = 120;
             display = "icon_only";
           };
-          # DMS-style workspace pills: one capsule per workspace holding that
+          # One capsule per workspace holding that
           # workspace's window icons (needs per-window workspace info from
           # the compositor; stays flat if unavailable).
           "taskbar" = {

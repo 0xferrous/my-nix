@@ -27,7 +27,7 @@ local function ageSec()
   return age
 end
 
--- Port of the DMS AiUsage usageColor(): green -> red gradient by percent.
+-- Green-to-red usage color gradient by percent.
 local function usageColor(value)
   local clamped = math.max(0, math.min(100, value)) / 100
   local h = 0.33 * (1 - clamped)
@@ -60,7 +60,7 @@ local function usageColor(value)
 end
 
 -- Render codexbar's ISO-8601 timestamp in the same compact, English-readable
--- style as the DMS widget, converted from UTC to the machine's local timezone.
+-- style as the widget, converted from UTC to the machine's local timezone.
 local function formatResetTime(value)
   if value == nil or value == "" then return nil end
   local year, month, day, hour, minute, zone = string.match(

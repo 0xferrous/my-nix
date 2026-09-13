@@ -1,4 +1,3 @@
-{ dms }:
 {
   config,
   lib,
@@ -9,8 +8,6 @@ let
   cfg = config.fr.public;
 in
 {
-  imports = [ dms.nixosModules.greeter ];
-
   config = lib.mkIf cfg.enable {
     hardware.enableRedistributableFirmware = lib.mkDefault true;
 
@@ -166,9 +163,5 @@ in
       useNautilus = lib.mkDefault false;
     };
 
-    programs.dank-material-shell.greeter = {
-      enable = true;
-      compositor.name = "niri";
-    };
   };
 }

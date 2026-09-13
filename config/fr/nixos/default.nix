@@ -1,5 +1,4 @@
 {
-  dms,
   fenix,
   ghmd,
 }:
@@ -17,7 +16,7 @@
     ../../../modules/nixos/virtiofsd-nix-store.nix
 
     ./options.nix
-    (import ./desktop.nix { inherit dms; })
+    ./desktop.nix
     ./dns.nix
     (import ./ghmd.nix { inherit fenix ghmd; })
     ./incus.nix
