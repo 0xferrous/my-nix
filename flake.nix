@@ -88,6 +88,9 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    multiverse = {
+      url = "github:fzakaria/nixpkgs-multiverse";
+    };
     agent-box = {
       url = "github:0xferrous/agent-box";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -157,6 +160,7 @@
       fenix,
       ghmd,
       impermanence,
+      multiverse,
       nix-index-database,
       home-manager,
       ...
@@ -347,7 +351,7 @@
 
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
-          inherit fenix ghmd;
+          inherit fenix ghmd multiverse;
         };
         agent = {
           imports = [ ./config/agent/nixos.nix ];

@@ -1039,6 +1039,21 @@
         "type": "github"
       }
     },
+    "multiverse": {
+      "locked": {
+        "lastModified": 1789237730,
+        "narHash": "sha256-nJUM/VbN/vpaLH5SoqD2lhF/BQi28UJ9xsHce8d0zYI=",
+        "owner": "fzakaria",
+        "repo": "nixpkgs-multiverse",
+        "rev": "42f7c1a841ef59db94001175ec8bd897ad0d1c7b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fzakaria",
+        "repo": "nixpkgs-multiverse",
+        "type": "github"
+      }
+    },
     "neovim": {
       "inputs": {
         "flake-parts": "flake-parts_3",
@@ -1656,6 +1671,7 @@
         "impermanence": "impermanence",
         "libgit2-patched": "libgit2-patched",
         "llm-agents": "llm-agents_2",
+        "multiverse": "multiverse",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_6",
         "noctalia": "noctalia",

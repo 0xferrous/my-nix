@@ -13,6 +13,8 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    multiverse.enable = true;
+
     nix.settings = {
       auto-optimise-store = false;
       substituters = binaryCaches;

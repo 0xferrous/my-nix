@@ -1,6 +1,7 @@
 {
   fenix,
   ghmd,
+  multiverse,
 }:
 {
   ...
@@ -8,6 +9,7 @@
 {
   imports = [
     ghmd.nixosModules.default
+    multiverse.nixosModules.default
     ../../../modules/nixos/ash-vm-network.nix
     ../../../modules/nixos/bluetooth-keyboard-wake.nix
     ../../../modules/nixos/iron-proxy.nix

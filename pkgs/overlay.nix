@@ -2,7 +2,13 @@
   inputs,
   system,
 }:
-final: prev: {
+final: prev:
+(inputs.multiverse.lib.pinOverlay {
+  pins = {
+    nushell = "0.115.1";
+  };
+} final prev)
+// {
   herdr = inputs.llm-agents.packages.${system}.herdr;
 
   ashWrappers = import ./ash-portal-wrappers.nix {

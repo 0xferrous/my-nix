@@ -69,6 +69,7 @@ in
     ./home/wofi.nix
     ./home/zed.nix
     myNixInputs.nix-index-database.homeModules.default
+    myNixInputs.multiverse.homeManagerModules.default
     myNixInputs.vicinae.homeManagerModules.default
     myNixInputs.noctalia.homeModules.default
     myNixInputs.voxtype.homeManagerModules.default
@@ -116,6 +117,8 @@ in
         }
       ];
     };
+
+    multiverse.enable = true;
 
     fr.direnv = {
       enable = true;

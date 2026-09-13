@@ -1,5 +1,6 @@
 {
   fenix,
   ghmd,
+  multiverse,
 }:
-import ./nixos { inherit fenix ghmd; }
+import ./nixos { inherit fenix ghmd multiverse; }
