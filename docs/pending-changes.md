@@ -4,6 +4,17 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
 
 ## In progress / queued
 
+- [ ] ThinkPad AMD false power-key wake/suspend loop:
+  - Current live kernel reports `soc_button_array.use_low_level_irq = N`.
+    `ACPI0011:00/gpio-keys` has `KEY_POWER` and wake enabled, with repeated
+    `Lid opened` -> `Power key pressed short` -> suspend loops after resume.
+  - Added `fr.powerManagement.socButtonArray.useLowLevelIrq`; public `fr`
+    laptop defaults enable it, generating
+    `options soc_button_array use_low_level_irq=1`.
+  - After rebuild and reboot, verify
+    `/sys/module/soc_button_array/parameters/use_low_level_irq` is `Y`, stop
+    VMs/virtiofs users before testing, then retest lid suspend/resume.
+
 - [ ] iron-proxy × ash — token injection on the Ash VM bridge:
   - Host package `packages.iron-proxy` (v0.49.0 source build with the
     expired-certificate cache patch from upstream PR #235, not in nixpkgs)

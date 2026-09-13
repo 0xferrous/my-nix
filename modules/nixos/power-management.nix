@@ -144,6 +144,17 @@ in
       };
     };
 
+    socButtonArray.useLowLevelIrq = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Configure the soc_button_array driver to use level-low interrupts for
+        ACPI0011 GPIO buttons. This works around firmware that emits false
+        power-button events around lid/resume transitions when Linux uses the
+        default edge-both interrupt mode.
+      '';
+    };
+
     tlp = {
       cpuMaxPerfOnAc = lib.mkOption {
         type = lib.types.ints.between 0 100;
@@ -227,6 +238,10 @@ in
       ++ lib.optionals (cfg.cpu.maxCstate != null) [
         "processor.max_cstate=${toString cfg.cpu.maxCstate}"
       ];
+
+    boot.extraModprobeConfig = lib.mkIf cfg.socButtonArray.useLowLevelIrq ''
+      options soc_button_array use_low_level_irq=1
+    '';
 
     services.upower = {
       enable = lib.mkDefault cfg.upower.enable;

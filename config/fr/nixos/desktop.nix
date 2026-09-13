@@ -105,6 +105,11 @@ in
     fr.powerManagement = {
       enable = lib.mkDefault true;
       cpu.amdPstate.enable = lib.mkDefault true;
+      # ThinkPad AMD ACPI0011/soc_button_array can report false KEY_POWER
+      # events after lid/resume when the GPIO uses edge-both IRQs. Keep this
+      # enabled for the public fr laptop defaults until the model is covered by
+      # the upstream DMI quirk table.
+      socButtonArray.useLowLevelIrq = lib.mkDefault true;
       bluetoothKeyboardWake = {
         enable = lib.mkDefault false;
         usbDevices = lib.mkDefault [
