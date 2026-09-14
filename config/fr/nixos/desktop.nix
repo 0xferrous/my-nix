@@ -173,5 +173,9 @@ in
       useNautilus = lib.mkDefault false;
     };
 
+    # Noctalia's lock screen runs inside the user session; use its separate
+    # greetd greeter for the login screen and session handoff.
+    services.displayManager.noctalia-greeter.enable = lib.mkDefault true;
+
   };
 }

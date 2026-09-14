@@ -2,6 +2,7 @@
   fenix,
   ghmd,
   multiverse,
+  noctalia-greeter,
 }:
 {
   ...
@@ -10,6 +11,7 @@
   imports = [
     ghmd.nixosModules.default
     multiverse.nixosModules.default
+    noctalia-greeter.nixosModules.default
     ../../../modules/nixos/ash-vm-network.nix
     ../../../modules/nixos/bluetooth-keyboard-wake.nix
     ../../../modules/nixos/iron-proxy.nix

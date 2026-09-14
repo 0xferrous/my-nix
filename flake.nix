@@ -115,6 +115,10 @@
     noctalia = {
       url = "github:noctalia-dev/noctalia/cachix";
     };
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     voxtype = {
       url = "github:peteonrails/voxtype";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -161,6 +165,7 @@
       ghmd,
       impermanence,
       multiverse,
+      noctalia-greeter,
       nix-index-database,
       home-manager,
       ...
@@ -351,7 +356,12 @@
 
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
-          inherit fenix ghmd multiverse;
+          inherit
+            fenix
+            ghmd
+            multiverse
+            noctalia-greeter
+            ;
         };
         agent = {
           imports = [ ./config/agent/nixos.nix ];
