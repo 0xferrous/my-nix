@@ -99,6 +99,14 @@ in
       enable = lib.mkDefault true;
     };
 
+    # Ignore short power-button presses because this ThinkPad's ACPI0011 GPIO
+    # can emit a false press during lid resume. Preserve logind's explicit
+    # long-press power-off action and the firmware emergency hold behavior.
+    services.logind.settings.Login = {
+      HandlePowerKey = lib.mkDefault "ignore";
+      HandlePowerKeyLongPress = lib.mkDefault "poweroff";
+    };
+
     fr.powerManagement = {
       enable = lib.mkDefault true;
       cpu.amdPstate.enable = lib.mkDefault true;
