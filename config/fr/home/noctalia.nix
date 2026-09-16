@@ -115,6 +115,7 @@ in
       settings = {
         shell = {
           font_family = "Recursive Sans Casual Static";
+          polkit_agent = true;
           time_format = "{:%H:%M:%S}";
           clipboard_enabled = true;
           # Doc-recommended with the systemd service: launched apps survive
