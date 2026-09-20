@@ -76,7 +76,14 @@ in
     final.callPackage ./google-authenticator-transfer-decode.nix
       { };
   opensrc = final.callPackage ./opensrc.nix { };
-  oh-my-pi = final.callPackage ./oh-my-pi.nix { };
+  oh-my-pi =
+    if system == "x86_64-linux" then
+      final.callPackage ./oh-my-pi.nix { }
+    else
+      final.writeShellScriptBin "omp" ''
+        echo "oh-my-pi is unavailable on ${system}" >&2
+        exit 1
+      '';
   takopi = final.callPackage ./takopi.nix { };
   tron-wallet-cli = final.callPackage ./tron-wallet-cli { };
   tron-wallet-cli-java = final.callPackage ./tron-wallet-cli/java.nix { };
@@ -98,7 +105,7 @@ in
     agentStuffSrc = inputs."agent-stuff";
     gitHunk = final.git-hunk;
     jjHunk = final.jj-hunk;
-    plannotatorPiExtension = final.plannotator-pi-extension;
+    plannotatorPiExtension = if system == "x86_64-linux" then final.plannotator-pi-extension else null;
     zjRadarCli = patchedZjRadar.packages.${system}.zj-radar-cli;
   };
   piDev = final.pi.override {

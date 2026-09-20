@@ -8,6 +8,7 @@
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
+  isX86 = system == "x86_64-linux";
   AIPackages = myNixInputs.llm-agents.packages.${system};
   proxy = import ./proxy.nix;
   upstreamOpenCode = myNixInputs.opencode.packages.${system}.opencode;
@@ -22,7 +23,7 @@ let
     else if agentUseBbSource then
       pkgs.bbSource
     else
-      pkgs.bb;
+      null;
   opencodeDesktop =
     (myNixInputs.opencode.packages.${system}.opencode-desktop.override {
       inherit opencode;
@@ -54,6 +55,7 @@ let
   };
   devEssentialsPackages = import ../shared/packages/dev-essentials.nix {
     inherit pkgs AIPackages;
+    includeOhMyPi = isX86;
   };
   zjRadar = {
     default = pkgs.zjRadar;
@@ -87,20 +89,21 @@ in
     username = "agent";
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
-    packages = [
-      bbPackage
-      chatgpt
-      pkgs.obscura
-      pkgs.piDev
-      pkgs.waypipe
-      pkgs.xwayland-satellite
-      myNixInputs.codexbar.packages.${system}.default
-      agentPortalWrappers
-      myNixInputs.ash.packages.${system}."ash-dbus-proxy"
-      AIPackages.opencode2
-      opencodeDesktop
-    ]
-    ++ devEssentialsPackages;
+    packages =
+      lib.optional (bbPackage != null) bbPackage
+      ++ [
+        chatgpt
+        pkgs.obscura
+        pkgs.piDev
+        pkgs.waypipe
+        pkgs.xwayland-satellite
+        myNixInputs.codexbar.packages.${system}.default
+        agentPortalWrappers
+        myNixInputs.ash.packages.${system}."ash-dbus-proxy"
+        AIPackages.opencode2
+        opencodeDesktop
+      ]
+      ++ devEssentialsPackages;
     # Same iron-proxy tunnel as the system session (proxy.sessionEnv plus
     # lowercase proxy.sessionEnvLower — Bun/Node only honor lowercase
     # `no_proxy`), so shells, TUI-spawned background servers, and desktop
@@ -188,23 +191,13 @@ in
     };
   };
 
-  systemd.user.services.ash-dbus-proxy = {
-    Unit.Description = "Ash host notification D-Bus bridge";
-    Service = {
-      ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
-      Restart = "on-failure";
-      RestartSec = 1;
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
-
   systemd.user.services = {
-    bb-app = {
-      Unit.Description = "bb agent server";
+    ash-dbus-proxy = {
+      Unit.Description = "Ash host notification D-Bus bridge";
       Service = {
-        ExecStart = "${bbPackage}/bin/bb-app --server-bind-host 0.0.0.0";
+        ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
         Restart = "on-failure";
-        RestartSec = 2;
+        RestartSec = 1;
       };
       Install.WantedBy = [ "default.target" ];
     };
@@ -233,6 +226,17 @@ in
             pkgs.jujutsu
           ]
         }";
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+  }
+  // lib.optionalAttrs (bbPackage != null) {
+    bb-app = {
+      Unit.Description = "bb agent server";
+      Service = {
+        ExecStart = "${bbPackage}/bin/bb-app --server-bind-host 0.0.0.0";
         Restart = "on-failure";
         RestartSec = 2;
       };

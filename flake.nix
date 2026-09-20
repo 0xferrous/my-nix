@@ -173,7 +173,12 @@
       ...
     }:
     let
-      system = "x86_64-linux";
+      defaultSystem = "x86_64-linux";
+      imageSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      system = defaultSystem;
       zjRadarSource =
         (import inputs.nixpkgs {
           inherit system;
@@ -226,90 +231,107 @@
         ];
       };
       lib = pkgs.lib;
-      agentOciNixos = inputs.nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          myNixInputs = inputs;
-          inherit
-            fenix
-            ghmd
-            home-manager
-            impermanence
-            nix-index-database
-            ;
+      mkAgentOciNixos =
+        targetSystem:
+        inputs.nixpkgs.lib.nixosSystem {
+          system = targetSystem;
+          specialArgs = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+          };
+          modules = [
+            ./config/agent/nixos.nix
+            ./config/agent/oci.nix
+          ];
         };
-        modules = [
-          ./config/agent/nixos.nix
-          ./config/agent/oci.nix
-        ];
-      };
+      mkAgentContainerImage =
+        targetSystem:
+        let
+          agent = mkAgentOciNixos targetSystem;
+          imagePkgs = import inputs.nixpkgs { system = targetSystem; };
+        in
+        imagePkgs.dockerTools.buildLayeredImageWithNixDb {
+          name = "fr-agent";
+          tag = "latest";
+          compressor = "gz";
+          maxLayers = 125;
+
+          contents = [
+            agent.config.system.build.toplevel
+          ];
+
+          extraCommands = ''
+            rm -f etc
+            mkdir -p proc sys dev etc
+          '';
+
+          config = {
+            Entrypoint = [ "/init" ];
+            Env = [
+              "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
+              "NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-bundle.crt"
+            ];
+          };
+        };
     in
     {
       overlays.default = overlay;
 
-      packages = lib.recursiveUpdate frs-nvim.packages {
-        ${system} = {
-          inherit (pkgs)
-            fr-frame-summon
-            fr-kbd-backlight
-            dev-essentials
-            git-hunk
-            ironclaw
-            jj-hunk
-            google-authenticator-transfer-decode
-            oh-my-pi
-            opensrc
-            nash
-            obscura
-            pi
-            piDev
-            abwrap
-            pi-acp
-            takopi
-            tron-wallet-cli
-            tron-wallet-cli-java
-            terminal-control
-            iroh-ssh
-            ssh-tmp
-            prime-agent
-            flake-utils
-            gruvbox-gtk-theme
-            qwen3-server
-            codex-desktop
-            bb
-            tolaria
-            ;
-          "bb-source" = pkgs.bbSource;
-          "bb-android" = pkgs."bb-android";
-          "bb-android-x86_64" = pkgs."bb-android-x86_64";
-          "bb-android-arm64-v8a" = pkgs."bb-android-arm64-v8a";
-          opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
-          "install-bin" = pkgs."install-bin";
-          iron-proxy = pkgs.iron-proxy;
-          agent-container-image =
-            let
-              agent = agentOciNixos;
-            in
-            pkgs.dockerTools.buildImageWithNixDb {
-              name = "fr-agent";
-              tag = "latest";
-              compressor = "none";
-              copyToRoot = agent.config.system.build.toplevel;
-              keepContentsDirlinks = true;
-              extraCommands = ''
-                rm -f etc
-                mkdir -p proc sys dev etc
-              '';
-              config = {
-                Entrypoint = [ "/init" ];
-                Env = [
-                  "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
-                  "NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-bundle.crt"
-                ];
-              };
+      packages = lib.recursiveUpdate frs-nvim.packages (
+        lib.recursiveUpdate
+          {
+            ${system} = {
+              inherit (pkgs)
+                fr-frame-summon
+                fr-kbd-backlight
+                dev-essentials
+                git-hunk
+                ironclaw
+                jj-hunk
+                google-authenticator-transfer-decode
+                oh-my-pi
+                opensrc
+                nash
+                obscura
+                pi
+                piDev
+                abwrap
+                pi-acp
+                takopi
+                tron-wallet-cli
+                tron-wallet-cli-java
+                terminal-control
+                iroh-ssh
+                ssh-tmp
+                prime-agent
+                flake-utils
+                gruvbox-gtk-theme
+                qwen3-server
+                codex-desktop
+                bb
+                tolaria
+                ;
+              "bb-source" = pkgs.bbSource;
+              "bb-android" = pkgs."bb-android";
+              "bb-android-x86_64" = pkgs."bb-android-x86_64";
+              "bb-android-arm64-v8a" = pkgs."bb-android-arm64-v8a";
+              opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
+              "install-bin" = pkgs."install-bin";
+              iron-proxy = pkgs.iron-proxy;
             };
-        };
-      };
+          }
+          (
+            lib.genAttrs imageSystems (targetSystem: {
+              agent-container-image = mkAgentContainerImage targetSystem;
+            })
+          )
+      );
       apps = lib.recursiveUpdate frs-nvim.apps {
         ${system} = {
           pi = {

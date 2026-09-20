@@ -24,7 +24,17 @@ concurrency:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            architecture: amd64
+            runner: ubuntu-latest
+          - system: aarch64-linux
+            architecture: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/fr-agent
 
@@ -42,7 +52,8 @@ jobs:
 
       - name: Build image archive
         run: |
-          nix build --accept-flake-config --print-out-paths .#agent-container-image > image-path.txt
+          nix build --accept-flake-config --print-out-paths \
+            ".#packages.${{ matrix.system }}.agent-container-image" > image-path.txt
           cp "$(cat image-path.txt)" agent-container.tar
 
       - name: Log in to GHCR
@@ -55,9 +66,35 @@ jobs:
       - name: Push image to GHCR
         run: |
           nix shell nixpkgs#crane -c \
-            crane push agent-container.tar "${IMAGE_NAME}:${GITHUB_SHA}"
+            crane push agent-container.tar "${IMAGE_NAME}:${GITHUB_SHA}-${{ matrix.architecture }}"
+
+  publish-manifest:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/fr-agent
+
+    steps:
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish multi-platform image index
+        run: |
+          nix shell nixpkgs#crane -c crane index append \
+            -m "${IMAGE_NAME}:${GITHUB_SHA}-amd64" \
+            -m "${IMAGE_NAME}:${GITHUB_SHA}-arm64" \
+            -t "${IMAGE_NAME}:${GITHUB_SHA}"
 
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            nix shell nixpkgs#crane -c \
-              crane push agent-container.tar "${IMAGE_NAME}:latest"
+            nix shell nixpkgs#crane -c crane index append \
+              -m "${IMAGE_NAME}:${GITHUB_SHA}-amd64" \
+              -m "${IMAGE_NAME}:${GITHUB_SHA}-arm64" \
+              -t "${IMAGE_NAME}:latest"
           fi

@@ -7,7 +7,7 @@
   gitHunk,
   herdr,
   jjHunk,
-  plannotatorPiExtension,
+  plannotatorPiExtension ? null,
   zjRadarCli,
 }:
 let
@@ -87,12 +87,14 @@ let
     "${herdrPiExtension}"
     "--extension"
     "${./pi/zj-radar.ts}"
-    "--extension"
-    "${plannotatorPiExtension}/share/pi-extensions/plannotator/apps/pi-extension/index.ts"
     "--skill"
     "${gitHunk}/share/git-hunk/skills/git-hunk"
     "--skill"
     "${jjHunk}/share/jj-hunk/skills/jj-hunk"
+  ]
+  ++ lib.optionals (plannotatorPiExtension != null) [
+    "--extension"
+    "${plannotatorPiExtension}/share/pi-extensions/plannotator/apps/pi-extension/index.ts"
   ];
 in
 pkgs.writeShellScriptBin "pi" ''

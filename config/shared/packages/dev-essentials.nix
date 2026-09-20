@@ -2,6 +2,7 @@
   AIPackages,
   config ? null,
   includeAbwrap ? true,
+  includeOhMyPi ? true,
   pkgs,
   ...
 }:
@@ -38,7 +39,6 @@ in
   git-lfs
   gh
   hunkPackage
-  oh-my-pi
 
   # Search, navigation, and file inspection
   ripgrep
@@ -93,3 +93,4 @@ in
   prime-agent
 ])
 ++ pkgs.lib.optional includeAbwrap pkgs.abwrap
+++ pkgs.lib.optional includeOhMyPi pkgs.oh-my-pi
