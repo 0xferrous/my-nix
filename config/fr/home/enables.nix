@@ -20,7 +20,8 @@ in
     fish.enable = true;
     fzf = {
       enable = true;
-      enableNushellIntegration = true;
+      # Patched alongside Carapace in misc.nix for Nushell 0.115 compatibility.
+      enableNushellIntegration = false;
     };
     noti.enable = true;
     zoxide.enable = true;
