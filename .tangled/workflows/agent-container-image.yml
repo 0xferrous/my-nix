@@ -17,4 +17,7 @@ steps:
   - name: "Build agent container image"
     command: |
       set -euo pipefail
-      nix build --accept-flake-config --print-out-paths .#agent-container-image
+      # The public microVM is memory-constrained; serialize Nix evaluation and
+      # builds to avoid the guest kernel killing the nix process.
+      nix build --accept-flake-config --max-jobs 1 --cores 1 \
+        --print-out-paths .#agent-container-image
