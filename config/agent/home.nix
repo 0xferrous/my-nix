@@ -79,7 +79,7 @@ in
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
     packages = [
-      pkgs.bb
+      pkgs.bbSource
       chatgpt
       pkgs.obscura
       pkgs.piDev
@@ -193,7 +193,7 @@ in
     bb-app = {
       Unit.Description = "bb agent server";
       Service = {
-        ExecStart = "${pkgs.bb}/bin/bb-app --server-bind-host 0.0.0.0";
+        ExecStart = "${pkgs.bbSource}/bin/bb-app --server-bind-host 0.0.0.0";
         Restart = "on-failure";
         RestartSec = 2;
       };
