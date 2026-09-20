@@ -1,6 +1,10 @@
 local loading = false
 -- view: { kind = "loading" } | { kind = "down", message: string } | { kind = "up", account: string }
 local view = { kind = "loading" }
+-- Noctalia's glyph registry only knows bundled Tabler names. Render the
+-- Nerd Font VPN glyph directly instead.
+local vpnGlyph = "󰖂"
+local vpnFont = "RecMonoCasual Nerd Font Mono"
 local baseTooltip = "Loading active Tailscale account…"
 -- lastUpdatedMs drives the "· Xs" age label, lastFetchMs throttles the
 -- tailscale invocation so the 1s bar tick only re-renders the age.
@@ -30,17 +34,17 @@ local function render()
   local container = vertical and ui.column or ui.row
   if view.kind == "loading" then
     barWidget.render(container({ gap = 6, align = "center" }, {
-      ui.glyph({ name = "vpn", size = 14, color = "on_surface_variant" }),
+      ui.label({ text = vpnGlyph, fontFamily = vpnFont, fontSize = 14, color = "on_surface_variant" }),
       ui.label({ text = "…", color = "on_surface_variant" }),
     }))
   elseif view.kind == "down" then
     barWidget.render(container({ gap = 6, align = "center" }, {
-      ui.glyph({ name = "vpn", size = 14, color = "error" }),
+      ui.label({ text = vpnGlyph, fontFamily = vpnFont, fontSize = 14, color = "error" }),
       ui.label({ text = view.message, color = "error" }),
     }))
   else
     local children = {
-      ui.glyph({ name = "vpn", size = 14, color = "primary" }),
+      ui.label({ text = vpnGlyph, fontFamily = vpnFont, fontSize = 14, color = "primary" }),
       ui.label({ text = view.account, color = "primary" }),
     }
     local age = ageSec()
