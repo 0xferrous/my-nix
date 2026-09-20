@@ -305,6 +305,7 @@ in
               members = [
                 "network"
                 "bluetooth"
+                "volume"
               ];
               border = "outline";
             }
