@@ -387,6 +387,24 @@ window-rule {
     clip-to-geometry true
 }
 
+// Color windows launched through Ash's Waypipe integration, whose titles start
+// with "ash: <vm-name>: ".
+window-rule {
+    match title=r#"^ash: "#
+
+    focus-ring {
+        off
+    }
+
+    border {
+        on
+        width 3
+        active-color "#ff9e64"
+        inactive-color "#7aa2f7"
+        urgent-color "#f7768e"
+    }
+}
+
 binds {
     // Keys consist of modifiers separated by + signs, followed by an XKB key name
     // in the end. To find an XKB name for a particular key, you may use a program
