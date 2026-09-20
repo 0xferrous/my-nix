@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - main
+    paths:
+      - ".github/workflows/agent-container-image.yml"
+      - "config/**"
+      - "flake.lock"
+      - "flake.nix"
+      - "modules/nixos/**"
+      - "patches/**"
+      - "pkgs/**"
   workflow_dispatch:
 
 permissions:
@@ -25,15 +33,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v19
+        uses: DeterminateSystems/nix-installer-action@v23
 
       - name: Enable Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v7
+        uses: DeterminateSystems/magic-nix-cache-action@v15
+        with:
+          use-flakehub: false
 
       - name: Build image archive
         run: |
-          image_path="$(nix build --accept-flake-config --print-out-paths .#agent-container-image)"
-          gunzip --stdout "$image_path" > agent-container.tar
+          nix build --accept-flake-config --print-out-paths .#agent-container-image > image-path.txt
+          cp "$(cat image-path.txt)" agent-container.tar
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

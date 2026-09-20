@@ -41,6 +41,7 @@
     useUserPackages = true;
     extraSpecialArgs = {
       inherit myNixInputs;
+      agentUseBbSource = true;
     };
     users.agent = import ./home.nix;
   };

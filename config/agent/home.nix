@@ -2,6 +2,7 @@
   lib,
   pkgs,
   myNixInputs,
+  agentUseBbSource ? true,
   ...
 }:
 let
@@ -14,6 +15,7 @@ let
       hash = "sha256-SVvFPO+KuS67+6XGPhaB3cIuc3XUyM0XVccy5v8afS4=";
     };
   };
+  bbPackage = if agentUseBbSource then pkgs.bbSource else pkgs.bb;
   opencodeDesktop =
     (myNixInputs.opencode.packages.${system}.opencode-desktop.override {
       inherit opencode;
@@ -79,7 +81,7 @@ in
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
     packages = [
-      pkgs.bbSource
+      bbPackage
       chatgpt
       pkgs.obscura
       pkgs.piDev
@@ -193,7 +195,7 @@ in
     bb-app = {
       Unit.Description = "bb agent server";
       Service = {
-        ExecStart = "${pkgs.bbSource}/bin/bb-app --server-bind-host 0.0.0.0";
+        ExecStart = "${bbPackage}/bin/bb-app --server-bind-host 0.0.0.0";
         Restart = "on-failure";
         RestartSec = 2;
       };

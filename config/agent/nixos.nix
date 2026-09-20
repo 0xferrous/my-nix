@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   home-manager,
@@ -11,6 +12,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
   agentPortalWrappers = myNixInputs.ash.packages.${system}.agent-portal-wrappers;
+  nvimPackage = if config.boot.isContainer then pkgs.neovim else pkgs.frsNvimPackage;
   impermanenceRoot = "/persist";
   ashHostCacheUrl = "http://192.168.127.1:5000";
   proxy = import ./proxy.nix;
@@ -70,12 +72,16 @@ in
       inputs = myNixInputs;
       system = pkgs.stdenv.hostPlatform.system;
     })
-    (_final: prev: {
+  ]
+  # The patched libgit2 is needed by the Ash workspace VM, but applying it
+  # globally in the OCI image forces Nix itself and its test suite to rebuild.
+  ++ lib.optional (!config.boot.isContainer) (
+    _final: prev: {
       libgit2 = prev.libgit2.overrideAttrs {
         src = myNixInputs.libgit2-patched;
       };
-    })
-  ];
+    }
+  );
 
   # Allow only the unfree ChatGPT/Codex desktop app (codex-desktop); the rest
   # of the agent VM stays on free software.
@@ -168,7 +174,7 @@ in
     AIPackages.opencode
     codex-desktop
     home-manager
-    frsNvimPackage
+    nvimPackage
     ironclaw
     agentPortalWrappers
   ];
