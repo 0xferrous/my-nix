@@ -85,6 +85,11 @@ build-agent-system:
   mkdir -p "{{agent_vm_artifacts_dir}}"
   nix build .#nixosConfigurations.agent.config.system.build.toplevel -o "{{agent_vm_system_dir}}"
 
+# Build the agent as a single-layer Docker-compatible archive. This is the
+# container image format consumed by smolvm and microsandbox.
+build-agent-container-image:
+  nix build --accept-flake-config .#agent-container-image
+
 switch-agent-nixos:
   nh -e sudo os switch . --hostname agent
 

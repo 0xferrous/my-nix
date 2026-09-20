@@ -207,6 +207,23 @@
         ];
       };
       lib = pkgs.lib;
+      agentOciNixos = inputs.nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          myNixInputs = inputs;
+          inherit
+            fenix
+            ghmd
+            home-manager
+            impermanence
+            nix-index-database
+            ;
+        };
+        modules = [
+          ./config/agent/nixos.nix
+          ./config/agent/oci.nix
+        ];
+      };
     in
     {
       overlays.default = overlay;
@@ -250,6 +267,27 @@
           opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
           "install-bin" = pkgs."install-bin";
           iron-proxy = pkgs.iron-proxy;
+          agent-container-image =
+            let
+              agent = agentOciNixos;
+            in
+            pkgs.dockerTools.buildImageWithNixDb {
+              name = "fr-agent";
+              tag = "latest";
+              copyToRoot = agent.config.system.build.toplevel;
+              keepContentsDirlinks = true;
+              extraCommands = ''
+                rm -f etc
+                mkdir -p proc sys dev etc
+              '';
+              config = {
+                Entrypoint = [ "/init" ];
+                Env = [
+                  "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
+                  "NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-bundle.crt"
+                ];
+              };
+            };
         };
       };
       apps = lib.recursiveUpdate frs-nvim.apps {
