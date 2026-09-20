@@ -80,6 +80,10 @@ in
   # Allow only the unfree ChatGPT/Codex desktop app (codex-desktop); the rest
   # of the agent VM stays on free software.
   nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "codex-desktop";
+  nixpkgs.config.permittedInsecurePackages = [
+    "gradle-7.6.6"
+    "pnpm-9.15.9"
+  ];
 
   nix.settings = {
     experimental-features = [
