@@ -2,9 +2,22 @@
   lib,
   home-manager,
   myNixInputs,
+  pkgs,
   ...
 }:
-
+let
+  # Keep the low-memory Electron limits specific to the OCI image build. The
+  # host agent still uses the normal bbSource derivation.
+  bbSourceContainer = pkgs.bbSource.overrideAttrs (old: {
+    preBuild = (old.preBuild or "") + ''
+      export NODE_OPTIONS="--max-old-space-size=2048"
+      export npm_config_jobs=1
+      export npm_config_child_concurrency=1
+      export MAKEFLAGS=-j1
+      export TURBO_CONCURRENCY=1
+    '';
+  });
+in
 {
   imports = [
     home-manager.nixosModules.home-manager
@@ -42,6 +55,7 @@
     extraSpecialArgs = {
       inherit myNixInputs;
       agentUseBbSource = true;
+      bbPackageOverride = bbSourceContainer;
     };
     users.agent = import ./home.nix;
   };

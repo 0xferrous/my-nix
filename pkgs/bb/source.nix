@@ -106,16 +106,6 @@ stdenv.mkDerivation (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
-    # Tangled's hosted microVMs have 4 GiB of RAM. Keep the Electron and
-    # native-module build from consuming the whole guest while Nix is also
-    # resident; workflow-level environment variables do not propagate into
-    # sandboxed derivation builds.
-    export NODE_OPTIONS="--max-old-space-size=2048"
-    export npm_config_jobs=1
-    export npm_config_child_concurrency=1
-    export MAKEFLAGS=-j1
-    export TURBO_CONCURRENCY=1
-
     export npm_config_nodedir=${electron.headers}
     export npm_config_runtime=electron
     export npm_config_target=${electronVersion}

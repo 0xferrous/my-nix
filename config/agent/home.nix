@@ -3,6 +3,7 @@
   pkgs,
   myNixInputs,
   agentUseBbSource ? true,
+  bbPackageOverride ? null,
   ...
 }:
 let
@@ -15,7 +16,13 @@ let
       hash = "sha256-SVvFPO+KuS67+6XGPhaB3cIuc3XUyM0XVccy5v8afS4=";
     };
   };
-  bbPackage = if agentUseBbSource then pkgs.bbSource else pkgs.bb;
+  bbPackage =
+    if bbPackageOverride != null then
+      bbPackageOverride
+    else if agentUseBbSource then
+      pkgs.bbSource
+    else
+      pkgs.bb;
   opencodeDesktop =
     (myNixInputs.opencode.packages.${system}.opencode-desktop.override {
       inherit opencode;
