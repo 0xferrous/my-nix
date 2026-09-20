@@ -172,8 +172,25 @@
     }:
     let
       system = "x86_64-linux";
+      zjRadarSource =
+        (import inputs.nixpkgs {
+          inherit system;
+        }).applyPatches
+          {
+            name = "zj-radar-patched";
+            src = inputs.zj-radar.outPath;
+            patches = [ ./patches/zj-radar-crane-name.patch ];
+          };
+      zjRadar = (import "${zjRadarSource}/flake.nix").outputs {
+        self = null;
+        nixpkgs = inputs.nixpkgs;
+        fenix = inputs.fenix;
+        crane = inputs.zj-radar.inputs.crane;
+        flake-utils = inputs.zj-radar.inputs.flake-utils;
+      };
       overlay = import ./pkgs/overlay.nix {
         inherit inputs system;
+        patchedZjRadar = zjRadar;
       };
       pkgs = import inputs.nixpkgs {
         inherit system;

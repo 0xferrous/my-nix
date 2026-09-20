@@ -46,7 +46,9 @@ let
   devEssentialsPackages = import ../shared/packages/dev-essentials.nix {
     inherit pkgs AIPackages;
   };
-  zjRadar = myNixInputs.zj-radar.packages.${system};
+  zjRadar = {
+    default = pkgs.zjRadar;
+  };
   zjRadarPlugin =
     pkgs.runCommand "zellij-plugin-zj-radar.wasm"
       {

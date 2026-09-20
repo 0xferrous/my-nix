@@ -1,6 +1,7 @@
 {
   inputs,
   system,
+  patchedZjRadar ? inputs.zj-radar,
 }:
 final: prev:
 let
@@ -91,13 +92,14 @@ in
   flake-utils = final.callPackage ./flake-utils.nix { };
   gruvbox-gtk-theme = final.callPackage ./gruvbox-gtk-theme.nix { };
   plannotator-pi-extension = final.callPackage ./plannotator-pi-extension.nix { };
+  zjRadar = patchedZjRadar.packages.${system}.zj-radar;
   pi = final.callPackage ./pi.nix {
     piPackage = inputs.llm-agents.packages.${system}.pi;
     agentStuffSrc = inputs."agent-stuff";
     gitHunk = final.git-hunk;
     jjHunk = final.jj-hunk;
     plannotatorPiExtension = final.plannotator-pi-extension;
-    zjRadarCli = inputs.zj-radar.packages.${system}.zj-radar-cli;
+    zjRadarCli = patchedZjRadar.packages.${system}.zj-radar-cli;
   };
   piDev = final.pi.override {
     agentStuffPath = "~/dev/fr/agent-stuff";
