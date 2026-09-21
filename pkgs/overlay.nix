@@ -1,6 +1,7 @@
 {
   inputs,
   patchedZjRadar ? inputs.zj-radar,
+  patchedZjRadarByBuildSystem ? { },
   crossZjRadar ? null,
   crossPackages ? null,
 }:
@@ -8,6 +9,7 @@ final: prev:
 let
   buildSystem = final.stdenv.buildPlatform.system;
   targetSystem = final.stdenv.hostPlatform.system;
+  patchedZjRadarForBuild = patchedZjRadarByBuildSystem.${buildSystem} or patchedZjRadar;
   isCross = buildSystem != targetSystem;
   useCrossPackages =
     isCross
@@ -125,7 +127,7 @@ in
     if useCrossPackages && crossZjRadar != null then
       crossZjRadar.packages.${buildSystem}.zj-radar
     else
-      patchedZjRadar.packages.${targetSystem}.zj-radar;
+      patchedZjRadarForBuild.packages.${targetSystem}.zj-radar;
   pi = final.callPackage ./pi.nix {
     piPackage = inputs.llm-agents.packages.${targetSystem}.pi;
     agentStuffSrc = inputs."agent-stuff";
@@ -137,7 +139,7 @@ in
       if useCrossPackages && crossZjRadar != null then
         crossZjRadar.packages.${buildSystem}.zj-radar-cli
       else
-        patchedZjRadar.packages.${targetSystem}.zj-radar-cli;
+        patchedZjRadarForBuild.packages.${targetSystem}.zj-radar-cli;
   };
   piDev = final.pi.override {
     agentStuffPath = "~/dev/fr/agent-stuff";

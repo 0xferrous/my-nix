@@ -7,6 +7,7 @@
   myNixInputs,
   nix-index-database,
   patchedZjRadar ? myNixInputs.zj-radar,
+  patchedZjRadarByBuildSystem ? { },
   crossZjRadar ? null,
   crossPackages ? null,
   ...
@@ -73,7 +74,12 @@ in
   nixpkgs.overlays = [
     (import ../../pkgs/overlay.nix {
       inputs = myNixInputs;
-      inherit patchedZjRadar crossZjRadar crossPackages;
+      inherit
+        patchedZjRadar
+        patchedZjRadarByBuildSystem
+        crossZjRadar
+        crossPackages
+        ;
     })
   ]
   # The patched libgit2 is needed by the Ash workspace VM, but applying it

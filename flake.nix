@@ -179,35 +179,49 @@
         "aarch64-linux"
       ];
       system = defaultSystem;
-      zjRadarSource =
-        (import inputs.nixpkgs {
-          inherit system;
-        }).applyPatches
+      mkZjRadar =
+        {
+          buildSystem,
+          crossSystem ? null,
+        }:
+        let
+          source =
+            (import inputs.nixpkgs {
+              system = buildSystem;
+            }).applyPatches
+              {
+                name = "zj-radar-patched";
+                src = inputs.zj-radar.outPath;
+                patches = [
+                  ./patches/zj-radar-crane-name.patch
+                  ./patches/zj-radar-cross-compile.patch
+                ];
+              };
+        in
+        (import "${source}/flake.nix").outputs (
           {
-            name = "zj-radar-patched";
-            src = inputs.zj-radar.outPath;
-            patches = [
-              ./patches/zj-radar-crane-name.patch
-              ./patches/zj-radar-cross-compile.patch
-            ];
-          };
-      zjRadar = (import "${zjRadarSource}/flake.nix").outputs {
-        self = null;
-        nixpkgs = inputs.nixpkgs;
-        fenix = inputs.fenix;
-        crane = inputs.zj-radar.inputs.crane;
-        flake-utils = inputs.zj-radar.inputs.flake-utils;
-      };
-      zjRadarCross = (import "${zjRadarSource}/flake.nix").outputs {
-        self = null;
-        nixpkgs = inputs.nixpkgs;
-        fenix = inputs.fenix;
-        crane = inputs.zj-radar.inputs.crane;
-        flake-utils = inputs.zj-radar.inputs.flake-utils;
+            self = null;
+            nixpkgs = inputs.nixpkgs;
+            fenix = inputs.fenix;
+            crane = inputs.zj-radar.inputs.crane;
+            flake-utils = inputs.zj-radar.inputs.flake-utils;
+          }
+          // inputs.nixpkgs.lib.optionalAttrs (crossSystem != null) {
+            inherit crossSystem;
+          }
+        );
+      zjRadar = mkZjRadar { buildSystem = system; };
+      zjRadarAarch64 = mkZjRadar { buildSystem = "aarch64-linux"; };
+      zjRadarCross = mkZjRadar {
+        buildSystem = system;
         crossSystem = "aarch64-linux";
       };
+      patchedZjRadarByBuildSystem = {
+        "x86_64-linux" = zjRadar;
+        "aarch64-linux" = zjRadarAarch64;
+      };
       crossOverlay = import ./pkgs/overlay.nix {
-        inherit inputs;
+        inherit inputs patchedZjRadarByBuildSystem;
         patchedZjRadar = zjRadar;
         crossZjRadar = zjRadarCross;
       };
@@ -239,7 +253,7 @@
         ];
       };
       overlay = import ./pkgs/overlay.nix {
-        inherit inputs;
+        inherit inputs patchedZjRadarByBuildSystem;
         patchedZjRadar = zjRadar;
         crossZjRadar = zjRadarCross;
         crossPackages = crossPkgs;
@@ -292,6 +306,7 @@
               nix-index-database
               ;
             patchedZjRadar = zjRadar;
+            inherit patchedZjRadarByBuildSystem;
             crossZjRadar = zjRadarCross;
             crossPackages = crossPkgs;
           };
@@ -515,6 +530,7 @@
               nix-index-database
               ;
             patchedZjRadar = zjRadar;
+            inherit patchedZjRadarByBuildSystem;
             crossZjRadar = zjRadarCross;
             crossPackages = crossPkgs;
           };
@@ -547,6 +563,7 @@
               nix-index-database
               ;
             patchedZjRadar = zjRadar;
+            inherit patchedZjRadarByBuildSystem;
             crossZjRadar = zjRadarCross;
             crossPackages = crossPkgs;
           };
