@@ -4,6 +4,7 @@
   patchedZjRadarByBuildSystem ? { },
   crossZjRadar ? null,
   crossPackages ? null,
+  includeZjRadar ? true,
 }:
 final: prev:
 let
@@ -124,7 +125,9 @@ in
   # Select packages from the platform tuple being evaluated. A cross package
   # set is used only when its build and host platforms match this one.
   zjRadar =
-    if useCrossPackages && crossZjRadar != null then
+    if !includeZjRadar then
+      null
+    else if useCrossPackages && crossZjRadar != null then
       crossZjRadar.packages.${buildSystem}.zj-radar
     else
       patchedZjRadarForBuild.packages.${targetSystem}.zj-radar;
@@ -135,8 +138,11 @@ in
     jjHunk = final.jj-hunk;
     plannotatorPiExtension =
       if targetSystem == "x86_64-linux" then final.plannotator-pi-extension else null;
+    inherit includeZjRadar;
     zjRadarCli =
-      if useCrossPackages && crossZjRadar != null then
+      if !includeZjRadar then
+        null
+      else if useCrossPackages && crossZjRadar != null then
         crossZjRadar.packages.${buildSystem}.zj-radar-cli
       else
         patchedZjRadarForBuild.packages.${targetSystem}.zj-radar-cli;

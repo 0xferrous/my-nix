@@ -10,6 +10,7 @@
   patchedZjRadarByBuildSystem ? { },
   crossZjRadar ? null,
   crossPackages ? null,
+  includeZjRadar ? true,
   ...
 }:
 let
@@ -79,6 +80,7 @@ in
         patchedZjRadarByBuildSystem
         crossZjRadar
         crossPackages
+        includeZjRadar
         ;
     })
   ]

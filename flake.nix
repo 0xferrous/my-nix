@@ -309,6 +309,7 @@
             inherit patchedZjRadarByBuildSystem;
             crossZjRadar = zjRadarCross;
             crossPackages = crossPkgs;
+            includeZjRadar = false;
           };
           modules = [
             ./config/agent/nixos.nix

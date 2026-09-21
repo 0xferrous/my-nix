@@ -5,6 +5,7 @@
   agentUseBbSource ? true,
   bbPackageOverride ? null,
   includeOpenCodeDesktop ? true,
+  includeZjRadar ? true,
   ...
 }:
 let
@@ -62,18 +63,26 @@ let
     inherit pkgs AIPackages;
     includeOhMyPi = isX86;
   };
-  zjRadar = {
-    default = pkgs.zjRadar;
-  };
   zjRadarPlugin =
-    pkgs.runCommand "zellij-plugin-zj-radar.wasm"
-      {
-        pname = "zellij-zj-radar";
-        meta.platforms = lib.platforms.unix;
-      }
-      ''
-        cp ${zjRadar.default}/bin/zj_radar.wasm "$out"
-      '';
+    if includeZjRadar then
+      pkgs.runCommand "zellij-plugin-zj-radar.wasm"
+        {
+          pname = "zellij-zj-radar";
+          meta.platforms = lib.platforms.unix;
+        }
+        ''
+          cp ${pkgs.zjRadar}/bin/zj_radar.wasm "$out"
+        ''
+    else
+      null;
+  piPackage =
+    if includeZjRadar then
+      pkgs.piDev
+    else
+      pkgs.piDev.override {
+        includeZjRadar = false;
+        zjRadarCli = null;
+      };
   ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
   agentPortalWrappers = pkgs.runCommand "agent-portal-wrappers" { } ''
     cp -R ${myNixInputs.ash.packages.${system}.agent-portal-wrappers} "$out"
@@ -99,7 +108,7 @@ in
       ++ [
         chatgpt
         pkgs.obscura
-        pkgs.piDev
+        piPackage
         pkgs.waypipe
         pkgs.xwayland-satellite
         myNixInputs.codexbar.packages.${system}.default
@@ -296,12 +305,27 @@ in
 
   programs.zellij = {
     enable = true;
-    plugins = [ zjRadarPlugin ];
-    layouts.radar-sidebar = ./zellij-radar.kdl;
+    plugins = lib.optional includeZjRadar zjRadarPlugin;
+    layouts =
+      if includeZjRadar then
+        { radar-sidebar = ./zellij-radar.kdl; }
+      else
+        {
+          default = pkgs.writeText "zellij-default.kdl" ''
+            layout {
+                pane
+                pane size=2 borderless=true {
+                    plugin location="zellij:status-bar"
+                }
+            }
+          '';
+        };
     settings = {
-      default_layout = "radar-sidebar";
+      default_layout = if includeZjRadar then "radar-sidebar" else "default";
       theme = "gruvbox-dark";
       pane_frames = false;
+    }
+    // lib.optionalAttrs includeZjRadar {
       plugins."zj-radar" = {
         density = "cards";
         glyphs = "nerd";
