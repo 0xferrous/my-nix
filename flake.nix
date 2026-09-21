@@ -207,7 +207,7 @@
         crossSystem = "aarch64-linux";
       };
       crossOverlay = import ./pkgs/overlay.nix {
-        inherit inputs system;
+        inherit inputs;
         patchedZjRadar = zjRadar;
         crossZjRadar = zjRadarCross;
       };
@@ -239,7 +239,7 @@
         ];
       };
       overlay = import ./pkgs/overlay.nix {
-        inherit inputs system;
+        inherit inputs;
         patchedZjRadar = zjRadar;
         crossZjRadar = zjRadarCross;
         crossPackages = crossPkgs;
@@ -279,9 +279,8 @@
       mkAgentOciNixos =
         targetSystem:
         inputs.nixpkgs.lib.nixosSystem {
-          # Evaluate the NixOS image for its target platform so native ARM64
-          # substitutes remain usable. Selected source packages are injected
-          # from crossPkgs by the overlay below.
+          # Evaluate the NixOS image for the requested package platform. Nix
+          # derives the applicable build and host handling for the invocation.
           system = targetSystem;
           specialArgs = {
             myNixInputs = inputs;
@@ -295,11 +294,6 @@
           };
           modules = [
             ({ ... }: {
-              # Keep the NixOS closure on the target platform so its package
-              # derivations can match native aarch64 cache entries. The
-              # explicitly selected crossPackages remain injected by overlay.
-              nixpkgs.hostPlatform = targetSystem;
-              nixpkgs.buildPlatform = targetSystem;
               nixpkgs.overlays = [ overlay ];
             })
             ./config/agent/nixos.nix
@@ -310,11 +304,11 @@
         targetSystem:
         let
           agent = mkAgentOciNixos targetSystem;
-          # Assemble the OCI tarball with native host tools. The contents are
-          # still the target NixOS closure, but dockerTools itself need not be
-          # executed through binfmt/QEMU.
+          # Use the package platform selected by the image output. Nix then
+          # chooses the applicable builder and platform handling for the
+          # invocation instead of this flake forcing a host architecture.
           imagePkgs = import inputs.nixpkgs {
-            system = defaultSystem;
+            system = targetSystem;
             overlays = [ overlay ];
           };
         in

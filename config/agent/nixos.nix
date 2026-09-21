@@ -70,7 +70,6 @@ in
   nixpkgs.overlays = [
     (import ../../pkgs/overlay.nix {
       inputs = myNixInputs;
-      system = pkgs.stdenv.hostPlatform.system;
     })
   ]
   # The patched libgit2 is needed by the Ash workspace VM, but applying it

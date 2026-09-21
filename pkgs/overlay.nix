@@ -1,13 +1,19 @@
 {
   inputs,
-  system,
   patchedZjRadar ? inputs.zj-radar,
   crossZjRadar ? null,
   crossPackages ? null,
 }:
 final: prev:
 let
+  buildSystem = final.stdenv.buildPlatform.system;
   targetSystem = final.stdenv.hostPlatform.system;
+  isCross = buildSystem != targetSystem;
+  useCrossPackages =
+    isCross
+    && crossPackages != null
+    && crossPackages.stdenv.buildPlatform.system == buildSystem
+    && crossPackages.stdenv.hostPlatform.system == targetSystem;
   nushellSrc = final.fetchFromGitHub {
     owner = "nushell";
     repo = "nushell";
@@ -19,7 +25,7 @@ in
   # TODO: Remove this source build and use nixpkgs' Nushell 0.116.0 once it
   # is released.
   nushell =
-    if targetSystem == "aarch64-linux" && crossPackages != null then
+    if useCrossPackages then
       crossPackages.nushell
     else
       prev.nushell.overrideAttrs (old: {
@@ -81,10 +87,7 @@ in
     AIPackages = inputs.llm-agents.packages.${targetSystem};
   };
   obscura =
-    if targetSystem == "aarch64-linux" && crossPackages != null then
-      crossPackages.obscura
-    else
-      final.callPackage ./obscura/package.nix { };
+    if useCrossPackages then crossPackages.obscura else final.callPackage ./obscura/package.nix { };
   nash = final.callPackage ./nash.nix { };
   google-authenticator-transfer-decode =
     final.callPackage ./google-authenticator-transfer-decode.nix
@@ -116,12 +119,11 @@ in
   flake-utils = final.callPackage ./flake-utils.nix { };
   gruvbox-gtk-theme = final.callPackage ./gruvbox-gtk-theme.nix { };
   plannotator-pi-extension = final.callPackage ./plannotator-pi-extension.nix { };
-  # Select target packages from the package set being evaluated. This matters
-  # for cross-built images: `system` is the flake's default (build) system,
-  # while the overlay's host platform is the image target.
+  # Select packages from the platform tuple being evaluated. A cross package
+  # set is used only when its build and host platforms match this one.
   zjRadar =
-    if targetSystem == "aarch64-linux" && crossZjRadar != null then
-      crossZjRadar.packages.${system}.zj-radar
+    if useCrossPackages && crossZjRadar != null then
+      crossZjRadar.packages.${buildSystem}.zj-radar
     else
       patchedZjRadar.packages.${targetSystem}.zj-radar;
   pi = final.callPackage ./pi.nix {
@@ -132,8 +134,8 @@ in
     plannotatorPiExtension =
       if targetSystem == "x86_64-linux" then final.plannotator-pi-extension else null;
     zjRadarCli =
-      if targetSystem == "aarch64-linux" && crossZjRadar != null then
-        crossZjRadar.packages.${system}.zj-radar-cli
+      if useCrossPackages && crossZjRadar != null then
+        crossZjRadar.packages.${buildSystem}.zj-radar-cli
       else
         patchedZjRadar.packages.${targetSystem}.zj-radar-cli;
   };
