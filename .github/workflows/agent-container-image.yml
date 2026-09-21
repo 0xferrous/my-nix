@@ -65,9 +65,43 @@ jobs:
         with:
           use-flakehub: false
 
+      - name: Preview image build and cache plan
+        run: |
+          set -o pipefail
+          target=".#packages.${{ matrix.system }}.agent-container-image"
+          nix build --accept-flake-config --dry-run "$target" 2>&1 \
+            | tee image-build-plan.txt
+
+          derivations=$(grep -Ec '^  /nix/store/.*\.drv$' image-build-plan.txt || true)
+          fetched=$(awk '
+            /^these [0-9]+ paths will be fetched:$/ { in_paths = 1; next }
+            in_paths && /^  / { count++; next }
+            in_paths { in_paths = 0 }
+            END { print count + 0 }
+          ' image-build-plan.txt)
+          eval_builds=$(grep -Ec "^building '/nix/store/.*\\.drv'" image-build-plan.txt || true)
+
+          {
+            echo "### Nix image build plan (${{ matrix.system }})"
+            echo
+            echo "- Derivations requiring a local build: $derivations"
+            echo "- Evaluation-time derivations realized: $eval_builds"
+            echo "- Paths fetched from substituters: $fetched"
+            echo
+            echo "Derivations not listed by 'nix build --dry-run' are available from the local store or configured substituters."
+            echo
+            echo '<details><summary>Planned derivations</summary>'
+            echo
+            echo '```text'
+            grep -E '^these [0-9]+ (derivations will be built|paths will be fetched):$|^  /nix/store/.*\\.drv$' image-build-plan.txt || true
+            echo '```'
+            echo
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Build image archive
         run: |
-          nix build --accept-flake-config --print-out-paths \
+          nix build --accept-flake-config --print-build-logs --print-out-paths \
             ".#packages.${{ matrix.system }}.agent-container-image" > image-path.txt
           cp "$(cat image-path.txt)" agent-container.tar
 
