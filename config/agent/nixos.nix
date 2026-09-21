@@ -11,6 +11,7 @@
   crossZjRadar ? null,
   crossPackages ? null,
   includeZjRadar ? true,
+  includeCodexDesktop ? true,
   ...
 }:
 let
@@ -185,11 +186,11 @@ in
       uv
       AIPackages.codex
       AIPackages.opencode
-      codex-desktop
       home-manager
       nvimPackage
       agentPortalWrappers
     ]
+    ++ lib.optional includeCodexDesktop codex-desktop
     ++ lib.optional (system == "x86_64-linux") pkgs.ironclaw;
 
   environment.shellAliases = {

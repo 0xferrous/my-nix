@@ -310,6 +310,7 @@
             crossZjRadar = zjRadarCross;
             crossPackages = crossPkgs;
             includeZjRadar = false;
+            includeCodexDesktop = false;
           };
           modules = [
             ./config/agent/nixos.nix
