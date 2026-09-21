@@ -291,11 +291,11 @@
               impermanence
               nix-index-database
               ;
+            patchedZjRadar = zjRadar;
+            crossZjRadar = zjRadarCross;
+            crossPackages = crossPkgs;
           };
           modules = [
-            ({ ... }: {
-              nixpkgs.overlays = [ overlay ];
-            })
             ./config/agent/nixos.nix
             ./config/agent/oci.nix
           ];
@@ -514,6 +514,9 @@
               impermanence
               nix-index-database
               ;
+            patchedZjRadar = zjRadar;
+            crossZjRadar = zjRadarCross;
+            crossPackages = crossPkgs;
           };
         };
         nash = {
@@ -543,6 +546,9 @@
               impermanence
               nix-index-database
               ;
+            patchedZjRadar = zjRadar;
+            crossZjRadar = zjRadarCross;
+            crossPackages = crossPkgs;
           };
           modules = [
             ./config/agent/nixos.nix
