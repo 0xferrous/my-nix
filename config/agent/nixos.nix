@@ -12,6 +12,7 @@
   crossPackages ? null,
   includeZjRadar ? true,
   includeCodexDesktop ? true,
+  useCustomNushell ? true,
   ...
 }:
 let
@@ -82,6 +83,7 @@ in
         crossZjRadar
         crossPackages
         includeZjRadar
+        useCustomNushell
         ;
     })
   ]

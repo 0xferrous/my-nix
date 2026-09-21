@@ -5,6 +5,7 @@
   crossZjRadar ? null,
   crossPackages ? null,
   includeZjRadar ? true,
+  useCustomNushell ? true,
 }:
 final: prev:
 let
@@ -30,6 +31,8 @@ in
   nushell =
     if useCrossPackages then
       crossPackages.nushell
+    else if !useCustomNushell then
+      prev.nushell
     else
       prev.nushell.overrideAttrs (old: {
         version = "0.115.1-unstable";

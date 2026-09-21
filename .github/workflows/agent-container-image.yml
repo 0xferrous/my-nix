@@ -22,6 +22,11 @@ on:
       - "patches/**"
       - "pkgs/**"
   workflow_dispatch:
+    inputs:
+      commit:
+        description: "Commit SHA, branch, or tag to build and publish"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -48,8 +53,14 @@ jobs:
       IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/fr-agent
 
     steps:
-      - name: Checkout
+      - name: Checkout requested commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit || (github.event_name == 'pull_request' && github.event.pull_request.head.sha) || github.sha }}
+
+      - name: Resolve source commit
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v23
@@ -106,7 +117,7 @@ jobs:
           cp "$(cat image-path.txt)" agent-container.tar
 
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -114,19 +125,28 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push image to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           nix shell nixpkgs#crane -c \
-            crane push agent-container.tar "${IMAGE_NAME}:${GITHUB_SHA}-${{ matrix.architecture }}"
+            crane push agent-container.tar "${IMAGE_NAME}:${{ steps.source.outputs.sha }}-${{ matrix.architecture }}"
 
   publish-manifest:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs: build-and-push
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/fr-agent
 
     steps:
+      - name: Checkout requested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit || (github.event_name == 'pull_request' && github.event.pull_request.head.sha) || github.sha }}
+
+      - name: Resolve source commit
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v23
 
@@ -140,13 +160,13 @@ jobs:
       - name: Publish multi-platform image index
         run: |
           nix shell nixpkgs#crane -c crane index append \
-            -m "${IMAGE_NAME}:${GITHUB_SHA}-amd64" \
-            -m "${IMAGE_NAME}:${GITHUB_SHA}-arm64" \
-            -t "${IMAGE_NAME}:${GITHUB_SHA}"
+            -m "${IMAGE_NAME}:${{ steps.source.outputs.sha }}-amd64" \
+            -m "${IMAGE_NAME}:${{ steps.source.outputs.sha }}-arm64" \
+            -t "${IMAGE_NAME}:${{ steps.source.outputs.sha }}"
 
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+          if [ "${{ github.event_name }}" = "push" ] && [ "${GITHUB_REF_NAME}" = "main" ]; then
             nix shell nixpkgs#crane -c crane index append \
-              -m "${IMAGE_NAME}:${GITHUB_SHA}-amd64" \
-              -m "${IMAGE_NAME}:${GITHUB_SHA}-arm64" \
+              -m "${IMAGE_NAME}:${{ steps.source.outputs.sha }}-amd64" \
+              -m "${IMAGE_NAME}:${{ steps.source.outputs.sha }}-arm64" \
               -t "${IMAGE_NAME}:latest"
           fi

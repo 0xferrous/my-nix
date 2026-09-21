@@ -311,6 +311,7 @@
             crossPackages = crossPkgs;
             includeZjRadar = false;
             includeCodexDesktop = false;
+            useCustomNushell = false;
           };
           modules = [
             ./config/agent/nixos.nix
