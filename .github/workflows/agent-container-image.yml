@@ -114,7 +114,7 @@ jobs:
         run: |
           nix build --accept-flake-config --print-build-logs --print-out-paths \
             ".#packages.${{ matrix.system }}.agent-container-image" > image-path.txt
-          cp "$(cat image-path.txt)" agent-container.tar
+          gzip --decompress --stdout "$(cat image-path.txt)" > agent-container.tar
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
