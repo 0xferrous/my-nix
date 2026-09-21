@@ -50,17 +50,21 @@
 
        src = pkgs.lib.cleanSourceWith {
          src = ./.;
-@@ -55,6 +75,13 @@
-       commonArgs = {
+@@ -56,13 +56,19 @@
+         pname = "zj-radar";
          inherit src;
          strictDeps = true;
 +        # When crossSystem is set, compile the host-side CLI for the target
 +        # platform while keeping cargo, build scripts, and proc macros on the
 +        # build platform.
-+        CARGO_BUILD_TARGET =
-+          nixpkgs.lib.optionalString
-+            (crossSystem != null)
-+            pkgs.stdenv.hostPlatform.rust.rustcTarget;
          # zellij-tile's dependency tree pulls openssl-sys (via isahc → curl);
          # its build script needs openssl + pkg-config present. Shared via
          # commonArgs so both the host checks (test/clippy) and the wasm dep
+         # build can compile it.
+         buildInputs = [pkgs.openssl];
+         nativeBuildInputs = [pkgs.pkg-config];
+-      };
++      }
++      // nixpkgs.lib.optionalAttrs (crossSystem != null) {
++        CARGO_BUILD_TARGET = pkgs.stdenv.hostPlatform.rust.rustcTarget;
++      };
