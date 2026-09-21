@@ -156,6 +156,10 @@ stdenv.mkDerivation (finalAttrs: {
     # their libc.musl dependency from the nix store.
     find "$out/lib/chatgpt" -type d -name '*-musl' -prune -exec rm -rf {} +
     find "$out/lib/chatgpt" -type f -name '*.musl.node' -delete
+    # Android ARM64 prebuilds have the same ELF architecture as Linux ARM64,
+    # so autoPatchelfHook incorrectly inspects them and cannot provide Android
+    # system libraries such as liblog.so and libc++_shared.so.
+    find "$out/lib/chatgpt" -type d -path '*/prebuilds/android-*' -prune -exec rm -rf {} +
 
     # The app preserves the Nix store's read-only modes when copying bundled
     # plugins into the codex home (resources/plugins -> ~/.codex/.tmp/...), so

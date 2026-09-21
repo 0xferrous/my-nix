@@ -186,7 +186,10 @@
           {
             name = "zj-radar-patched";
             src = inputs.zj-radar.outPath;
-            patches = [ ./patches/zj-radar-crane-name.patch ];
+            patches = [
+              ./patches/zj-radar-crane-name.patch
+              ./patches/zj-radar-cross-compile.patch
+            ];
           };
       zjRadar = (import "${zjRadarSource}/flake.nix").outputs {
         self = null;
@@ -195,9 +198,51 @@
         crane = inputs.zj-radar.inputs.crane;
         flake-utils = inputs.zj-radar.inputs.flake-utils;
       };
+      zjRadarCross = (import "${zjRadarSource}/flake.nix").outputs {
+        self = null;
+        nixpkgs = inputs.nixpkgs;
+        fenix = inputs.fenix;
+        crane = inputs.zj-radar.inputs.crane;
+        flake-utils = inputs.zj-radar.inputs.flake-utils;
+        crossSystem = "aarch64-linux";
+      };
+      crossOverlay = import ./pkgs/overlay.nix {
+        inherit inputs system;
+        patchedZjRadar = zjRadar;
+        crossZjRadar = zjRadarCross;
+      };
+      crossPkgs = import inputs.nixpkgs {
+        inherit system;
+        crossSystem = inputs.nixpkgs.lib.systems.elaborate "aarch64-linux";
+        overlays = [ crossOverlay ];
+        config.allowUnfreePredicate =
+          pkg:
+          builtins.elem (pkg.pname or "") [
+            "codex-desktop"
+            "android-sdk-build-tools"
+            "android-sdk-cmdline-tools"
+            "cmake"
+            "android-sdk-ndk"
+            "android-sdk-platform-tools"
+            "android-sdk-platforms"
+            "android-sdk-tools"
+            "build-tools"
+            "cmdline-tools"
+            "ndk"
+            "platform-tools"
+            "platforms"
+            "tools"
+          ];
+        config.permittedInsecurePackages = [
+          "gradle-7.6.6"
+          "pnpm-9.15.9"
+        ];
+      };
       overlay = import ./pkgs/overlay.nix {
         inherit inputs system;
         patchedZjRadar = zjRadar;
+        crossZjRadar = zjRadarCross;
+        crossPackages = crossPkgs;
       };
       pkgs = import inputs.nixpkgs {
         inherit system;
@@ -234,6 +279,9 @@
       mkAgentOciNixos =
         targetSystem:
         inputs.nixpkgs.lib.nixosSystem {
+          # Evaluate the NixOS image for its target platform so native ARM64
+          # substitutes remain usable. Selected source packages are injected
+          # from crossPkgs by the overlay below.
           system = targetSystem;
           specialArgs = {
             myNixInputs = inputs;
@@ -246,6 +294,14 @@
               ;
           };
           modules = [
+            ({ ... }: {
+              # Keep the NixOS closure on the target platform so its package
+              # derivations can match native aarch64 cache entries. The
+              # explicitly selected crossPackages remain injected by overlay.
+              nixpkgs.hostPlatform = targetSystem;
+              nixpkgs.buildPlatform = targetSystem;
+              nixpkgs.overlays = [ overlay ];
+            })
             ./config/agent/nixos.nix
             ./config/agent/oci.nix
           ];
@@ -254,7 +310,13 @@
         targetSystem:
         let
           agent = mkAgentOciNixos targetSystem;
-          imagePkgs = import inputs.nixpkgs { system = targetSystem; };
+          # Assemble the OCI tarball with native host tools. The contents are
+          # still the target NixOS closure, but dockerTools itself need not be
+          # executed through binfmt/QEMU.
+          imagePkgs = import inputs.nixpkgs {
+            system = defaultSystem;
+            overlays = [ overlay ];
+          };
         in
         imagePkgs.dockerTools.buildLayeredImageWithNixDb {
           name = "fr-agent";
@@ -430,7 +492,11 @@
       };
       homeConfigurations.agent = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs.myNixInputs = inputs;
+        extraSpecialArgs = {
+          myNixInputs = inputs;
+          agentUseBbSource = true;
+          bbPackageOverride = null;
+        };
         modules = [ ./config/agent/home.nix ];
       };
 

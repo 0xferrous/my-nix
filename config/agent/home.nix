@@ -4,6 +4,7 @@
   myNixInputs,
   agentUseBbSource ? true,
   bbPackageOverride ? null,
+  includeOpenCodeDesktop ? true,
   ...
 }:
 let
@@ -14,7 +15,11 @@ let
   upstreamOpenCode = myNixInputs.opencode.packages.${system}.opencode;
   opencode = upstreamOpenCode.override {
     node_modules = upstreamOpenCode.node_modules.override {
-      hash = "sha256-SVvFPO+KuS67+6XGPhaB3cIuc3XUyM0XVccy5v8afS4=";
+      hash =
+        if system == "aarch64-linux" then
+          "sha256-HJRrSu5u0TEg214d2RAbM1C+nmrxvIR/d7JlSBOGb9I="
+        else
+          "sha256-SVvFPO+KuS67+6XGPhaB3cIuc3XUyM0XVccy5v8afS4=";
     };
   };
   bbPackage =
@@ -101,8 +106,8 @@ in
         agentPortalWrappers
         myNixInputs.ash.packages.${system}."ash-dbus-proxy"
         AIPackages.opencode2
-        opencodeDesktop
       ]
+      ++ lib.optional includeOpenCodeDesktop opencodeDesktop
       ++ devEssentialsPackages;
     # Same iron-proxy tunnel as the system session (proxy.sessionEnv plus
     # lowercase proxy.sessionEnvLower — Bun/Node only honor lowercase

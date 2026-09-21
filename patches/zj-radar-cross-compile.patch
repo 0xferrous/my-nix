@@ -1,0 +1,66 @@
+--- a/flake.nix
++++ b/flake.nix
+@@ -17,21 +17,39 @@
+     fenix,
+     crane,
+     flake-utils,
++    crossSystem ? null,
+   }:
+     flake-utils.lib.eachDefaultSystem (system: let
+-      pkgs = import nixpkgs {inherit system;};
+-      fx = fenix.packages.${system};
++      pkgs = import nixpkgs (
++        {
++          inherit system;
++        }
++        // nixpkgs.lib.optionalAttrs (crossSystem != null) {
++          crossSystem = nixpkgs.lib.systems.elaborate crossSystem;
++        }
++      );
+       # Minimal host toolchain + the wasm32-wasip1 std the Zellij plugin
+       # compiles against. Avoid fx.stable.toolchain here: it pulls extra
+       # rust-docs/rust-src/rust-analyzer components into the dev hot path.
+-      toolchain = fx.combine [
+-        fx.stable.cargo
+-        fx.stable.clippy
+-        fx.stable.rustc
+-        fx.stable.rustfmt
+-        fx.targets.wasm32-wasip1.stable.rust-std
+-      ];
+-      craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
++      mkToolchain = p:
++        let
++          fx = fenix.packages.${p.stdenv.buildPlatform.system};
++          targetRustStd = [
++            fx.targets.${p.stdenv.hostPlatform.rust.rustcTarget}.stable.rust-std
++          ];
++        in
++        fx.combine (
++          [
++            fx.stable.cargo
++            fx.stable.clippy
++            fx.stable.rustc
++            fx.stable.rustfmt
++            fx.targets.wasm32-wasip1.stable.rust-std
++          ]
++          ++ targetRustStd
++        );
++      toolchain = mkToolchain pkgs;
++      craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
+
+       src = pkgs.lib.cleanSourceWith {
+         src = ./.;
+@@ -55,6 +75,13 @@
+       commonArgs = {
+         inherit src;
+         strictDeps = true;
++        # When crossSystem is set, compile the host-side CLI for the target
++        # platform while keeping cargo, build scripts, and proc macros on the
++        # build platform.
++        CARGO_BUILD_TARGET =
++          nixpkgs.lib.optionalString
++            (crossSystem != null)
++            pkgs.stdenv.hostPlatform.rust.rustcTarget;
+         # zellij-tile's dependency tree pulls openssl-sys (via isahc → curl);
+         # its build script needs openssl + pkg-config present. Shared via
+         # commonArgs so both the host checks (test/clippy) and the wasm dep
