@@ -3,24 +3,20 @@
   lib,
   pkgs,
   home-manager,
-  impermanence,
   myNixInputs,
   nix-index-database,
+  impermanence,
+  includeCodexDesktop ? true,
+  useCustomNushell ? true,
   ...
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
   AIPackages = myNixInputs.llm-agents.packages.${system};
-  agentPortalWrappers = myNixInputs.ash.packages.${system}.agent-portal-wrappers;
   nvimPackage = if config.boot.isContainer then pkgs.neovim else pkgs.frsNvimPackage;
   impermanenceRoot = "/persist";
-  ashHostCacheUrl = "http://192.168.127.1:5000";
-  proxy = import ./proxy.nix;
+  cfg = config.fr.agent.selfUpdate;
   binaryCaches = [
-    {
-      url = "${ashHostCacheUrl}?priority=30";
-      key = "nixos-1:TpdALX3FryCxN1I/WG+lhTeme19H/Ka035MJchdsYH4=";
-    }
     {
       url = "https://cache.nixos.org";
       key = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
@@ -50,468 +46,347 @@ let
   };
 in
 {
+  options.fr.agent.impermanence.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "Persist the agent state through impermanence.";
+  };
+
+  options.fr.agent.selfUpdate = {
+    enable = lib.mkEnableOption "automatic agent NixOS and Home Manager updates";
+    workspace = lib.mkOption {
+      type = lib.types.str;
+      default = "/home/agent/dev/fr/my-nix";
+      description = "Mounted flake workspace used for automatic updates.";
+    };
+    nixosTarget = lib.mkOption {
+      type = lib.types.str;
+      default = "agent";
+      description = "NixOS configuration selected by the automatic system update.";
+    };
+    homeTarget = lib.mkOption {
+      type = lib.types.str;
+      default = "agent";
+      description = "Home Manager configuration selected by the automatic user update.";
+    };
+  };
+
   imports = [
-    ../../modules/nixos/ash-vm-mdns.nix
-    myNixInputs.ash-stable.nixosModules.ashGuest
     impermanence.nixosModules.impermanence
     nix-index-database.nixosModules.nix-index
   ];
 
-  virtualisation.ash-guest = {
-    enable = true;
-    user = "agent";
-    emptyPassword = false;
-    sshReadySignal = {
-      afterUnits = [ "agent-home-switch.service" ];
-      requiredUnits = [ "agent-home-switch.service" ];
-    };
-  };
+  config = {
+    nixpkgs.overlays = [
+      (import ../../pkgs/overlay.nix {
+        inputs = myNixInputs;
+        inherit useCustomNushell;
+      })
+    ]
+    # The patched libgit2 is needed by the Ash workspace VM, but applying it
+    # globally to container-style targets forces Nix itself and its test suite
+    # to rebuild.
+    ++ lib.optional (!config.boot.isContainer) (
+      _final: prev: {
+        libgit2 = prev.libgit2.overrideAttrs {
+          src = myNixInputs.libgit2-patched;
+        };
+      }
+    );
 
-  nixpkgs.overlays = [
-    (import ../../pkgs/overlay.nix {
-      inputs = myNixInputs;
-      system = pkgs.stdenv.hostPlatform.system;
-    })
-  ]
-  # The patched libgit2 is needed by the Ash workspace VM, but applying it
-  # globally in the OCI image forces Nix itself and its test suite to rebuild.
-  ++ lib.optional (!config.boot.isContainer) (
-    _final: prev: {
-      libgit2 = prev.libgit2.overrideAttrs {
-        src = myNixInputs.libgit2-patched;
-      };
-    }
-  );
-
-  # Allow only the unfree ChatGPT/Codex desktop app (codex-desktop); the rest
-  # of the agent VM stays on free software.
-  nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "codex-desktop";
-  nixpkgs.config.permittedInsecurePackages = [
-    "gradle-7.6.6"
-    "pnpm-9.15.9"
-  ];
-
-  nix.settings = {
-    experimental-features = [
-      "nix-command"
-      "flakes"
-      "local-overlay-store"
-      "read-only-local-store"
+    # Allow only the unfree ChatGPT/Codex desktop app (codex-desktop); the rest
+    # of the agent VM stays on free software.
+    nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "codex-desktop";
+    nixpkgs.config.permittedInsecurePackages = [
+      "gradle-7.6.6"
+      "pnpm-9.15.9"
     ];
-    substituters = map (cache: cache.url) binaryCaches;
-    fsync-metadata = false;
-    trusted-public-keys = map (cache: cache.key) binaryCaches;
-    trusted-substituters = map (cache: cache.url) binaryCaches;
-    # SQLite WAL mode fails with disk I/O errors on Ash's writable VirtioFS
-    # share, which backs the local-overlay store state database.
-    use-sqlite-wal = false;
-  };
 
-  # nix (via libgit2) refuses to open git repos not owned by the current user.
-  # The my-nix workspace share is owned by `agent`, but agent-auto-switch runs
-  # as root, so mark the repo safe in the system gitconfig.
-  environment.etc."gitconfig".text = ''
-    [safe]
-      directory = /home/agent/dev/fr/my-nix
-  '';
+    nix.settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      substituters = map (cache: cache.url) binaryCaches;
+      trusted-public-keys = map (cache: cache.key) binaryCaches;
+      trusted-substituters = map (cache: cache.url) binaryCaches;
+    };
 
-  # Route agent-tool HTTP(S) egress through the host iron-proxy tunnel so it
-  # can inject real credentials; the proxy is configured with secrets-only
-  # transforms (no allowlist), so nothing is blocked. The Ash bridge, host
-  # cache (192.168.127.1:5000), mDNS, and Tailscale stay in NO_PROXY.
-  # Shared tunnel env comes from proxy.nix (both cases); only login-only
-  # extras are defined inline below.
-  environment.sessionVariables =
-    proxy.sessionEnv
-    // proxy.sessionEnvLower
-    // {
+    environment.sessionVariables = {
       EDITOR = "nvim";
-      HARMONIA_CACHE_URL = ashHostCacheUrl;
       PLANNOTATOR_REMOTE = "1";
       PLANNOTATOR_PORT = "19432";
     };
 
-  # Trust the host iron-proxy MITM CA so proxied HTTPS (and the injected
-  # credentials) verify cleanly in the guest. The cert is committed next to
-  # the fr.iron-proxy module; the matching private key never leaves the host.
-  security.pki.certificateFiles = [ ../../modules/nixos/iron-proxy-ca.crt ];
+    # Agent workloads commonly run many file watchers and subprocesses in the
+    # same long-lived SSH or user-systemd session. Keep their descriptor ceiling
+    # comfortably above systemd's default and apply it consistently to services,
+    # user services, and PAM-created login sessions.
+    systemd.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
+    systemd.user.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
 
-  # Agent workloads commonly run many file watchers and subprocesses in the
-  # same long-lived SSH or user-systemd session. Keep their descriptor ceiling
-  # comfortably above systemd's default and apply it consistently to services,
-  # user services, and PAM-created login sessions.
-  systemd.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
-  systemd.user.settings.Manager.DefaultLimitNOFILE = "1048576:1048576";
-
-  # Electron workloads such as codex-desktop can exceed the agent VM's 4 GiB
-  # of RAM. Compressed swap prevents the kernel from killing renderers under
-  # short-lived memory pressure without requiring persistent disk swap.
-  zramSwap = {
-    enable = true;
-    memoryPercent = 100;
-  };
-
-  security.pam.loginLimits = [
-    {
-      domain = "*";
-      type = "-";
-      item = "nofile";
-      value = "1048576";
-    }
-  ];
-
-  fonts.packages = with pkgs; [
-    recursive
-    nerd-fonts.recursive-mono
-  ];
-
-  environment.systemPackages = with pkgs; [
-    kitty.terminfo
-    poetry
-    python3
-    uv
-    AIPackages.codex
-    AIPackages.opencode
-    codex-desktop
-    home-manager
-    nvimPackage
-    ironclaw
-    agentPortalWrappers
-  ];
-
-  environment.shellAliases = {
-    vi = "nvim";
-    vim = "nvim";
-    vimdiff = "nvim -d";
-  };
-
-  fr.ash-vm-mdns.enable = true;
-
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
-  };
-
-  programs.nix-index.enable = true;
-  programs.nix-index-database.comma.enable = true;
-  programs.nix-ld.enable = true;
-
-  services.openssh = {
-    enable = true;
-    settings = opensshSettings;
-  };
-
-  # Self-update: rebuild this VM from the my-nix flake right after boot so
-  # config changes made on the host reach the VM without manual steps. The
-  # timers fire almost immediately; the services wait on their real
-  # prerequisites (network-online, nix-daemon, the my-nix share) instead of
-  # delaying the trigger. The workspace share is a plain virtiofs mount
-  # created by Ash after boot (it only appears in /proc/self/mountinfo, not as
-  # a systemd mount unit), so poll for it rather than ordering after a unit.
-  # Every echo and all of the nixos-rebuild output lands in journald under
-  # this unit for debugging.
-  #
-  # Deliberately NOT wantedBy multi-user.target: a switch's activation
-  # re-triggers multi-user.target, which NixOS orders after its wantedBy
-  # units, so a switch running inside such a unit deadlocks on its own
-  # activation. A boot timer decouples the switch from that transaction.
-  systemd.timers.agent-auto-switch = {
-    description = "Trigger the agent NixOS self-update right after boot";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "0s";
+    zramSwap = {
+      enable = true;
+      memoryPercent = 100;
     };
-  };
 
-  systemd.services.agent-auto-switch = {
-    description = "Rebuild agent NixOS from the my-nix flake";
-    wants = [ "network-online.target" ];
-    after = [
-      "network-online.target"
-      "nix-daemon.service"
-      # The NixOS switch runs after the fast, user-level home-manager switch:
-      # it re-triggers multi-user.target and restarts sshd, so it stays last.
-      "agent-home-switch.service"
+    security.pam.loginLimits = [
+      {
+        domain = "*";
+        type = "-";
+        item = "nofile";
+        value = "1048576";
+      }
     ];
-    environment.NO_COLOR = "1";
-    serviceConfig = {
-      Type = "oneshot";
-      # Rebuilds can be slow on a cold cache; never let systemd kill them.
-      TimeoutStartSec = "infinity";
-    };
-    script = ''
-      echo "agent-auto-switch: starting, waiting for my-nix share"
-      attempts=0
-      while [ "$attempts" -lt 60 ]; do
-        if ${pkgs.util-linux}/bin/findmnt /home/agent/dev/fr/my-nix >/dev/null 2>&1; then
-          break
-        fi
-        attempts=$((attempts + 1))
-        echo "agent-auto-switch: my-nix share not mounted yet (attempt $attempts/60); retrying in 5s"
-        ${pkgs.coreutils}/bin/sleep 5
-      done
-      if [ "$attempts" -ge 60 ]; then
-        echo "agent-auto-switch: my-nix share did not appear after 60 attempts (300s); aborting" >&2
-        exit 1
-      fi
-      echo "agent-auto-switch: my-nix share is up"
 
-      # nixos-rebuild-ng activates through a fixed-name transient unit
-      # (nixos-rebuild-switch-to-configuration.service). If a switch is already
-      # activating (e.g. a manual one), skip instead of colliding with it.
-      if ${pkgs.systemd}/bin/systemctl is-active --quiet nixos-rebuild-switch-to-configuration.service 2>/dev/null; then
-        echo "agent-auto-switch: a switch is already activating; skipping this run" >&2
-        exit 0
-      fi
-
-      # Serialize with any other instance of this service.
-      ${pkgs.util-linux}/bin/flock -n /run/agent-auto-switch.lock ${pkgs.bash}/bin/bash -c '
-        set -e
-        echo "agent-auto-switch: starting nixos-rebuild switch"
-        ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch \
-          --flake /home/agent/dev/fr/my-nix#agent \
-          --accept-flake-config
-        echo "agent-auto-switch: switch completed successfully"
-      '
-      rc=$?
-      if [ "$rc" -ne 0 ]; then
-        echo "agent-auto-switch: switch failed (or lock busy); see journal for details" >&2
-        exit "$rc"
-      fi
-    '';
-  };
-
-  # Home-manager is deliberately NOT wired into nixos-rebuild (the NixOS module
-  # was removed); the agent home config is rebuilt by this boot timer instead.
-  # The home switch runs first (fast, user-level, no sshd disruption) and the
-  # NixOS switch is ordered after it.
-  systemd.timers.agent-home-switch = {
-    description = "Trigger the agent home-manager rebuild after the NixOS switch";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "0s";
-    };
-  };
-
-  systemd.services.agent-home-switch = {
-    description = "Rebuild agent home-manager config from the my-nix flake";
-    wants = [ "network-online.target" ];
-    after = [
-      "network-online.target"
-      "nix-daemon.service"
+    fonts.packages = with pkgs; [
+      recursive
+      nerd-fonts.recursive-mono
     ];
-    path = [
-      pkgs.home-manager
-      pkgs.nix
-      pkgs.git
-    ];
-    environment = {
-      NO_COLOR = "1";
-      # Activation runs as the agent user and needs the user session bus.
-      XDG_RUNTIME_DIR = "/run/user/1000";
-      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/1000/bus";
-      NIX_CONFIG = "accept-flake-config = true";
-    };
-    serviceConfig = {
-      Type = "oneshot";
-      User = "agent";
-      TimeoutStartSec = "infinity";
-    };
-    script = ''
-      echo "agent-home-switch: starting, waiting for my-nix share"
-      attempts=0
-      while [ "$attempts" -lt 60 ]; do
-        if ${pkgs.util-linux}/bin/findmnt /home/agent/dev/fr/my-nix >/dev/null 2>&1; then
-          break
-        fi
-        attempts=$((attempts + 1))
-        echo "agent-home-switch: my-nix share not mounted yet (attempt $attempts/60); retrying in 5s"
-        ${pkgs.coreutils}/bin/sleep 5
-      done
-      if [ "$attempts" -ge 60 ]; then
-        echo "agent-home-switch: my-nix share did not appear after 60 attempts (300s); aborting" >&2
-        exit 1
-      fi
-      echo "agent-home-switch: my-nix share is up; starting home-manager switch"
 
-      # The timer fires right after boot, so the user session bus may not be up
-      # yet; home-manager activation needs it for systemctl --user.
-      attempts=0
-      while [ ! -S /run/user/1000/bus ]; do
-        attempts=$((attempts + 1))
+    environment.systemPackages =
+      with pkgs;
+      [
+        git
+        kitty.terminfo
+        nix
+        nh
+        poetry
+        python3
+        uv
+        AIPackages.codex
+        AIPackages.opencode
+        home-manager
+        nvimPackage
+      ]
+      ++ lib.optional includeCodexDesktop codex-desktop
+      ++ lib.optional (system == "x86_64-linux") pkgs.ironclaw;
+
+    environment.shellAliases = {
+      vi = "nvim";
+      vim = "nvim";
+      vimdiff = "nvim -d";
+    };
+
+    programs.direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+
+    programs.nix-index.enable = true;
+    programs.nix-index-database.comma.enable = true;
+    programs.nix-ld.enable = true;
+
+    services.openssh = {
+      enable = true;
+      settings = opensshSettings;
+    };
+
+    services.tailscale.enable = true;
+    services.journald.storage = "persistent";
+
+    systemd.timers.agent-auto-switch = lib.mkIf cfg.enable {
+      description = "Trigger the agent NixOS self-update right after boot";
+      wantedBy = [ "timers.target" ];
+      timerConfig.OnBootSec = "0s";
+    };
+
+    systemd.services.agent-auto-switch = lib.mkIf cfg.enable {
+      description = "Rebuild agent NixOS from the configured flake";
+      wants = [ "network-online.target" ];
+      after = [
+        "network-online.target"
+        "nix-daemon.service"
+        "agent-home-switch.service"
+      ];
+      environment.NO_COLOR = "1";
+      serviceConfig = {
+        Type = "oneshot";
+        TimeoutStartSec = "infinity";
+      };
+      script = ''
+        echo "agent-auto-switch: starting, waiting for flake workspace"
+        attempts=0
+        while [ "$attempts" -lt 60 ]; do
+          if ${pkgs.util-linux}/bin/findmnt ${lib.escapeShellArg cfg.workspace} >/dev/null 2>&1; then
+            break
+          fi
+          attempts=$((attempts + 1))
+          echo "agent-auto-switch: flake workspace not mounted yet (attempt $attempts/60); retrying in 5s"
+          ${pkgs.coreutils}/bin/sleep 5
+        done
         if [ "$attempts" -ge 60 ]; then
-          echo "agent-home-switch: user session bus not found after 60s; continuing anyway" >&2
-          break
+          echo "agent-auto-switch: flake workspace did not appear after 300s; aborting" >&2
+          exit 1
         fi
-        ${pkgs.coreutils}/bin/sleep 1
-      done
 
-      ${pkgs.util-linux}/bin/flock -n /run/user/1000/agent-home-switch.lock ${pkgs.bash}/bin/bash -c '
-        set -e
-        echo "agent-home-switch: running home-manager switch"
-        ${pkgs.home-manager}/bin/home-manager switch \
-          --flake /home/agent/dev/fr/my-nix#agent
-        echo "agent-home-switch: switch completed successfully"
-      '
-      rc=$?
-      if [ "$rc" -ne 0 ]; then
-        echo "agent-home-switch: switch failed (or lock busy); see journal for details" >&2
-        exit "$rc"
-      fi
-    '';
-  };
+        if ${pkgs.systemd}/bin/systemctl is-active --quiet nixos-rebuild-switch-to-configuration.service 2>/dev/null; then
+          echo "agent-auto-switch: a switch is already activating; skipping this run" >&2
+          exit 0
+        fi
 
-  # dbus-broker live-reloads policy when the Nix store overlay changes during a
-  # switch. In the agent VM this can briefly observe missing config symlinks and
-  # leave the bus with a policy that denies even root's systemd calls.
-  services.dbus.implementation = "dbus";
+        ${pkgs.util-linux}/bin/flock -n /run/agent-auto-switch.lock ${pkgs.bash}/bin/bash -c '
+          set -e
+          ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch \
+            --flake ${lib.escapeShellArg "${cfg.workspace}#${cfg.nixosTarget}"} \
+            --accept-flake-config
+        '
+      '';
+    };
 
-  services.resolved = {
-    enable = true;
-    settings.Resolve = {
-      Cache = "yes";
-      DNSOverTLS = "yes";
-      DNSSEC = "allow-downgrade";
-      DNSStubListener = "yes";
-      DNS = [
-        "1.1.1.1#cloudflare-dns.com"
-        "1.0.0.1#cloudflare-dns.com"
+    systemd.timers.agent-home-switch = lib.mkIf cfg.enable {
+      description = "Trigger the agent Home Manager rebuild after the NixOS switch";
+      wantedBy = [ "timers.target" ];
+      timerConfig.OnBootSec = "0s";
+    };
+
+    systemd.services.agent-home-switch = lib.mkIf cfg.enable {
+      description = "Rebuild agent Home Manager config from the configured flake";
+      wants = [ "network-online.target" ];
+      after = [
+        "network-online.target"
+        "nix-daemon.service"
       ];
-      FallbackDNS = [
-        "1.1.1.1#cloudflare-dns.com"
-        "1.0.0.1#cloudflare-dns.com"
-        "9.9.9.9#dns.quad9.net"
-        "149.112.112.112#dns.quad9.net"
+      path = [
+        pkgs.home-manager
+        pkgs.nix
+        pkgs.git
+      ];
+      environment = {
+        NO_COLOR = "1";
+        XDG_RUNTIME_DIR = "/run/user/1000";
+        DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/1000/bus";
+        NIX_CONFIG = "accept-flake-config = true";
+      };
+      serviceConfig = {
+        Type = "oneshot";
+        User = "agent";
+        TimeoutStartSec = "infinity";
+      };
+      script = ''
+        echo "agent-home-switch: starting, waiting for flake workspace"
+        attempts=0
+        while [ "$attempts" -lt 60 ]; do
+          if ${pkgs.util-linux}/bin/findmnt ${lib.escapeShellArg cfg.workspace} >/dev/null 2>&1; then
+            break
+          fi
+          attempts=$((attempts + 1))
+          ${pkgs.coreutils}/bin/sleep 5
+        done
+        if [ "$attempts" -ge 60 ]; then
+          echo "agent-home-switch: flake workspace did not appear after 300s; aborting" >&2
+          exit 1
+        fi
+
+        attempts=0
+        while [ ! -S /run/user/1000/bus ]; do
+          attempts=$((attempts + 1))
+          if [ "$attempts" -ge 60 ]; then
+            echo "agent-home-switch: user session bus not found after 60s; continuing anyway" >&2
+            break
+          fi
+          ${pkgs.coreutils}/bin/sleep 1
+        done
+
+        ${pkgs.util-linux}/bin/flock -n /run/user/1000/agent-home-switch.lock ${pkgs.bash}/bin/bash -c '
+          set -e
+          ${pkgs.home-manager}/bin/home-manager switch \
+            --flake ${lib.escapeShellArg "${cfg.workspace}#${cfg.homeTarget}"}
+        '
+      '';
+    };
+
+    environment.shells = [ pkgs.nushell ];
+
+    users.users.agent = {
+      isNormalUser = true;
+      uid = 1000;
+      group = "users";
+      home = "/home/agent";
+      createHome = true;
+      linger = true;
+      shell = pkgs.nushell;
+      extraGroups = [ "wheel" ];
+      hashedPassword = "!";
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGIBIABk26sFfyg3iuOTK+6iZ2RhkiNXEJZ8wmgDUrhB"
       ];
     };
-  };
-  services.tailscale.enable = true;
 
-  # Agent VMs run behind the host-only Ash bridge. Allow host access to any
-  # service started inside the guest without maintaining a per-port allowlist.
-  networking.firewall.enable = false;
-  networking.nameservers = lib.mkForce [ ];
+    security.sudo.wheelNeedsPassword = false;
 
-  environment.shells = [ pkgs.nushell ];
-
-  users.users.agent = {
-    isNormalUser = true;
-    uid = 1000;
-    group = "users";
-    home = "/home/agent";
-    createHome = true;
-    linger = true;
-    shell = pkgs.nushell;
-    extraGroups = [ "wheel" ];
-    hashedPassword = "!";
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGIBIABk26sFfyg3iuOTK+6iZ2RhkiNXEJZ8wmgDUrhB"
+    systemd.tmpfiles.rules = [
+      "d /run/user/1000 0700 agent users - -"
+      "d /run/user/1000/gnupg 0700 agent users - -"
+      "r /run/user/1000/gnupg/S.gpg-agent - - - - -"
     ];
-  };
 
-  security.sudo.wheelNeedsPassword = false;
-
-  systemd.tmpfiles.rules = [
-    "d /run/user/1000 0700 agent users - -"
-    "d /run/user/1000/gnupg 0700 agent users - -"
-    "r /run/user/1000/gnupg/S.gpg-agent - - - - -"
-  ];
-
-  systemd.services.agent-tmpfiles-create = {
-    description = "Create agent runtime tmpfiles";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-tmpfiles-setup.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "/run/current-system/systemd/bin/systemd-tmpfiles --create";
+    systemd.services.agent-tmpfiles-create = {
+      description = "Create agent runtime tmpfiles";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "systemd-tmpfiles-setup.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "/run/current-system/systemd/bin/systemd-tmpfiles --create";
+      };
     };
+
+    boot.kernel.sysctl = {
+      "fs.inotify.max_queued_events" = 65536;
+      "fs.inotify.max_user_instances" = 1048576;
+      "fs.inotify.max_user_watches" = 2097152;
+      "kernel.unprivileged_userns_clone" = 1;
+      "vm.vfs_cache_pressure" = 1000;
+    };
+
+    environment.persistence.${impermanenceRoot} = lib.mkIf config.fr.agent.impermanence.enable {
+      files = lib.optional (!config.boot.isContainer) "/etc/machine-id";
+      directories = [
+        "/var/lib/nixos"
+        "/var/lib/tailscale"
+        "/var/log/journal"
+      ];
+      users.agent.files = [ ];
+      users.agent.directories = [
+        ".cargo"
+        ".codex"
+        ".config/Codex"
+        ".bb"
+        ".config/bb"
+        ".bb-machines"
+        ".foundry"
+        ".config/gh"
+        ".config/git"
+        ".config/herdr"
+        ".ironclaw"
+        ".t3"
+        ".config/T3 Code (Alpha)"
+        ".config/t3code"
+        ".config/systemd/user"
+        ".config/jj"
+        ".local/state/nix"
+        ".config/nushell"
+        ".omp"
+        ".config/opencode"
+        ".config/ai.opencode.desktop"
+        ".config/ai.opencode.desktop.dev"
+        ".local/share/opencode"
+        ".local/state/opencode"
+        ".cache/opencode"
+        ".pi"
+        ".cache/pypoetry"
+        ".config/pypoetry"
+        ".local/share/pypoetry"
+        ".prime"
+        ".config/sops"
+        ".ssh"
+        ".supermaven"
+        ".cache/uv"
+        ".local/share/uv"
+        ".local/share/zoxide"
+      ];
+    };
+
+    system.stateVersion = "26.05";
   };
-
-  boot.kernel.sysctl = {
-    "fs.inotify.max_queued_events" = 65536;
-    "fs.inotify.max_user_instances" = 1048576;
-    "fs.inotify.max_user_watches" = 2097152;
-    "kernel.unprivileged_userns_clone" = 1;
-    "vm.vfs_cache_pressure" = 1000;
-  };
-
-  services.journald.storage = "persistent";
-
-  environment.persistence.${impermanenceRoot} = {
-    files = [
-      "/etc/machine-id"
-    ];
-    directories = [
-      "/var/lib/nixos"
-      "/var/lib/tailscale"
-      "/var/log/journal"
-    ];
-    users.agent.files = [
-    ];
-    users.agent.directories = [
-      # cargo / rust
-      ".cargo"
-      # codex
-      ".codex"
-      ".config/Codex"
-      # bb app/server/host daemon state, including the database, credentials, threads, worktrees, plugins, and logs
-      ".bb"
-      # bb desktop Electron user data, including the selected server, Connect credential, and window state
-      ".config/bb"
-      # host-daemon state for machines joined to remote bb servers
-      ".bb-machines"
-      # foundry
-      ".foundry"
-      # gh
-      ".config/gh"
-      # git
-      ".config/git"
-      # herdr
-      ".config/herdr"
-      # ironclaw
-      ".ironclaw"
-      # t3code (server state, credentials, runtime, tools, and worktrees)
-      ".t3"
-      # t3code desktop (current and legacy production Electron profiles)
-      ".config/T3 Code (Alpha)"
-      ".config/t3code"
-      ".config/systemd/user"
-      # jj
-      ".config/jj"
-      # nix
-      ".local/state/nix"
-      # nushell
-      ".config/nushell"
-      # oh-my-pi
-      ".omp"
-      # opencode (CLI + desktop)
-      ".config/opencode"
-      ".config/ai.opencode.desktop"
-      ".config/ai.opencode.desktop.dev"
-      ".local/share/opencode"
-      ".local/state/opencode"
-      ".cache/opencode"
-      # pi
-      ".pi"
-      # poetry
-      ".cache/pypoetry"
-      ".config/pypoetry"
-      ".local/share/pypoetry"
-      # prime
-      ".prime"
-      # sops
-      ".config/sops"
-      # ssh
-      ".ssh"
-      # supermaven
-      ".supermaven"
-      # uv
-      ".cache/uv"
-      ".local/share/uv"
-      # zoxide
-      ".local/share/zoxide"
-    ];
-  };
-
-  system.stateVersion = "26.05";
 }

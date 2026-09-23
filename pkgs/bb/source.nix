@@ -32,6 +32,7 @@ let
   pname = "bb-source";
   version = "0.43.0";
   pnpm = pnpm_9;
+  electronArch = if stdenv.hostPlatform.system == "aarch64-linux" then "arm64" else "x64";
   pnpmWorkspaces = [
     "bb-app..."
     "@bb/app..."
@@ -46,7 +47,7 @@ let
   ];
   pnpmInstallFlags = [
     "--config.supportedArchitectures.os=linux"
-    "--config.supportedArchitectures.cpu=x64"
+    "--config.supportedArchitectures.cpu=${electronArch}"
     "--config.supportedArchitectures.libc=glibc"
   ];
   # electron_41 is the wrapped Electron package; .dist/.headers/.version pass
@@ -125,7 +126,7 @@ stdenv.mkDerivation (finalAttrs: {
     '
     # Build an unpacked directory (linux-unpacked) instead of an AppImage. The
     # native package installs that tree directly; there is no AppImage to wrap.
-    pnpm --dir apps/desktop exec electron-builder --linux --dir --x64 --publish never \
+    pnpm --dir apps/desktop exec electron-builder --linux --dir --${electronArch} --publish never \
       --config .nix-electron-builder.json \
       -c.electronDist=${electronDist} \
       -c.electronVersion=${electronVersion}
@@ -279,6 +280,9 @@ stdenv.mkDerivation (finalAttrs: {
     sourceProvenance = with lib.sourceTypes; [ fromSource ];
     license = lib.licenses.mit;
     mainProgram = "bb-desktop";
-    platforms = [ "x86_64-linux" ];
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+    ];
   };
 })

@@ -3,17 +3,25 @@
   pkgs,
   myNixInputs,
   agentUseBbSource ? true,
+  agentUseAshIntegration ? true,
+  agentUseProxy ? true,
   bbPackageOverride ? null,
+  includeOpenCodeDesktop ? true,
   ...
 }:
 let
   system = pkgs.stdenv.hostPlatform.system;
+  isX86 = system == "x86_64-linux";
   AIPackages = myNixInputs.llm-agents.packages.${system};
   proxy = import ./proxy.nix;
   upstreamOpenCode = myNixInputs.opencode.packages.${system}.opencode;
   opencode = upstreamOpenCode.override {
     node_modules = upstreamOpenCode.node_modules.override {
-      hash = "sha256-SVvFPO+KuS67+6XGPhaB3cIuc3XUyM0XVccy5v8afS4=";
+      hash =
+        if system == "aarch64-linux" then
+          "sha256-HJRrSu5u0TEg214d2RAbM1C+nmrxvIR/d7JlSBOGb9I="
+        else
+          "sha256-SVvFPO+KuS67+6XGPhaB3cIuc3XUyM0XVccy5v8afS4=";
     };
   };
   bbPackage =
@@ -22,7 +30,7 @@ let
     else if agentUseBbSource then
       pkgs.bbSource
     else
-      pkgs.bb;
+      null;
   opencodeDesktop =
     (myNixInputs.opencode.packages.${system}.opencode-desktop.override {
       inherit opencode;
@@ -54,19 +62,9 @@ let
   };
   devEssentialsPackages = import ../shared/packages/dev-essentials.nix {
     inherit pkgs AIPackages;
+    includeOhMyPi = isX86;
   };
-  zjRadar = {
-    default = pkgs.zjRadar;
-  };
-  zjRadarPlugin =
-    pkgs.runCommand "zellij-plugin-zj-radar.wasm"
-      {
-        pname = "zellij-zj-radar";
-        meta.platforms = lib.platforms.unix;
-      }
-      ''
-        cp ${zjRadar.default}/bin/zj_radar.wasm "$out"
-      '';
+  piPackage = pkgs.piDev;
   ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
   agentPortalWrappers = pkgs.runCommand "agent-portal-wrappers" { } ''
     cp -R ${myNixInputs.ash.packages.${system}.agent-portal-wrappers} "$out"
@@ -87,28 +85,30 @@ in
     username = "agent";
     homeDirectory = "/home/agent";
     stateVersion = "26.05";
-    packages = [
-      bbPackage
-      chatgpt
-      pkgs.obscura
-      pkgs.piDev
-      pkgs.waypipe
-      pkgs.xwayland-satellite
-      myNixInputs.codexbar.packages.${system}.default
-      agentPortalWrappers
-      myNixInputs.ash.packages.${system}."ash-dbus-proxy"
-      AIPackages.opencode2
-      opencodeDesktop
-    ]
-    ++ devEssentialsPackages;
+    packages =
+      lib.optional (bbPackage != null) bbPackage
+      ++ [
+        chatgpt
+        pkgs.obscura
+        piPackage
+        pkgs.waypipe
+        pkgs.xwayland-satellite
+        myNixInputs.codexbar.packages.${system}.default
+        AIPackages.opencode2
+      ]
+      ++ lib.optionals agentUseAshIntegration [
+        agentPortalWrappers
+        myNixInputs.ash.packages.${system}."ash-dbus-proxy"
+      ]
+      ++ lib.optional includeOpenCodeDesktop opencodeDesktop
+      ++ devEssentialsPackages;
     # Same iron-proxy tunnel as the system session (proxy.sessionEnv plus
     # lowercase proxy.sessionEnvLower — Bun/Node only honor lowercase
     # `no_proxy`), so shells, TUI-spawned background servers, and desktop
     # entries started outside a login session also route egress through it
     # while loopback still bypasses (literals required, Bun ignores CIDR).
     sessionVariables =
-      proxy.sessionEnv
-      // proxy.sessionEnvLower
+      (lib.optionalAttrs agentUseProxy (proxy.sessionEnv // proxy.sessionEnvLower))
       // {
         # Enable upstream ChatGPT's Wayland flags; waypipe supplies WAYLAND_DISPLAY.
         NIXOS_OZONE_WL = "1";
@@ -120,15 +120,18 @@ in
   # export the same tunnel env there explicitly. Values must be strings
   # (unlike home.sessionVariables, paths are not coerced), hence toString.
   systemd.user.sessionVariables = lib.mapAttrs (_: v: toString v) (
-    proxy.sessionEnv // proxy.sessionEnvLower
+    lib.optionalAttrs agentUseProxy (proxy.sessionEnv // proxy.sessionEnvLower)
   );
 
-  # Nushell creates a starter config when this file is absent. Remove it before
-  # Home Manager links its declarative replacement.
-  home.activation.removeNushellStarterConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-    if [ -e "$HOME/.config/nushell/config.nu" ] && [ ! -L "$HOME/.config/nushell/config.nu" ]; then
-      rm -f "$HOME/.config/nushell/config.nu"
-    fi
+  # Nushell creates starter files when these files are absent. Remove them
+  # before Home Manager links its declarative replacements.
+  home.activation.removeNushellStarterFiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    for file in config.nu env.nu; do
+      path="$HOME/.config/nushell/$file"
+      if [ -e "$path" ] && [ ! -L "$path" ]; then
+        rm -f "$path"
+      fi
+    done
   '';
 
   # Seed a per-VM bb-app environment drop-in without managing its contents.
@@ -188,27 +191,7 @@ in
     };
   };
 
-  systemd.user.services.ash-dbus-proxy = {
-    Unit.Description = "Ash host notification D-Bus bridge";
-    Service = {
-      ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
-      Restart = "on-failure";
-      RestartSec = 1;
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
-
   systemd.user.services = {
-    bb-app = {
-      Unit.Description = "bb agent server";
-      Service = {
-        ExecStart = "${bbPackage}/bin/bb-app --server-bind-host 0.0.0.0";
-        Restart = "on-failure";
-        RestartSec = 2;
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
-
     herdr = {
       Unit.Description = "Herdr agent multiplexer server";
       Service = {
@@ -233,6 +216,28 @@ in
             pkgs.jujutsu
           ]
         }";
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+  }
+  // lib.optionalAttrs agentUseAshIntegration {
+    ash-dbus-proxy = {
+      Unit.Description = "Ash host notification D-Bus bridge";
+      Service = {
+        ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
+        Restart = "on-failure";
+        RestartSec = 1;
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+  }
+  // lib.optionalAttrs (bbPackage != null) {
+    bb-app = {
+      Unit.Description = "bb agent server";
+      Service = {
+        ExecStart = "${bbPackage}/bin/bb-app --server-bind-host 0.0.0.0";
         Restart = "on-failure";
         RestartSec = 2;
       };
@@ -287,31 +292,18 @@ in
 
   programs.zellij = {
     enable = true;
-    plugins = [ zjRadarPlugin ];
-    layouts.radar-sidebar = ./zellij-radar.kdl;
+    layouts.default = pkgs.writeText "zellij-default.kdl" ''
+      layout {
+          pane
+          pane size=2 borderless=true {
+              plugin location="zellij:status-bar"
+          }
+      }
+    '';
     settings = {
-      default_layout = "radar-sidebar";
+      default_layout = "default";
       theme = "gruvbox-dark";
       pane_frames = false;
-      plugins."zj-radar" = {
-        density = "cards";
-        glyphs = "nerd";
-        naming = "managed";
-        # Zellij 0.44 can delay the initial ModeUpdate for `attach --create`
-        # sessions. Seed Gruvbox immediately; a later mode update still wins.
-        theme_bg = "#3c3836";
-        theme_fg = "#fbf1c7";
-        # Match Zellij's built-in gruvbox-dark text colors exactly: unselected
-        # uses #3c3836, selected uses #504945, and both use #fbf1c7 text.
-        theme_rail_bg = "#3c3836";
-        theme_idle_bg = "#3c3836";
-        theme_agent_bg = "#3c3836";
-        theme_active_bg = "#504945";
-        theme_flash_bg = "#504945";
-        theme_dim_fg = "#fbf1c7";
-        theme_idle_fg = "#fbf1c7";
-        theme_stale_fg = "#fbf1c7";
-      };
     };
   };
 

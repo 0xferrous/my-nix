@@ -1,9 +1,0 @@
---- a/flake.nix
-+++ b/flake.nix
-@@ -57,6 +57,7 @@
-       };
-       commonArgs = {
-+        pname = "zj-radar";
-         inherit src;
-         strictDeps = true;
-         # zellij-tile's dependency tree pulls openssl-sys (via isahc → curl);

@@ -18,7 +18,6 @@ Current public building blocks include:
 - [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md): portable Neovim wrapper config exposed via this repo's flake `packages` and `apps`
 - `packages.<system>.pi`: `pi` wrapped with default CLI args plus bundled extensions/theme, and a seeded `ctrl+backspace` kill-word keybinding (merged idempotently into `~/.pi/agent/keybindings.json`)
 - `packages.<system>.install-bin`: helper that symlinks a path into `~/bin` using the path basename
-- [`lib/mkAgentBoxImage.nix`](./lib/mkAgentBoxImage.nix): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
 - [`docs/pending-changes.md`](./docs/pending-changes.md): rolling WIP / pending-change log
 - `nixosModules.virtiofsdNixStore`: socket-activated read-only `/nix/store` sharing via `virtiofsd`
 - `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module
@@ -90,9 +89,9 @@ Packages provided by the overlay:
 | `terminal-control` | control, inspect, test, and capture real terminal applications for agents and TUI review |
 | `iroh-ssh` | SSH to machines behind NATs and firewalls using Iroh, without port forwarding or VPN setup |
 | `ssh-tmp` | SSH with an ephemeral Ed25519 identity, empty configuration, and no agent identities |
-| `prime-agent` | self-improving RLM agent for coding workflows and long-running autonomous tasks |
 | `oh-my-pi` | AI coding agent for the terminal |
 | `qwen3-server` | Qwen3-Coder 30B-A3B served directly by llama.cpp (Vulkan backend), plus `qwen3-get-model`/`qwen3-bench` helpers |
+| `microsandbox` / `msb` | Prebuilt microsandbox CLI and libkrunfw runtime from the upstream GitHub release (Linux x86_64 and aarch64) |
 | `ironclaw` | secure personal AI assistant |
 | `iron-proxy` | MITM egress proxy with DNS server, secret injection, and audit logging |
 | `obscura` | headless browser engine in Rust: V8, real DOM, CDP, stealth |

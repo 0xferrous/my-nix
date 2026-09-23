@@ -79,7 +79,6 @@ in
     nixpkgs.overlays = [
       (import ../../pkgs/overlay.nix {
         inputs = myNixInputs;
-        system = pkgs.stdenv.hostPlatform.system;
       })
 
     ];

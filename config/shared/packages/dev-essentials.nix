@@ -2,6 +2,7 @@
   AIPackages,
   config ? null,
   includeAbwrap ? true,
+  includeOhMyPi ? true,
   pkgs,
   ...
 }:
@@ -38,7 +39,6 @@ in
   git-lfs
   gh
   hunkPackage
-  oh-my-pi
 
   # Search, navigation, and file inspection
   ripgrep
@@ -90,6 +90,7 @@ in
   docker-compose
 
   # AI agent tooling
-  prime-agent
+  AIPackages.prime-agent
 ])
 ++ pkgs.lib.optional includeAbwrap pkgs.abwrap
+++ pkgs.lib.optional includeOhMyPi pkgs.oh-my-pi

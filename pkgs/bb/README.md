@@ -1,8 +1,9 @@
 # bb packages
 
-The directory contains two Linux x86_64 desktop packages and two Android APK
-variants. `bb` packages the published Electron AppImage; `bb-source` builds the
-same desktop from the pinned upstream source tag; `bb-android-x86_64` targets
+The directory contains two Linux desktop packages and two Android APK
+variants. `bb` packages the published x86_64 Electron AppImage; `bb-source`
+builds the desktop from the pinned upstream source tag for x86_64 or ARM64;
+`bb-android-x86_64` targets
 Waydroid, while `bb-android-arm64-v8a` targets current Android phones.
 `bb-android` remains an alias for the x86_64 build. The desktop packages expose
 `bb-desktop`, `bb`, and `bb-app`, and both launch the server, host daemon,

@@ -8,7 +8,7 @@
 #
 # Default is empty (no heavy preview/archive helpers like ffmpeg,
 # imagemagick, or poppler); pass an explicit list where integrations
-# are wanted (see lib/mkAgentBoxImage.nix).
+# are wanted.
 {
   pkgs,
   optionalDeps ? [ ],

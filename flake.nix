@@ -105,10 +105,6 @@
       url = "github:shazow/foundry.nix/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agent-images = {
-      url = "github:nothingnesses/agent-images";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Noctalia shell for the fr desktop configuration.
     # Deliberately NOT following this flake's nixpkgs: Noctalia pins a
     # nixpkgs tarball and publishes Cachix binaries against it, so following
@@ -145,15 +141,6 @@
       url = "github:0xferrous/ghmd";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zj-radar = {
-      url = "github:0xferrous/zj-radar?ref=fix/theme";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.fenix.follows = "fenix";
-    };
-    # agent-images = {
-    #   url = "github:0xferrous/agent-images/feat/nix-ld";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
     frs-nvim = {
       url = "path:./pkgs/frs-nvim";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -173,27 +160,13 @@
       ...
     }:
     let
-      system = "x86_64-linux";
-      zjRadarSource =
-        (import inputs.nixpkgs {
-          inherit system;
-        }).applyPatches
-          {
-            name = "zj-radar-patched";
-            src = inputs.zj-radar.outPath;
-            patches = [ ./patches/zj-radar-crane-name.patch ];
-          };
-      zjRadar = (import "${zjRadarSource}/flake.nix").outputs {
-        self = null;
-        nixpkgs = inputs.nixpkgs;
-        fenix = inputs.fenix;
-        crane = inputs.zj-radar.inputs.crane;
-        flake-utils = inputs.zj-radar.inputs.flake-utils;
-      };
-      overlay = import ./pkgs/overlay.nix {
-        inherit inputs system;
-        patchedZjRadar = zjRadar;
-      };
+      defaultSystem = "x86_64-linux";
+      imageSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      system = defaultSystem;
+      overlay = import ./pkgs/overlay.nix { inherit inputs; };
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ overlay ];
@@ -226,90 +199,121 @@
         ];
       };
       lib = pkgs.lib;
-      agentOciNixos = inputs.nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {
-          myNixInputs = inputs;
-          inherit
-            fenix
-            ghmd
-            home-manager
-            impermanence
-            nix-index-database
-            ;
+      mkAgentMicrosandboxHome =
+        targetSystem:
+        let
+          targetPkgs =
+            if targetSystem == system then
+              pkgs
+            else
+              import inputs.nixpkgs {
+                system = targetSystem;
+                overlays = [
+                  (import ./pkgs/overlay.nix {
+                    inherit inputs;
+                    useCustomNushell = false;
+                  })
+                ];
+              };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = targetPkgs;
+          extraSpecialArgs = {
+            myNixInputs = inputs;
+            agentUseAshIntegration = false;
+            agentUseProxy = false;
+            agentUseBbSource = false;
+            bbPackageOverride = inputs.llm-agents.packages.${targetSystem}.bb-app;
+            includeOpenCodeDesktop = false;
+          };
+          modules = [ ./config/agent/home.nix ];
         };
-        modules = [
-          ./config/agent/nixos.nix
-          ./config/agent/oci.nix
-        ];
-      };
+      mkAgentNixos =
+        {
+          targetSystem,
+          microsandbox ? false,
+        }:
+        inputs.nixpkgs.lib.nixosSystem {
+          system = targetSystem;
+          specialArgs = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+            includeCodexDesktop = false;
+            useCustomNushell = false;
+          };
+          modules = [
+            ./config/agent/nixos.nix
+          ]
+          ++ lib.optional microsandbox ./config/agent/microsandbox.nix
+          ++ lib.optional (!microsandbox) ./config/agent/ash.nix;
+        };
+      mkMicrosandboxPackage =
+        targetSystem:
+        let
+          targetPkgs = import inputs.nixpkgs { system = targetSystem; };
+        in
+        targetPkgs.callPackage ./pkgs/microsandbox.nix { };
     in
     {
       overlays.default = overlay;
 
-      packages = lib.recursiveUpdate frs-nvim.packages {
-        ${system} = {
-          inherit (pkgs)
-            fr-frame-summon
-            fr-kbd-backlight
-            dev-essentials
-            git-hunk
-            ironclaw
-            jj-hunk
-            google-authenticator-transfer-decode
-            oh-my-pi
-            opensrc
-            nash
-            obscura
-            pi
-            piDev
-            abwrap
-            pi-acp
-            takopi
-            tron-wallet-cli
-            tron-wallet-cli-java
-            terminal-control
-            iroh-ssh
-            ssh-tmp
-            prime-agent
-            flake-utils
-            gruvbox-gtk-theme
-            qwen3-server
-            codex-desktop
-            bb
-            tolaria
-            ;
-          "bb-source" = pkgs.bbSource;
-          "bb-android" = pkgs."bb-android";
-          "bb-android-x86_64" = pkgs."bb-android-x86_64";
-          "bb-android-arm64-v8a" = pkgs."bb-android-arm64-v8a";
-          opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
-          "install-bin" = pkgs."install-bin";
-          iron-proxy = pkgs.iron-proxy;
-          agent-container-image =
-            let
-              agent = agentOciNixos;
-            in
-            pkgs.dockerTools.buildImageWithNixDb {
-              name = "fr-agent";
-              tag = "latest";
-              compressor = "none";
-              copyToRoot = agent.config.system.build.toplevel;
-              keepContentsDirlinks = true;
-              extraCommands = ''
-                rm -f etc
-                mkdir -p proc sys dev etc
-              '';
-              config = {
-                Entrypoint = [ "/init" ];
-                Env = [
-                  "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
-                  "NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-bundle.crt"
-                ];
-              };
+      packages = lib.recursiveUpdate frs-nvim.packages (
+        lib.recursiveUpdate
+          {
+            ${system} = {
+              inherit (pkgs)
+                fr-frame-summon
+                fr-kbd-backlight
+                dev-essentials
+                git-hunk
+                ironclaw
+                jj-hunk
+                google-authenticator-transfer-decode
+                oh-my-pi
+                opensrc
+                nash
+                obscura
+                pi
+                piDev
+                abwrap
+                pi-acp
+                takopi
+                tron-wallet-cli
+                tron-wallet-cli-java
+                terminal-control
+                iroh-ssh
+                ssh-tmp
+                flake-utils
+                gruvbox-gtk-theme
+                qwen3-server
+                microsandbox
+                msb
+                codex-desktop
+                bb
+                tolaria
+                ;
+              "bb-source" = pkgs.bbSource;
+              "bb-android" = pkgs."bb-android";
+              "bb-android-x86_64" = pkgs."bb-android-x86_64";
+              "bb-android-arm64-v8a" = pkgs."bb-android-arm64-v8a";
+              opencode-desktop = inputs.opencode.packages.${system}.opencode-desktop;
+              "install-bin" = pkgs."install-bin";
+              iron-proxy = pkgs.iron-proxy;
             };
-        };
-      };
+          }
+          (
+            lib.genAttrs imageSystems (targetSystem: {
+              microsandbox = mkMicrosandboxPackage targetSystem;
+              msb = mkMicrosandboxPackage targetSystem;
+            })
+          )
+      );
       apps = lib.recursiveUpdate frs-nvim.apps {
         ${system} = {
           pi = {
@@ -327,10 +331,6 @@
           takopi = {
             type = "app";
             program = "${pkgs.takopi}/bin/takopi";
-          };
-          prime-agent = {
-            type = "app";
-            program = "${pkgs.prime-agent}/bin/prime-agent";
           };
           "install-bin" = {
             type = "app";
@@ -368,18 +368,10 @@
       formatter.${system} = pkgs.nixfmt-tree;
 
       lib.makeBbDesktopEntry = import ./lib/makeBbDesktopEntry.nix;
-      lib.mkAgentBoxImage =
-        args:
-        import ./lib/mkAgentBoxImage.nix (
-          args
-          // {
-            inputs = inputs // {
-              foundry = inputs.foundry-stable;
-            };
-          }
-        );
       homeManagerModules = import ./modules/home;
-      nixosModules = import ./modules/nixos;
+      nixosModules = (import ./modules/nixos) // {
+        microsandbox = import ./config/microsandbox/module.nix;
+      };
       homeConfigs = {
         fr =
           {
@@ -408,9 +400,18 @@
       };
       homeConfigurations.agent = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs.myNixInputs = inputs;
+        extraSpecialArgs = {
+          myNixInputs = inputs;
+          agentUseBbSource = true;
+          agentUseAshIntegration = true;
+          agentUseProxy = true;
+          includeOpenCodeDesktop = true;
+          bbPackageOverride = null;
+        };
         modules = [ ./config/agent/home.nix ];
       };
+      homeConfigurations.agent-microsandbox = mkAgentMicrosandboxHome system;
+      homeConfigurations.agent-microsandbox-aarch64-linux = mkAgentMicrosandboxHome "aarch64-linux";
 
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
@@ -422,7 +423,10 @@
             ;
         };
         agent = {
-          imports = [ ./config/agent/nixos.nix ];
+          imports = [
+            ./config/agent/nixos.nix
+            ./config/agent/ash.nix
+          ];
           _module.args = {
             myNixInputs = inputs;
             inherit
@@ -432,6 +436,24 @@
               impermanence
               nix-index-database
               ;
+          };
+        };
+        agent-microsandbox = {
+          imports = [
+            ./config/agent/nixos.nix
+            ./config/agent/microsandbox.nix
+          ];
+          _module.args = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+            includeCodexDesktop = false;
+            useCustomNushell = false;
           };
         };
         nash = {
@@ -450,21 +472,18 @@
       };
 
       nixosConfigurations = {
-        agent = inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = {
-            myNixInputs = inputs;
-            inherit
-              fenix
-              ghmd
-              home-manager
-              impermanence
-              nix-index-database
-              ;
-          };
-          modules = [
-            ./config/agent/nixos.nix
-          ];
+        agent = mkAgentNixos {
+          targetSystem = system;
+        };
+
+        agent-microsandbox = mkAgentNixos {
+          targetSystem = system;
+          microsandbox = true;
+        };
+
+        agent-microsandbox-aarch64-linux = mkAgentNixos {
+          targetSystem = "aarch64-linux";
+          microsandbox = true;
         };
 
         nash = inputs.nixpkgs.lib.nixosSystem {
