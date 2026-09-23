@@ -18,7 +18,6 @@ Current public building blocks include:
 - [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md): portable Neovim wrapper config exposed via this repo's flake `packages` and `apps`
 - `packages.<system>.pi`: `pi` wrapped with default CLI args plus bundled extensions/theme, and a seeded `ctrl+backspace` kill-word keybinding (merged idempotently into `~/.pi/agent/keybindings.json`)
 - `packages.<system>.install-bin`: helper that symlinks a path into `~/bin` using the path basename
-- [`lib/mkAgentBoxImage.nix`](./lib/mkAgentBoxImage.nix): image builder for environments intended to run inside [`agent-box`](https://github.com/0xferrous/agent-box), exposed via this repo's flake as `lib.mkAgentBoxImage`
 - [`docs/pending-changes.md`](./docs/pending-changes.md): rolling WIP / pending-change log
 - `nixosModules.virtiofsdNixStore`: socket-activated read-only `/nix/store` sharing via `virtiofsd`
 - `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module

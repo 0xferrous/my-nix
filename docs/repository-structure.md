@@ -6,11 +6,11 @@ This repository contains public Nix building blocks extracted from a larger pers
 
 | Path | Purpose |
 | --- | --- |
-| `flake.nix` | Main flake entrypoint. Wires inputs, exports packages/apps, reusable modules, public `fr` configs, and the `mkAgentBoxImage` helper. |
+| `flake.nix` | Main flake entrypoint. Wires inputs, exports packages/apps, reusable modules, and public configs. |
 | `flake.lock` | Locked flake input revisions. |
 | `README.md` | High-level project overview and examples for consuming the public configs. |
 | `AGENTS.md` | Repo-wide instructions for coding agents working in this repository. |
-| `justfile` | Convenience commands for building/loading the agent-box image and updating `frs-nvim` locks. |
+| `justfile` | Convenience commands for updating `frs-nvim` locks and refreshing package pins. |
 | `lib/` | Reusable Nix library helpers. |
 | `modules/` | Generic reusable Home Manager and NixOS modules. |
 | `config/` | Public `fr` Home Manager/NixOS configuration built from the reusable modules. |
@@ -25,7 +25,6 @@ The root flake currently exports these main groups:
 
 - `packages`: package outputs from `pkgs/frs-nvim`, plus this repo's helper packages for `x86_64-linux`.
 - `apps`: runnable app outputs from `pkgs/frs-nvim`, plus this repo's helper apps for `x86_64-linux`.
-- `lib.mkAgentBoxImage`: helper imported from `lib/mkAgentBoxImage.nix` for building an agent-box runtime image.
 - `homeManagerModules`: reusable Home Manager modules from `modules/home/default.nix`.
 - `nixosModules`: reusable NixOS modules from `modules/nixos/default.nix`.
 - `homeConfigs.fr`: public Home Manager config wrapper importing `config/fr/home.nix` and passing flake inputs through `_module.args.myNixInputs`.
@@ -35,12 +34,8 @@ The root flake currently exports these main groups:
 
 ## `lib/`
 
-```text
-lib/
-└── mkAgentBoxImage.nix
-```
-
-`lib/mkAgentBoxImage.nix` builds an image intended for use inside `agent-box`. The root flake exposes it as `lib.mkAgentBoxImage` and injects this flake's inputs, including the stable Foundry input under `foundry`.
+Reusable Nix helpers live here, including shared package expressions used by
+multiple configuration call sites.
 
 ## Reusable modules: `modules/`
 
@@ -215,11 +210,9 @@ docs/
 
 ```text
 .github/workflows/
-├── agent-box-rt-image.yml
 └── frs-nvim-ci.yml
 ```
 
-- `agent-box-rt-image.yml`: workflow related to the agent-box runtime image.
 - `frs-nvim-ci.yml`: CI for the portable Neovim flake/config.
 
 ## Structural conventions

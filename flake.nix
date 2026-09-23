@@ -105,10 +105,6 @@
       url = "github:shazow/foundry.nix/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    agent-images = {
-      url = "github:nothingnesses/agent-images";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Noctalia shell for the fr desktop configuration.
     # Deliberately NOT following this flake's nixpkgs: Noctalia pins a
     # nixpkgs tarball and publishes Cachix binaries against it, so following
@@ -150,10 +146,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.fenix.follows = "fenix";
     };
-    # agent-images = {
-    #   url = "github:0xferrous/agent-images/feat/nix-ld";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
     frs-nvim = {
       url = "path:./pkgs/frs-nvim";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -440,16 +432,6 @@
       formatter.${system} = pkgs.nixfmt-tree;
 
       lib.makeBbDesktopEntry = import ./lib/makeBbDesktopEntry.nix;
-      lib.mkAgentBoxImage =
-        args:
-        import ./lib/mkAgentBoxImage.nix (
-          args
-          // {
-            inputs = inputs // {
-              foundry = inputs.foundry-stable;
-            };
-          }
-        );
       homeManagerModules = import ./modules/home;
       nixosModules = (import ./modules/nixos) // {
         microsandbox = import ./config/microsandbox/module.nix;
