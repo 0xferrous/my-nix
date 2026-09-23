@@ -58,6 +58,12 @@
             chmod 0440 etc/sudoers
           '';
           config = {
+            # msb exec does not source /etc/profile. Give guest commands the
+            # active NixOS and agent Home Manager profiles explicitly; agentd
+            # prepends /.msb/scripts to this value.
+            Env = [
+              "PATH=/run/wrappers/bin:/run/current-system/sw/bin:/etc/profiles/per-user/agent/bin:/home/agent/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ];
             Entrypoint = [ "/init" ];
           };
         };

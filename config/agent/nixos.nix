@@ -147,7 +147,10 @@ in
     environment.systemPackages =
       with pkgs;
       [
+        git
         kitty.terminfo
+        nix
+        nh
         poetry
         python3
         uv
