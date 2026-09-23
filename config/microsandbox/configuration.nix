@@ -25,6 +25,8 @@
   environment.systemPackages = with pkgs; [
     cacert
     git
+    home-manager
+    nh
     nix
     sudo
   ];
