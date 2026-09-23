@@ -21,6 +21,8 @@
   # minimal bootstrap defaults, this target explicitly applies them.
   systemd.services.systemd-sysctl.enable = lib.mkForce true;
 
+  fr.agent.impermanence.enable = false;
+
   fr.agent.selfUpdate = {
     enable = true;
     workspace = "/workspace";

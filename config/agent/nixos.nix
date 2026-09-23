@@ -46,6 +46,12 @@ let
   };
 in
 {
+  options.fr.agent.impermanence.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "Persist the agent state through impermanence.";
+  };
+
   options.fr.agent.selfUpdate = {
     enable = lib.mkEnableOption "automatic agent NixOS and Home Manager updates";
     workspace = lib.mkOption {
@@ -330,8 +336,8 @@ in
       "vm.vfs_cache_pressure" = 1000;
     };
 
-    environment.persistence.${impermanenceRoot} = {
-      files = [ "/etc/machine-id" ];
+    environment.persistence.${impermanenceRoot} = lib.mkIf config.fr.agent.impermanence.enable {
+      files = lib.optional (!config.boot.isContainer) "/etc/machine-id";
       directories = [
         "/var/lib/nixos"
         "/var/lib/tailscale"
