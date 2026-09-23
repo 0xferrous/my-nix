@@ -290,11 +290,12 @@
         ];
       };
       lib = pkgs.lib;
-      mkAgentOciNixos =
-        targetSystem:
+      mkAgentNixos =
+        {
+          targetSystem,
+          microsandbox ? false,
+        }:
         inputs.nixpkgs.lib.nixosSystem {
-          # Evaluate the NixOS image for the requested package platform. Nix
-          # derives the applicable build and host handling for the invocation.
           system = targetSystem;
           specialArgs = {
             myNixInputs = inputs;
@@ -315,43 +316,9 @@
           };
           modules = [
             ./config/agent/nixos.nix
-            ./config/agent/oci.nix
-          ];
-        };
-      mkAgentContainerImage =
-        targetSystem:
-        let
-          agent = mkAgentOciNixos targetSystem;
-          # Use the package platform selected by the image output. Nix then
-          # chooses the applicable builder and platform handling for the
-          # invocation instead of this flake forcing a host architecture.
-          imagePkgs = import inputs.nixpkgs {
-            system = targetSystem;
-            overlays = [ overlay ];
-          };
-        in
-        imagePkgs.dockerTools.buildLayeredImageWithNixDb {
-          name = "fr-agent";
-          tag = "latest";
-          compressor = "gz";
-          maxLayers = 125;
-
-          contents = [
-            agent.config.system.build.toplevel
-          ];
-
-          extraCommands = ''
-            rm -f etc
-            mkdir -p proc sys dev etc
-          '';
-
-          config = {
-            Entrypoint = [ "/init" ];
-            Env = [
-              "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
-              "NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-bundle.crt"
-            ];
-          };
+          ]
+          ++ lib.optional microsandbox ./config/agent/microsandbox.nix
+          ++ lib.optional (!microsandbox) ./config/agent/ash.nix;
         };
       mkMicrosandboxPackage =
         targetSystem:
@@ -410,7 +377,6 @@
           }
           (
             lib.genAttrs imageSystems (targetSystem: {
-              agent-container-image = mkAgentContainerImage targetSystem;
               microsandbox = mkMicrosandboxPackage targetSystem;
               msb = mkMicrosandboxPackage targetSystem;
             })
@@ -523,6 +489,19 @@
         };
         modules = [ ./config/agent/home.nix ];
       };
+      homeConfigurations.agent-microsandbox = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = {
+          myNixInputs = inputs;
+          agentUseAshIntegration = false;
+          agentUseProxy = false;
+          agentUseBbSource = false;
+          bbPackageOverride = inputs.llm-agents.packages.${system}.bb-app;
+          includeOpenCodeDesktop = false;
+          includeZjRadar = false;
+        };
+        modules = [ ./config/agent/home.nix ];
+      };
 
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
@@ -534,7 +513,10 @@
             ;
         };
         agent = {
-          imports = [ ./config/agent/nixos.nix ];
+          imports = [
+            ./config/agent/nixos.nix
+            ./config/agent/ash.nix
+          ];
           _module.args = {
             myNixInputs = inputs;
             inherit
@@ -548,6 +530,29 @@
             inherit patchedZjRadarByBuildSystem;
             crossZjRadar = zjRadarCross;
             crossPackages = crossPkgs;
+          };
+        };
+        agent-microsandbox = {
+          imports = [
+            ./config/agent/nixos.nix
+            ./config/agent/microsandbox.nix
+          ];
+          _module.args = {
+            myNixInputs = inputs;
+            inherit
+              fenix
+              ghmd
+              home-manager
+              impermanence
+              nix-index-database
+              ;
+            patchedZjRadar = zjRadar;
+            inherit patchedZjRadarByBuildSystem;
+            crossZjRadar = zjRadarCross;
+            crossPackages = crossPkgs;
+            includeZjRadar = false;
+            includeCodexDesktop = false;
+            useCustomNushell = false;
           };
         };
         nash = {
@@ -566,25 +571,13 @@
       };
 
       nixosConfigurations = {
-        agent = inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = {
-            myNixInputs = inputs;
-            inherit
-              fenix
-              ghmd
-              home-manager
-              impermanence
-              nix-index-database
-              ;
-            patchedZjRadar = zjRadar;
-            inherit patchedZjRadarByBuildSystem;
-            crossZjRadar = zjRadarCross;
-            crossPackages = crossPkgs;
-          };
-          modules = [
-            ./config/agent/nixos.nix
-          ];
+        agent = mkAgentNixos {
+          targetSystem = system;
+        };
+
+        agent-microsandbox = mkAgentNixos {
+          targetSystem = system;
+          microsandbox = true;
         };
 
         nash = inputs.nixpkgs.lib.nixosSystem {

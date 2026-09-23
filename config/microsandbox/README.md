@@ -51,6 +51,22 @@ Then apply it in the guest:
 nixos-rebuild switch --flake /path/to/your/flake#example
 ```
 
+This repository also exposes the full agent environment as a switchable target;
+no separate agent OCI image is required:
+
+```sh
+mkdir -p .microsandbox-agent-persist
+msb create \
+  --name microsandbox-agent \
+  --net public \
+  --init /init \
+  --mount-dir "$PWD:/workspace:ro" \
+  --mount-dir "$PWD/.microsandbox-agent-persist:/persist" \
+  microsandbox-nixos:latest
+msb exec microsandbox-agent -- \
+  nixos-rebuild switch --flake /workspace#agent-microsandbox
+```
+
 The module disables DHCP, resolvconf, the firewall, sysctl, and unsupported
 serial/network services with ordinary NixOS defaults rather than image-level
 masks. It also merges the NixOS CA bundle with the per-sandbox MITM CA at boot.

@@ -3,6 +3,8 @@
   pkgs,
   myNixInputs,
   agentUseBbSource ? true,
+  agentUseAshIntegration ? true,
+  agentUseProxy ? true,
   bbPackageOverride ? null,
   includeOpenCodeDesktop ? true,
   includeZjRadar ? true,
@@ -112,9 +114,11 @@ in
         pkgs.waypipe
         pkgs.xwayland-satellite
         myNixInputs.codexbar.packages.${system}.default
+        AIPackages.opencode2
+      ]
+      ++ lib.optionals agentUseAshIntegration [
         agentPortalWrappers
         myNixInputs.ash.packages.${system}."ash-dbus-proxy"
-        AIPackages.opencode2
       ]
       ++ lib.optional includeOpenCodeDesktop opencodeDesktop
       ++ devEssentialsPackages;
@@ -124,8 +128,7 @@ in
     # entries started outside a login session also route egress through it
     # while loopback still bypasses (literals required, Bun ignores CIDR).
     sessionVariables =
-      proxy.sessionEnv
-      // proxy.sessionEnvLower
+      (lib.optionalAttrs agentUseProxy (proxy.sessionEnv // proxy.sessionEnvLower))
       // {
         # Enable upstream ChatGPT's Wayland flags; waypipe supplies WAYLAND_DISPLAY.
         NIXOS_OZONE_WL = "1";
@@ -137,7 +140,7 @@ in
   # export the same tunnel env there explicitly. Values must be strings
   # (unlike home.sessionVariables, paths are not coerced), hence toString.
   systemd.user.sessionVariables = lib.mapAttrs (_: v: toString v) (
-    proxy.sessionEnv // proxy.sessionEnvLower
+    lib.optionalAttrs agentUseProxy (proxy.sessionEnv // proxy.sessionEnvLower)
   );
 
   # Nushell creates a starter config when this file is absent. Remove it before
@@ -206,16 +209,6 @@ in
   };
 
   systemd.user.services = {
-    ash-dbus-proxy = {
-      Unit.Description = "Ash host notification D-Bus bridge";
-      Service = {
-        ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
-        Restart = "on-failure";
-        RestartSec = 1;
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
-
     herdr = {
       Unit.Description = "Herdr agent multiplexer server";
       Service = {
@@ -242,6 +235,17 @@ in
         }";
         Restart = "on-failure";
         RestartSec = 2;
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+  }
+  // lib.optionalAttrs agentUseAshIntegration {
+    ash-dbus-proxy = {
+      Unit.Description = "Ash host notification D-Bus bridge";
+      Service = {
+        ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
+        Restart = "on-failure";
+        RestartSec = 1;
       };
       Install.WantedBy = [ "default.target" ];
     };
