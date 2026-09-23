@@ -12,7 +12,7 @@ nix build ./config/microsandbox#image
 # nix build ./config/microsandbox#packages.aarch64-linux.image
 docker load < result
 
-msb create --name microsandbox-nixos --init /init microsandbox-nixos:latest
+msb create --name microsandbox-nixos --init auto microsandbox-nixos:latest
 msb exec microsandbox-nixos -- sh -lc 'nixos-rebuild switch --flake /path/to/your/flake#hostname'
 ```
 
@@ -59,7 +59,9 @@ mkdir -p .microsandbox-agent-persist
 msb create \
   --name microsandbox-agent \
   --net public \
-  --init /init \
+  --cpus 2 \
+  --memory 6G \
+  --init auto \
   --mount-dir "$PWD:/workspace:ro" \
   --mount-dir "$PWD/.microsandbox-agent-persist:/persist" \
   microsandbox-nixos:latest

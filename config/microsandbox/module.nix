@@ -31,10 +31,13 @@
       RemainAfterExit = true;
     };
     script = ''
-      # agentd mounts the per-sandbox CA after the guest filesystem exists.
-      while [ ! -s /.msb/tls/ca.pem ]; do
-        ${pkgs.coreutils}/bin/sleep 1
-      done
+      # TLS interception is optional. agentd installs the CA itself when
+      # interception is enabled; this bundle merge only preserves the NixOS
+      # CA set across a later NixOS activation.
+      if [ ! -s /.msb/tls/ca.pem ]; then
+        echo "microsandbox-ca-bundle: no MITM CA; skipping"
+        exit 0
+      fi
 
       ${pkgs.coreutils}/bin/mkdir -p /run/microsandbox
       ${pkgs.coreutils}/bin/cat \

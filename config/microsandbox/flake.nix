@@ -35,7 +35,18 @@
           # configuration (and should be imported by replacement configs).
           extraCommands = ''
             rm -f etc
-            mkdir -p proc sys dev
+            mkdir -p etc proc sys dev
+
+            # microsandbox resolves the initial process before NixOS activation
+            # has recreated the generated account database.
+            cat > etc/passwd <<'EOF'
+            root:x:0:0:root:/root:/bin/sh
+            agent:x:1000:100:agent:/home/agent:/bin/sh
+            EOF
+            cat > etc/group <<'EOF'
+            root:x:0:
+            users:x:100:
+            EOF
           '';
           config = {
             Entrypoint = [ "/init" ];
