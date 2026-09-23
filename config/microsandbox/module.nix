@@ -20,12 +20,13 @@
 
   # Build a runtime CA bundle that preserves the NixOS CA set and adds the
   # per-sandbox microsandbox MITM CA. The original NixOS bundle remains
-  # available through /etc/pki/tls/certs/ca-bundle.crt.
+  # available through /etc/pki/tls/certs/ca-bundle.crt. This is deliberately
+  # not ordered before multi-user.target: CA interception is optional and must
+  # not keep systemd in "starting" while the bundle is being prepared.
   systemd.services.microsandbox-ca-bundle = {
     description = "Trust the microsandbox MITM CA";
     wantedBy = [ "multi-user.target" ];
     after = [ "local-fs.target" ];
-    before = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;

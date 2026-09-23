@@ -123,12 +123,15 @@ in
     lib.optionalAttrs agentUseProxy (proxy.sessionEnv // proxy.sessionEnvLower)
   );
 
-  # Nushell creates a starter config when this file is absent. Remove it before
-  # Home Manager links its declarative replacement.
-  home.activation.removeNushellStarterConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-    if [ -e "$HOME/.config/nushell/config.nu" ] && [ ! -L "$HOME/.config/nushell/config.nu" ]; then
-      rm -f "$HOME/.config/nushell/config.nu"
-    fi
+  # Nushell creates starter files when these files are absent. Remove them
+  # before Home Manager links its declarative replacements.
+  home.activation.removeNushellStarterFiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    for file in config.nu env.nu; do
+      path="$HOME/.config/nushell/$file"
+      if [ -e "$path" ] && [ ! -L "$path" ]; then
+        rm -f "$path"
+      fi
+    done
   '';
 
   # Seed a per-VM bb-app environment drop-in without managing its contents.
