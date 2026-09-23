@@ -289,7 +289,6 @@
                 terminal-control
                 iroh-ssh
                 ssh-tmp
-                prime-agent
                 flake-utils
                 gruvbox-gtk-theme
                 qwen3-server
@@ -332,10 +331,6 @@
           takopi = {
             type = "app";
             program = "${pkgs.takopi}/bin/takopi";
-          };
-          prime-agent = {
-            type = "app";
-            program = "${pkgs.prime-agent}/bin/prime-agent";
           };
           "install-bin" = {
             type = "app";

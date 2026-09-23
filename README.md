@@ -89,7 +89,6 @@ Packages provided by the overlay:
 | `terminal-control` | control, inspect, test, and capture real terminal applications for agents and TUI review |
 | `iroh-ssh` | SSH to machines behind NATs and firewalls using Iroh, without port forwarding or VPN setup |
 | `ssh-tmp` | SSH with an ephemeral Ed25519 identity, empty configuration, and no agent identities |
-| `prime-agent` | self-improving RLM agent for coding workflows and long-running autonomous tasks |
 | `oh-my-pi` | AI coding agent for the terminal |
 | `qwen3-server` | Qwen3-Coder 30B-A3B served directly by llama.cpp (Vulkan backend), plus `qwen3-get-model`/`qwen3-bench` helpers |
 | `microsandbox` / `msb` | Prebuilt microsandbox CLI and libkrunfw runtime from the upstream GitHub release (Linux x86_64 and aarch64) |

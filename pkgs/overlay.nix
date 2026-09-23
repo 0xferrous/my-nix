@@ -95,9 +95,6 @@ in
   tron-wallet-cli-java = final.callPackage ./tron-wallet-cli/java.nix { };
   terminal-control = final.callPackage ./terminal-control.nix { };
   iroh-ssh = final.callPackage ./iroh-ssh.nix { };
-  # This is a prebuilt npm release; keep it in the target-native package set
-  # so its dependencies can substitute.
-  prime-agent = final.callPackage ./prime-agent.nix { };
   hints = final.callPackage ./hints.nix {
     source = inputs.hints;
     atspi2Core = final."at-spi2-core";

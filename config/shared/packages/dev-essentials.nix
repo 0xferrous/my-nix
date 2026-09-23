@@ -90,7 +90,7 @@ in
   docker-compose
 
   # AI agent tooling
-  prime-agent
+  AIPackages.prime-agent
 ])
 ++ pkgs.lib.optional includeAbwrap pkgs.abwrap
 ++ pkgs.lib.optional includeOhMyPi pkgs.oh-my-pi
