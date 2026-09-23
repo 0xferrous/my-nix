@@ -141,11 +141,6 @@
       url = "github:0xferrous/ghmd";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zj-radar = {
-      url = "github:0xferrous/zj-radar?ref=fix/theme";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.fenix.follows = "fenix";
-    };
     frs-nvim = {
       url = "path:./pkgs/frs-nvim";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -171,85 +166,7 @@
         "aarch64-linux"
       ];
       system = defaultSystem;
-      mkZjRadar =
-        {
-          buildSystem,
-          crossSystem ? null,
-        }:
-        let
-          source =
-            (import inputs.nixpkgs {
-              system = buildSystem;
-            }).applyPatches
-              {
-                name = "zj-radar-patched";
-                src = inputs.zj-radar.outPath;
-                patches = [
-                  ./patches/zj-radar-crane-name.patch
-                  ./patches/zj-radar-cross-compile.patch
-                ];
-              };
-        in
-        (import "${source}/flake.nix").outputs (
-          {
-            self = null;
-            nixpkgs = inputs.nixpkgs;
-            fenix = inputs.fenix;
-            crane = inputs.zj-radar.inputs.crane;
-            flake-utils = inputs.zj-radar.inputs.flake-utils;
-          }
-          // inputs.nixpkgs.lib.optionalAttrs (crossSystem != null) {
-            inherit crossSystem;
-          }
-        );
-      zjRadar = mkZjRadar { buildSystem = system; };
-      zjRadarAarch64 = mkZjRadar { buildSystem = "aarch64-linux"; };
-      zjRadarCross = mkZjRadar {
-        buildSystem = system;
-        crossSystem = "aarch64-linux";
-      };
-      patchedZjRadarByBuildSystem = {
-        "x86_64-linux" = zjRadar;
-        "aarch64-linux" = zjRadarAarch64;
-      };
-      crossOverlay = import ./pkgs/overlay.nix {
-        inherit inputs patchedZjRadarByBuildSystem;
-        patchedZjRadar = zjRadar;
-        crossZjRadar = zjRadarCross;
-      };
-      crossPkgs = import inputs.nixpkgs {
-        inherit system;
-        crossSystem = inputs.nixpkgs.lib.systems.elaborate "aarch64-linux";
-        overlays = [ crossOverlay ];
-        config.allowUnfreePredicate =
-          pkg:
-          builtins.elem (pkg.pname or "") [
-            "codex-desktop"
-            "android-sdk-build-tools"
-            "android-sdk-cmdline-tools"
-            "cmake"
-            "android-sdk-ndk"
-            "android-sdk-platform-tools"
-            "android-sdk-platforms"
-            "android-sdk-tools"
-            "build-tools"
-            "cmdline-tools"
-            "ndk"
-            "platform-tools"
-            "platforms"
-            "tools"
-          ];
-        config.permittedInsecurePackages = [
-          "gradle-7.6.6"
-          "pnpm-9.15.9"
-        ];
-      };
-      overlay = import ./pkgs/overlay.nix {
-        inherit inputs patchedZjRadarByBuildSystem;
-        patchedZjRadar = zjRadar;
-        crossZjRadar = zjRadarCross;
-        crossPackages = crossPkgs;
-      };
+      overlay = import ./pkgs/overlay.nix { inherit inputs; };
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ overlay ];
@@ -298,11 +215,6 @@
               impermanence
               nix-index-database
               ;
-            patchedZjRadar = zjRadar;
-            inherit patchedZjRadarByBuildSystem;
-            crossZjRadar = zjRadarCross;
-            crossPackages = crossPkgs;
-            includeZjRadar = false;
             includeCodexDesktop = false;
             useCustomNushell = false;
           };
@@ -467,6 +379,9 @@
         extraSpecialArgs = {
           myNixInputs = inputs;
           agentUseBbSource = true;
+          agentUseAshIntegration = true;
+          agentUseProxy = true;
+          includeOpenCodeDesktop = true;
           bbPackageOverride = null;
         };
         modules = [ ./config/agent/home.nix ];
@@ -480,7 +395,6 @@
           agentUseBbSource = false;
           bbPackageOverride = inputs.llm-agents.packages.${system}.bb-app;
           includeOpenCodeDesktop = false;
-          includeZjRadar = false;
         };
         modules = [ ./config/agent/home.nix ];
       };
@@ -508,10 +422,6 @@
               impermanence
               nix-index-database
               ;
-            patchedZjRadar = zjRadar;
-            inherit patchedZjRadarByBuildSystem;
-            crossZjRadar = zjRadarCross;
-            crossPackages = crossPkgs;
           };
         };
         agent-microsandbox = {
@@ -528,11 +438,6 @@
               impermanence
               nix-index-database
               ;
-            patchedZjRadar = zjRadar;
-            inherit patchedZjRadarByBuildSystem;
-            crossZjRadar = zjRadarCross;
-            crossPackages = crossPkgs;
-            includeZjRadar = false;
             includeCodexDesktop = false;
             useCustomNushell = false;
           };

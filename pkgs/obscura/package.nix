@@ -3,37 +3,14 @@
   stdenv,
   rustPlatform,
   fetchFromGitHub,
-  fetchurl,
   callPackage,
-  runCommand,
   nix-update-script,
   librusty_v8 ? (
     callPackage ./librusty_v8.nix {
       inherit (callPackage ./fetchers.nix { }) fetchLibrustyV8;
     }
   ),
-  librusty_v8_host ? null,
 }:
-let
-  hostLibrustyV8 =
-    if librusty_v8_host != null then
-      librusty_v8_host
-    else if stdenv.buildPlatform.system == stdenv.hostPlatform.system then
-      librusty_v8
-    else
-      fetchurl {
-        name = "librusty_v8-137.3.0-${stdenv.buildPlatform.system}";
-        url = "https://github.com/denoland/rusty_v8/releases/download/v137.3.0/librusty_v8_release_${stdenv.buildPlatform.rust.rustcTarget}.a.gz";
-        hash =
-          {
-            x86_64-linux = "sha256-omgf3lMBir0zZgGPEyYX3VmAAt948VbHvG0v9gi1ZWc=";
-            aarch64-linux = "sha256-42jQy0HBecQ6mQ5OxKVeRN2XYvHTS+FWlqzEQz+KbJI=";
-            x86_64-darwin = "sha256-ZnFsCn2VDqLHKqr2oMGkAqO6xV/fwLQ0H0mzjpr+zXU=";
-            aarch64-darwin = "sha256-YFA9ZyTlUsRrAewmChXnnobEcVtxl8XGJ0iRG/H04HA=";
-          }
-          .${stdenv.buildPlatform.system};
-      };
-in
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "obscura";
@@ -49,34 +26,14 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # The v8 crate's build script downloads librusty_v8.a at build time; the Nix
   # sandbox has no network, so point it at a prefetched release archive (same
   # approach as nixpkgs' deno/codex/windmill packages).
-  env = {
-    RUSTY_V8_ARCHIVE = librusty_v8;
-    RUSTY_V8_ARCHIVE_HOST = hostLibrustyV8;
-  };
-
-  # The build-dependency snapshot is executed on the build platform and needs
-  # a build-platform V8 archive; the final binary links the host-platform
-  # archive. The patched v8 build script selects between these variables.
-  cargoDeps =
-    let
-      unpatchedCargoDeps = rustPlatform.fetchCargoVendor {
-        inherit (finalAttrs) src;
-        hash = "sha256-tBuPQjjqXkF+vcBRXXyi9+gcBzg8L3QH2jjixBzGODE=";
-      };
-    in
-    if stdenv.buildPlatform.system == stdenv.hostPlatform.system then
-      unpatchedCargoDeps
-    else
-      runCommand "${finalAttrs.pname}-${finalAttrs.version}-vendor-cross" { } ''
-        cp -R --no-preserve=mode,ownership ${unpatchedCargoDeps}/. "$out"
-        chmod -R u+w "$out"
-        patch -d "$out" -p1 < ${../../patches/obscura-rusty-v8-cross-compile.patch}
-      '';
+  env.RUSTY_V8_ARCHIVE = librusty_v8;
 
   # Render build: screenshots/PDF/screencasting via the CPU paint pipeline.
   # Uses rustls, so neither CMake nor OpenSSL is needed (stealth would add
   # both via wreq/BoringSSL).
   buildFeatures = [ "render" ];
+
+  cargoHash = "sha256-tBuPQjjqXkF+vcBRXXyi9+gcBzg8L3QH2jjixBzGODE=";
 
   # Tests need the obstacle-course companion repo and network fixtures.
   doCheck = false;

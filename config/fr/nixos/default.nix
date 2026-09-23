@@ -5,20 +5,9 @@
   noctalia-greeter,
 }:
 {
-  lib,
-  pkgs,
   ...
 }:
 {
-  # Permit the x86_64 host to build and run aarch64-linux derivations through
-  # QEMU user-mode emulation. ARM hosts do not need to emulate themselves.
-  boot.binfmt.emulatedSystems = lib.optional (
-    pkgs.stdenv.hostPlatform.system == "x86_64-linux"
-  ) "aarch64-linux";
-  # Explicitly load the filesystem module before systemd-binfmt registers the
-  # QEMU handlers. This matters on kernels where binfmt_misc is modular.
-  boot.kernelModules = lib.optional (pkgs.stdenv.hostPlatform.system == "x86_64-linux") "binfmt_misc";
-
   imports = [
     ghmd.nixosModules.default
     multiverse.nixosModules.default

@@ -7,7 +7,6 @@
   agentUseProxy ? true,
   bbPackageOverride ? null,
   includeOpenCodeDesktop ? true,
-  includeZjRadar ? true,
   ...
 }:
 let
@@ -65,26 +64,7 @@ let
     inherit pkgs AIPackages;
     includeOhMyPi = isX86;
   };
-  zjRadarPlugin =
-    if includeZjRadar then
-      pkgs.runCommand "zellij-plugin-zj-radar.wasm"
-        {
-          pname = "zellij-zj-radar";
-          meta.platforms = lib.platforms.unix;
-        }
-        ''
-          cp ${pkgs.zjRadar}/bin/zj_radar.wasm "$out"
-        ''
-    else
-      null;
-  piPackage =
-    if includeZjRadar then
-      pkgs.piDev
-    else
-      pkgs.piDev.override {
-        includeZjRadar = false;
-        zjRadarCli = null;
-      };
+  piPackage = pkgs.piDev;
   ashDbusProxy = myNixInputs.ash.packages.${system}."ash-dbus-proxy";
   agentPortalWrappers = pkgs.runCommand "agent-portal-wrappers" { } ''
     cp -R ${myNixInputs.ash.packages.${system}.agent-portal-wrappers} "$out"
@@ -309,46 +289,18 @@ in
 
   programs.zellij = {
     enable = true;
-    plugins = lib.optional includeZjRadar zjRadarPlugin;
-    layouts =
-      if includeZjRadar then
-        { radar-sidebar = ./zellij-radar.kdl; }
-      else
-        {
-          default = pkgs.writeText "zellij-default.kdl" ''
-            layout {
-                pane
-                pane size=2 borderless=true {
-                    plugin location="zellij:status-bar"
-                }
-            }
-          '';
-        };
+    layouts.default = pkgs.writeText "zellij-default.kdl" ''
+      layout {
+          pane
+          pane size=2 borderless=true {
+              plugin location="zellij:status-bar"
+          }
+      }
+    '';
     settings = {
-      default_layout = if includeZjRadar then "radar-sidebar" else "default";
+      default_layout = "default";
       theme = "gruvbox-dark";
       pane_frames = false;
-    }
-    // lib.optionalAttrs includeZjRadar {
-      plugins."zj-radar" = {
-        density = "cards";
-        glyphs = "nerd";
-        naming = "managed";
-        # Zellij 0.44 can delay the initial ModeUpdate for `attach --create`
-        # sessions. Seed Gruvbox immediately; a later mode update still wins.
-        theme_bg = "#3c3836";
-        theme_fg = "#fbf1c7";
-        # Match Zellij's built-in gruvbox-dark text colors exactly: unselected
-        # uses #3c3836, selected uses #504945, and both use #fbf1c7 text.
-        theme_rail_bg = "#3c3836";
-        theme_idle_bg = "#3c3836";
-        theme_agent_bg = "#3c3836";
-        theme_active_bg = "#504945";
-        theme_flash_bg = "#504945";
-        theme_dim_fg = "#fbf1c7";
-        theme_idle_fg = "#fbf1c7";
-        theme_stale_fg = "#fbf1c7";
-      };
     };
   };
 

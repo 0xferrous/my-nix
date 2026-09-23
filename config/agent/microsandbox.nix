@@ -39,7 +39,6 @@
       agentUseBbSource = false;
       bbPackageOverride = myNixInputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.bb-app;
       includeOpenCodeDesktop = false;
-      includeZjRadar = false;
     };
     users.agent = import ./home.nix;
   };

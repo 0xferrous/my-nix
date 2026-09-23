@@ -8,8 +8,6 @@
   herdr,
   jjHunk,
   plannotatorPiExtension ? null,
-  zjRadarCli ? null,
-  includeZjRadar ? true,
 }:
 let
   lib = pkgs.lib;
@@ -91,8 +89,6 @@ let
     "--skill"
     "${jjHunk}/share/jj-hunk/skills/jj-hunk"
   ]
-  ++ lib.optional includeZjRadar "--extension"
-  ++ lib.optional includeZjRadar "${./pi/zj-radar.ts}"
   ++ lib.optionals (plannotatorPiExtension != null) [
     "--extension"
     "${plannotatorPiExtension}/share/pi-extensions/plannotator/apps/pi-extension/index.ts"
@@ -101,14 +97,11 @@ in
 pkgs.writeShellScriptBin "pi" ''
   export XDG_SESSION_TYPE=wayland
   export PATH=${
-    lib.makeBinPath (
-      [
-        gitHunk
-        jjHunk
-        jq
-      ]
-      ++ lib.optional (zjRadarCli != null) zjRadarCli
-    )
+    lib.makeBinPath ([
+      gitHunk
+      jjHunk
+      jq
+    ])
   }:$PATH
 
   # Ensure ctrl+backspace kills a word like ctrl+w. pi has no CLI/env knob to
