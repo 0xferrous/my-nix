@@ -199,6 +199,35 @@
         ];
       };
       lib = pkgs.lib;
+      mkAgentMicrosandboxHome =
+        targetSystem:
+        let
+          targetPkgs =
+            if targetSystem == system then
+              pkgs
+            else
+              import inputs.nixpkgs {
+                system = targetSystem;
+                overlays = [
+                  (import ./pkgs/overlay.nix {
+                    inherit inputs;
+                    useCustomNushell = false;
+                  })
+                ];
+              };
+        in
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = targetPkgs;
+          extraSpecialArgs = {
+            myNixInputs = inputs;
+            agentUseAshIntegration = false;
+            agentUseProxy = false;
+            agentUseBbSource = false;
+            bbPackageOverride = inputs.llm-agents.packages.${targetSystem}.bb-app;
+            includeOpenCodeDesktop = false;
+          };
+          modules = [ ./config/agent/home.nix ];
+        };
       mkAgentNixos =
         {
           targetSystem,
@@ -386,18 +415,8 @@
         };
         modules = [ ./config/agent/home.nix ];
       };
-      homeConfigurations.agent-microsandbox = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = {
-          myNixInputs = inputs;
-          agentUseAshIntegration = false;
-          agentUseProxy = false;
-          agentUseBbSource = false;
-          bbPackageOverride = inputs.llm-agents.packages.${system}.bb-app;
-          includeOpenCodeDesktop = false;
-        };
-        modules = [ ./config/agent/home.nix ];
-      };
+      homeConfigurations.agent-microsandbox = mkAgentMicrosandboxHome system;
+      homeConfigurations.agent-microsandbox-aarch64-linux = mkAgentMicrosandboxHome "aarch64-linux";
 
       nixosConfigs = {
         fr = import ./config/fr/nixos.nix {
@@ -464,6 +483,11 @@
 
         agent-microsandbox = mkAgentNixos {
           targetSystem = system;
+          microsandbox = true;
+        };
+
+        agent-microsandbox-aarch64-linux = mkAgentNixos {
+          targetSystem = "aarch64-linux";
           microsandbox = true;
         };
 

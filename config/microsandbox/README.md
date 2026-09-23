@@ -2,7 +2,9 @@
 
 This standalone flake builds the small NixOS Docker image used by
 microsandbox. The image enables Nix flakes and the `nix` command, installs Git
-and Nix, and explicitly keeps `nixos-rebuild` available.
+and Nix, and explicitly keeps `nixos-rebuild` available. It also seeds a bootstrap
+`agent` account with a home directory and passwordless wheel sudo so the
+account is usable before the first replacement configuration is activated.
 
 Build and load the image from the host:
 
@@ -67,6 +69,7 @@ msb create \
   microsandbox-nixos:latest
 msb exec microsandbox-agent -- \
   nixos-rebuild switch --flake /workspace#agent-microsandbox
+# On ARM64, use: /workspace#agent-microsandbox-aarch64-linux
 ```
 
 The module disables DHCP, resolvconf, the firewall, sysctl, and unsupported

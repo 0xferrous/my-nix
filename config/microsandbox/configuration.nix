@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   imports = [ ./module.nix ];
@@ -26,7 +26,21 @@
     cacert
     git
     nix
+    sudo
   ];
+
+  # Keep a usable bootstrap account available before a replacement flake is
+  # activated. Replacement configurations can override these defaults.
+  users.users.agent = {
+    isNormalUser = lib.mkDefault true;
+    uid = lib.mkDefault 1000;
+    group = lib.mkDefault "users";
+    home = lib.mkDefault "/home/agent";
+    createHome = lib.mkDefault true;
+    extraGroups = lib.mkDefault [ "wheel" ];
+    hashedPassword = lib.mkDefault "!";
+  };
+  security.sudo.wheelNeedsPassword = lib.mkDefault false;
 
   system.stateVersion = "26.05";
 }

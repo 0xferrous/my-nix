@@ -24,8 +24,16 @@
   fr.agent.selfUpdate = {
     enable = true;
     workspace = "/workspace";
-    nixosTarget = "agent-microsandbox";
-    homeTarget = "agent-microsandbox";
+    nixosTarget =
+      if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
+        "agent-microsandbox"
+      else
+        "agent-microsandbox-${pkgs.stdenv.hostPlatform.system}";
+    homeTarget =
+      if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
+        "agent-microsandbox"
+      else
+        "agent-microsandbox-${pkgs.stdenv.hostPlatform.system}";
   };
 
   # Install the agent Home Manager profile as part of this switch target.
