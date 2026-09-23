@@ -37,6 +37,7 @@
       { print }
     ' "$out/init" > "$out/init.tmp"
     mv "$out/init.tmp" "$out/init"
+    ${pkgs.coreutils}/bin/chmod 0755 "$out/init"
   '';
 
   environment.systemPackages = with pkgs; [
