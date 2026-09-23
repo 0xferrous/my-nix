@@ -173,5 +173,8 @@ in
   qwen3-server = final.callPackage ./qwen3-server.nix {
     llamaCpp = prev.llama-cpp.override { vulkanSupport = true; };
   };
+  microsandbox = final.callPackage ./microsandbox.nix { };
+  # Short alias matching the upstream executable name.
+  msb = final.microsandbox;
   frsNvimPackage = inputs.frs-nvim.packages.${targetSystem}.default;
 }

@@ -353,6 +353,12 @@
             ];
           };
         };
+      mkMicrosandboxPackage =
+        targetSystem:
+        let
+          targetPkgs = import inputs.nixpkgs { system = targetSystem; };
+        in
+        targetPkgs.callPackage ./pkgs/microsandbox.nix { };
     in
     {
       overlays.default = overlay;
@@ -387,6 +393,8 @@
                 flake-utils
                 gruvbox-gtk-theme
                 qwen3-server
+                microsandbox
+                msb
                 codex-desktop
                 bb
                 tolaria
@@ -403,6 +411,8 @@
           (
             lib.genAttrs imageSystems (targetSystem: {
               agent-container-image = mkAgentContainerImage targetSystem;
+              microsandbox = mkMicrosandboxPackage targetSystem;
+              msb = mkMicrosandboxPackage targetSystem;
             })
           )
       );
@@ -475,7 +485,9 @@
           }
         );
       homeManagerModules = import ./modules/home;
-      nixosModules = import ./modules/nixos;
+      nixosModules = (import ./modules/nixos) // {
+        microsandbox = import ./config/microsandbox/module.nix;
+      };
       homeConfigs = {
         fr =
           {

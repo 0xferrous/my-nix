@@ -93,6 +93,7 @@ Packages provided by the overlay:
 | `prime-agent` | self-improving RLM agent for coding workflows and long-running autonomous tasks |
 | `oh-my-pi` | AI coding agent for the terminal |
 | `qwen3-server` | Qwen3-Coder 30B-A3B served directly by llama.cpp (Vulkan backend), plus `qwen3-get-model`/`qwen3-bench` helpers |
+| `microsandbox` / `msb` | Prebuilt microsandbox CLI and libkrunfw runtime from the upstream GitHub release (Linux x86_64 and aarch64) |
 | `ironclaw` | secure personal AI assistant |
 | `iron-proxy` | MITM egress proxy with DNS server, secret injection, and audit logging |
 | `obscura` | headless browser engine in Rust: V8, real DOM, CDP, stealth |
