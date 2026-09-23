@@ -174,7 +174,6 @@ in
     };
 
     services.tailscale.enable = true;
-    services.dbus.implementation = "dbus";
     services.journald.storage = "persistent";
 
     systemd.timers.agent-auto-switch = lib.mkIf cfg.enable {
