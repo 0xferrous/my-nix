@@ -22,6 +22,23 @@
   system.disableInstallerTools = true;
   system.tools.nixos-rebuild.enable = true;
 
+  # microsandbox invokes the image-root /init directly instead of using a
+  # bootloader. Follow the activated NixOS profile when one exists, while
+  # retaining the image generation for the first boot before any switch.
+  system.systemBuilderCommands = ''
+    ${pkgs.gawk}/bin/awk -v fallback="$out" '
+      /^systemConfig=/ {
+        print "systemConfig=/nix/var/nix/profiles/system";
+        print "if [ ! -x " "\"" "$systemConfig/init" "\"" " ]; then";
+        print "    systemConfig=" fallback;
+        print "fi";
+        next;
+      }
+      { print }
+    ' "$out/init" > "$out/init.tmp"
+    mv "$out/init.tmp" "$out/init"
+  '';
+
   environment.systemPackages = with pkgs; [
     cacert
     git

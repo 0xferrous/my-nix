@@ -78,4 +78,6 @@ masks. It also merges the NixOS CA bundle with the per-sandbox MITM CA at boot.
 
 Images are provided for `x86_64-linux` and `aarch64-linux`, covering Linux
 machines and Apple Silicon Macs. microsandbox supplies the kernel while
-`/init` hands PID 1 to NixOS/systemd.
+`/init` hands PID 1 to NixOS/systemd and follows the activated NixOS system
+profile, so a target selected with `nixos-rebuild switch` remains active after
+microsandbox restarts.
