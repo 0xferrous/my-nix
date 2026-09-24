@@ -17,6 +17,9 @@ in
   config = lib.mkIf cfg.enable {
     multiverse.enable = true;
 
+    nix.daemonCPUSchedPolicy = "idle";
+    nix.daemonIOSchedClass = "idle";
+
     nix.settings = {
       auto-optimise-store = false;
       substituters = binaryCaches;
