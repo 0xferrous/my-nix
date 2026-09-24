@@ -47,6 +47,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    home.packages = [ cfg.package ];
+
     home.activation.executorDataDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD mkdir -p ${lib.escapeShellArg cfg.dataDir}
     '';
@@ -60,10 +62,10 @@ in
       Install.WantedBy = [ "default.target" ];
       Service = {
         WorkingDirectory = cfg.dataDir;
-        Environment = {
-          EXECUTOR_DATA_DIR = toString cfg.dataDir;
-          EXECUTOR_SUPERVISED = "1";
-        };
+        Environment = [
+          "EXECUTOR_DATA_DIR=${toString cfg.dataDir}"
+          "EXECUTOR_SUPERVISED=1"
+        ];
         ExecStart = lib.escapeShellArgs (
           [
             "${cfg.package}/bin/executor"
