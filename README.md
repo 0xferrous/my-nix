@@ -82,6 +82,7 @@ Packages provided by the overlay:
 | `pi`, `abwrap`, `pi-acp` | `pi` wraps the llm-agents CLI with bundled extensions/theme and AI tooling; `abwrap` launches Nushell—or a directly selected entrypoint such as `pi`, `codex`, or `opencode`—inside Bubblewrap with a per-invocation writable Nix local-overlay store; `pi-acp` is the Agent Client Protocol adapter |
 | `herdr` | agent multiplexer that lives in your terminal |
 | `dev-essentials` | combined package exposing the shared development essentials on one `PATH` |
+| `executor` | Executor integration service and CLI, packaged from the upstream Linux release |
 | `git-hunk`, `jj-hunk` | non-interactive hunk staging for `git` and `jj` |
 | `takopi` | Telegram bridge for Codex, Claude Code, and other agent CLIs |
 | `tron-wallet-cli` | agent-first TRON command-line wallet (TypeScript), built from source |

@@ -76,6 +76,7 @@ in
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${targetSystem};
   };
+  executor = final.callPackage ./executor.nix { };
   obscura = final.callPackage ./obscura/package.nix { };
   nash = final.callPackage ./nash.nix { };
   google-authenticator-transfer-decode =

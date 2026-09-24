@@ -271,6 +271,7 @@
                 fr-frame-summon
                 fr-kbd-backlight
                 dev-essentials
+                executor
                 git-hunk
                 ironclaw
                 jj-hunk
