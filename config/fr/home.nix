@@ -39,6 +39,7 @@ in
   imports = [
     ../../modules/home/symlinks.nix
     ../../modules/home/vcs.nix
+    ../../modules/home/executor.nix
     ../../modules/home/termfilechooser.nix
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/nushell.nix
@@ -118,6 +119,8 @@ in
     };
 
     multiverse.enable = true;
+
+    services.executor.enable = true;
 
     fr.direnv = {
       enable = true;
