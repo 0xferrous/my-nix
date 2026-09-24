@@ -130,6 +130,8 @@ in
       memoryPercent = 100;
     };
 
+    security.pam.services.su.startSession = true;
+
     security.pam.loginLimits = [
       {
         domain = "*";

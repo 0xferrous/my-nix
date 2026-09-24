@@ -24,7 +24,7 @@
   fr.agent.impermanence.enable = false;
 
   fr.agent.selfUpdate = {
-    enable = true;
+    enable = false;
     workspace = "/workspace";
     nixosTarget =
       if pkgs.stdenv.hostPlatform.system == "x86_64-linux" then
