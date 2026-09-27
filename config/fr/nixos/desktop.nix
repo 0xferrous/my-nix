@@ -9,6 +9,29 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    # Avoid browsers selecting DejaVu's monochrome emoji glyphs before the
+    # color emoji font. The NixOS default font bundle includes DejaVu, which
+    # can make emoji render as empty boxes or text glyphs in Chromium.
+    fonts = {
+      # Override NixOS's own mkDefault true while still allowing a consuming
+      # configuration to provide a normal-priority override.
+      enableDefaultPackages = lib.mkOverride 999 false;
+      packages = lib.mkDefault (
+        with pkgs;
+        [
+          noto-fonts
+          noto-fonts-cjk-sans
+          noto-fonts-color-emoji
+        ]
+      );
+      fontconfig.defaultFonts = {
+        emoji = lib.mkDefault [ "Noto Color Emoji" ];
+        monospace = lib.mkDefault [ "Noto Sans Mono" ];
+        sansSerif = lib.mkDefault [ "Noto Sans" ];
+        serif = lib.mkDefault [ "Noto Serif" ];
+      };
+    };
+
     hardware.enableRedistributableFirmware = lib.mkDefault true;
 
     fr.desktopPortal = {
