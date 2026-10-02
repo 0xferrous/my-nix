@@ -26,8 +26,8 @@ in
       );
       fontconfig.defaultFonts = {
         emoji = lib.mkDefault [ "Noto Color Emoji" ];
-        monospace = lib.mkDefault [ "Noto Sans Mono" ];
-        sansSerif = lib.mkDefault [ "Noto Sans" ];
+        monospace = lib.mkDefault [ "RecMonoCasual Nerd Font" ];
+        sansSerif = lib.mkDefault [ "Recursive Sans Casual Static" ];
         serif = lib.mkDefault [ "Noto Serif" ];
       };
     };

@@ -14,5 +14,9 @@
   # Stronger than Home Manager's built-in standalone default (`false`), while
   # still allowing consuming configs to override with mkForce.
   fonts.fontconfig.enable = lib.mkDefault true;
-  fonts.fontconfig.defaultFonts.emoji = [ "Noto Color Emoji" ];
+  fonts.fontconfig.defaultFonts = {
+    emoji = [ "Noto Color Emoji" ];
+    monospace = [ "RecMonoCasual Nerd Font" ];
+    sansSerif = [ "Recursive Sans Casual Static" ];
+  };
 }
