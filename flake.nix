@@ -404,13 +404,18 @@
       homeConfigurations.agent-microsandbox-aarch64-linux = mkAgentMicrosandboxHome "aarch64-linux";
 
       nixosConfigs = {
-        fr = import ./config/fr/nixos.nix {
-          inherit
-            fenix
-            ghmd
-            multiverse
-            noctalia-greeter
-            ;
+        fr = {
+          imports = [
+            (import ./config/fr/nixos.nix {
+              inherit
+                fenix
+                ghmd
+                multiverse
+                noctalia-greeter
+                ;
+            })
+          ];
+          nixpkgs.overlays = [ overlay ];
         };
         agent = {
           imports = [
