@@ -79,6 +79,7 @@ in
     ../../modules/home/programs/nushell.nix
     ../../modules/home/programs/nushell-session-vars.nix
     ../fr/home/hunk.nix
+    ../fr/home/jujutsu.nix
   ];
 
   home = {
