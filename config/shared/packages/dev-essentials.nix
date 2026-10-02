@@ -44,6 +44,7 @@ in
   ripgrep
   fd
   bat
+  delta
   _7zz
   eza
   tree

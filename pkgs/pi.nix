@@ -88,8 +88,6 @@ let
     "--extension"
     "${herdrPiExtension}"
     "--skill"
-    "${gitHunk}/share/git-hunk/skills/git-hunk"
-    "--skill"
     "${jjHunk}/share/jj-hunk/skills/jj-hunk"
   ]
   ++ lib.optionals (plannotatorPiExtension != null) [
@@ -174,6 +172,17 @@ pkgs.writeShellScriptBin "pi" ''
     --prompt-template "$agent_stuff_root/prompts"
     --skill "$agent_stuff_root/skills"
   )
+
+  # The agent harness may already load git-hunk from ~/.agents/skills. Avoid
+  # registering the packaged copy in that case, while keeping the Nix copy as
+  # a fallback for hosts without the user-managed skill.
+  if [[ ! -f "$HOME/.agents/skills/git-hunk/SKILL.md" \
+    && ! -f "$HOME/.pi/agent/skills/git-hunk/SKILL.md" ]]; then
+    resource_args+=(
+      --skill
+      "${gitHunk}/share/git-hunk/skills/git-hunk"
+    )
+  fi
 
   exec ${piPackage}/bin/pi "''${resource_args[@]}" "$@"
 ''
