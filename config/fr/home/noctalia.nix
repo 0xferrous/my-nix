@@ -336,6 +336,7 @@ in
             "cpu-temperature"
             "disk-usage"
             "caffeine"
+            "config-switch"
             "ai-usage"
             "tailscale-active"
           ];
@@ -399,6 +400,11 @@ in
             type = "sysmon";
             stat = "disk_used_pct";
             path = "/";
+          };
+          "config-switch" = {
+            type = "fr/status:config-switch";
+            capsule = true;
+            capsule_border = "primary";
           };
           "ai-usage" = {
             type = "fr/status:ai-usage";

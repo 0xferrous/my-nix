@@ -5,7 +5,7 @@ plugin_api = 24
 author = "fr"
 license = "MIT"
 icon = "chart-bar"
-description = "Crypto prices, AI usage, and active Tailscale account widgets."
+description = "System status widgets for the fr configuration."
 dependencies = ["codexbar", "tailscale", "upower"]
 
 [[widget]]
@@ -56,6 +56,10 @@ entry = "tailscale.luau"
   default = 60
   min = 10
   max = 3600
+
+[[widget]]
+id = "config-switch"
+entry = "config-switch.luau"
 
 [[desktop_widget]]
 id = "battery"
