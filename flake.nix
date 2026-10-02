@@ -292,7 +292,6 @@
                 ssh-tmp
                 flake-utils
                 gruvbox-gtk-theme
-                qwen3-server
                 microsandbox
                 msb
                 codex-desktop
@@ -340,18 +339,6 @@
           google-authenticator-transfer-decode = {
             type = "app";
             program = "${pkgs.google-authenticator-transfer-decode}/bin/google-authenticator-transfer-decode";
-          };
-          qwen3-server = {
-            type = "app";
-            program = "${pkgs.qwen3-server}/bin/qwen3-server";
-          };
-          qwen3-get-model = {
-            type = "app";
-            program = "${pkgs.qwen3-server}/bin/qwen3-get-model";
-          };
-          qwen3-bench = {
-            type = "app";
-            program = "${pkgs.qwen3-server}/bin/qwen3-bench";
           };
           bb = {
             type = "app";

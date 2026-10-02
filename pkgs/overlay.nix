@@ -130,12 +130,6 @@ in
   # while this flake's newer nixpkgs pin is not.
   zoxide = inputs.llm-agents.inputs.nixpkgs.legacyPackages.${targetSystem}.zoxide;
 
-  # Direct llama.cpp server for Qwen3-Coder-30B-A3B (Vulkan backend — gfx1151
-  # is unsupported by ROCm/vLLM). Binaries: qwen3-server, qwen3-get-model,
-  # qwen3-bench.
-  qwen3-server = final.callPackage ./qwen3-server.nix {
-    llamaCpp = prev.llama-cpp.override { vulkanSupport = true; };
-  };
   microsandbox = final.callPackage ./microsandbox.nix { };
   # Short alias matching the upstream executable name.
   msb = final.microsandbox;
