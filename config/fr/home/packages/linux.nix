@@ -11,10 +11,10 @@ with pkgs;
   ollama-rocm
   amdgpu_top
 
-  # General llama.cpp with the Vulkan backend (gfx1151 is unsupported by
-  # ROCm/vLLM, so this is the go-to engine for local GGUF serving).
+  # PrismML's llama.cpp fork with the Vulkan backend (gfx1151 is unsupported
+  # by ROCm/vLLM, so this is the go-to engine for local GGUF serving).
   # Binaries: llama-server, llama-cli, llama-bench.
-  llama-cpp-vulkan
+  llama-cpp-prism-vulkan
 
   # Wayland screen recording
   wf-recorder

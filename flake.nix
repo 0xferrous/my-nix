@@ -293,6 +293,8 @@
                 flake-utils
                 gruvbox-gtk-theme
                 microsandbox
+                llama-cpp-prism-rocm
+                llama-cpp-prism-vulkan
                 msb
                 codex-desktop
                 bb

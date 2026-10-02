@@ -11,6 +11,39 @@ let
     rev = "9a251561a90277d0af466ee845dff706bbf3c3d9";
     hash = "sha256-aGmgsHfa35oGQJ+z6kxqHsM15QP03C9nSdv5g9hQwOA=";
   };
+  # Ternary Bonsai 2 uses PrismML's PTQ1_0/PQ2_0 GGUF formats, which are not
+  # understood by stock llama.cpp yet. Keep the fork pinned to a known PrismML
+  # tag until those formats land upstream.
+  prismLlamaCpp =
+    backend:
+    let
+      base =
+        if backend == "rocm" then
+          prev.llama-cpp.override { rocmSupport = true; }
+        else
+          prev.llama-cpp.override { vulkanSupport = true; };
+    in
+    base.overrideAttrs (old: {
+      pname = "llama-cpp-prism";
+      version = "10743";
+      src = final.fetchFromGitHub {
+        owner = "PrismML-Eng";
+        repo = "llama.cpp";
+        tag = "prism-b10743-adfffbe";
+        hash = "sha256-SNBAC+dNTwQxpGmKyG7i/8eqCNg6985DXtqGbzWgwFA=";
+      };
+      npmDepsHash = "sha256-2Q7XhaLAArmviOLdQsNbYTfdyDE5pW9lR26cRHEVl9k=";
+      preConfigure = ''
+        prependToVar cmakeFlags "-DLLAMA_BUILD_COMMIT:STRING=adfffbe"
+        pushd ${old.npmRoot}
+        LLAMA_BUILD_NUMBER=10743 npm run build
+        popd
+      '';
+      meta = old.meta // {
+        description = "PrismML llama.cpp fork with ternary Bonsai GGUF support";
+        homepage = "https://github.com/PrismML-Eng/llama.cpp";
+      };
+    });
 in
 {
   # TODO: Remove this source build and use nixpkgs' Nushell 0.116.0 once it
@@ -131,6 +164,8 @@ in
   zoxide = inputs.llm-agents.inputs.nixpkgs.legacyPackages.${targetSystem}.zoxide;
 
   microsandbox = final.callPackage ./microsandbox.nix { };
+  llama-cpp-prism-rocm = prismLlamaCpp "rocm";
+  llama-cpp-prism-vulkan = prismLlamaCpp "vulkan";
   # Short alias matching the upstream executable name.
   msb = final.microsandbox;
   frsNvimPackage = inputs.frs-nvim.packages.${targetSystem}.default;

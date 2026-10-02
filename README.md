@@ -92,6 +92,7 @@ Packages provided by the overlay:
 | `ssh-tmp` | SSH with an ephemeral Ed25519 identity, empty configuration, and no agent identities |
 | `oh-my-pi` | AI coding agent for the terminal |
 | `microsandbox` / `msb` | Prebuilt microsandbox CLI and libkrunfw runtime from the upstream GitHub release (Linux x86_64 and aarch64) |
+| `llama-cpp-prism-rocm`, `llama-cpp-prism-vulkan` | PrismML's ROCm/HIP- and Vulkan-enabled llama.cpp fork for Ternary Bonsai GGUF models |
 | `ironclaw` | secure personal AI assistant |
 | `iron-proxy` | MITM egress proxy with DNS server, secret injection, and audit logging |
 | `obscura` | headless browser engine in Rust: V8, real DOM, CDP, stealth |
