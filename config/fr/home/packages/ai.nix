@@ -22,7 +22,7 @@ with pkgs;
   AIPackages.handy
   AIPackages.openspec
   AIPackages.spec-kit
-  AIPackages.opencode
+  AIPackages.opencode2
   myNixInputs.codexbar.packages.${system}.default
   AIPackages.codex
   AIPackages.amp
