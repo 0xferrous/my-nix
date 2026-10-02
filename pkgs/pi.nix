@@ -23,7 +23,7 @@ let
       {
         outputHashMode = "recursive";
         outputHashAlgo = "sha256";
-        outputHash = "sha256-afnmCMSKZIvggF6kMy9Ho945PAZxNVDz+/0WQ7hn2io=";
+        outputHash = "sha256-uGzJqG6+/ztOACc7YhJLgahpW3S1sTXbjVuaHguCoA8=";
         nativeBuildInputs = [ pkgs.npm-lockfile-fix ];
       }
       ''
@@ -47,7 +47,7 @@ let
     # cannot reuse a stale fixed-output path without checking npmDepsHash.
     version = "unstable-${agentStuffLockHash}";
     src = agentStuffPatchedSrc;
-    npmDepsHash = "sha256-KA4qJ9MTv35qklVdYFgbY96mbMb+p0PkWrOWXMh3Iyo=";
+    npmDepsHash = "sha256-LU5z4b1w1gpLWGCO05XF9GzHmRoFncrx3sq3dN+B270=";
     npmDepsFetcherVersion = 2;
 
     dontNpmBuild = true;
@@ -59,6 +59,9 @@ let
       "--ignore-scripts"
       "--omit=optional"
     ];
+    # npm 11.17 lockfiles make `npm prune` fail with ERR_INVALID_ARG_TYPE in
+    # this build's npm 11.16; skip the prune step.
+    dontNpmPrune = true;
 
     postInstall = ''
       mkdir -p $out/share/pi-extensions
