@@ -155,7 +155,18 @@ in
   # creation avoids it; see git config core.createobject.
   programs.git = {
     enable = true;
-    includes = [ { path = "~/.config/git/private.config"; } ];
+    includes = [
+      { path = "~/.config/git/private.config"; }
+      # Agent VMs have no signing key or gpg agent, and the private config above
+      # may enable signing. Home Manager emits includes after the main config,
+      # so force signing off in a later include to override it.
+      {
+        contents = {
+          commit.gpgSign = false;
+          tag.gpgSign = false;
+        };
+      }
+    ];
     settings = {
       core = {
         createobject = "rename";
@@ -163,7 +174,11 @@ in
     };
   };
 
-  programs.jujutsu.enable = true;
+  programs.jujutsu = {
+    enable = true;
+    # Keep the shared Jujutsu defaults, but don't sign commits in agent VMs.
+    settings.signing.backend = lib.mkForce "none";
+  };
 
   programs.herdr = {
     enable = true;
