@@ -253,7 +253,9 @@ in
     bb-app = {
       Unit.Description = "bb agent server";
       Service = {
-        ExecStart = "${bbPackage}/bin/bb-app --server-bind-host 0.0.0.0";
+        # Derive BB_APP_URL from the machine's Tailscale MagicDNS name so
+        # generated links and browser origins point at the tailnet address.
+        ExecStart = "${pkgs.nushell}/bin/nu ${./bb-app-server.nu} ${bbPackage}/bin/bb-app ${pkgs.tailscale}/bin/tailscale";
         Restart = "on-failure";
         RestartSec = 2;
       };
