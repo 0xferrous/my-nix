@@ -266,6 +266,7 @@
               inherit (pkgs)
                 fr-frame-summon
                 fr-kbd-backlight
+                waydroid-size
                 dev-essentials
                 executor
                 git-hunk

@@ -47,6 +47,7 @@ in
   };
   fr-frame-summon = final.callPackage ./frame-summon.nix { };
   fr-kbd-backlight = final.callPackage ./keyboard-backlight.nix { };
+  waydroid-size = final.callPackage ./waydroid-size.nix { };
   git-hunk = final.callPackage ./git-hunk.nix { };
   ironclaw = final.callPackage ./ironclaw.nix { };
   iron-proxy = final.callPackage ./iron-proxy.nix { };
