@@ -7,7 +7,6 @@
   nix-index-database,
   impermanence,
   includeCodexDesktop ? true,
-  useCustomNushell ? true,
   ...
 }:
 let
@@ -78,10 +77,7 @@ in
 
   config = {
     nixpkgs.overlays = [
-      (import ../../pkgs/overlay.nix {
-        inputs = myNixInputs;
-        inherit useCustomNushell;
-      })
+      (import ../../pkgs/overlay.nix { inputs = myNixInputs; })
     ]
     # The patched libgit2 is needed by the Ash workspace VM, but applying it
     # globally to container-style targets forces Nix itself and its test suite

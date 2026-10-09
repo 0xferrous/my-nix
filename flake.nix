@@ -209,10 +209,7 @@
               import inputs.nixpkgs {
                 system = targetSystem;
                 overlays = [
-                  (import ./pkgs/overlay.nix {
-                    inherit inputs;
-                    useCustomNushell = false;
-                  })
+                  (import ./pkgs/overlay.nix { inherit inputs; })
                 ];
               };
         in
@@ -245,7 +242,6 @@
               nix-index-database
               ;
             includeCodexDesktop = false;
-            useCustomNushell = false;
           };
           modules = [
             ./config/agent/nixos.nix
@@ -448,7 +444,6 @@
               nix-index-database
               ;
             includeCodexDesktop = false;
-            useCustomNushell = false;
           };
         };
         nash = {

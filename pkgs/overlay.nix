@@ -1,16 +1,9 @@
 {
   inputs,
-  useCustomNushell ? true,
 }:
 final: prev:
 let
   targetSystem = final.stdenv.hostPlatform.system;
-  nushellSrc = final.fetchFromGitHub {
-    owner = "nushell";
-    repo = "nushell";
-    rev = "9a251561a90277d0af466ee845dff706bbf3c3d9";
-    hash = "sha256-aGmgsHfa35oGQJ+z6kxqHsM15QP03C9nSdv5g9hQwOA=";
-  };
   # Ternary Bonsai 2 uses PrismML's PTQ1_0/PQ2_0 GGUF formats, which are not
   # understood by stock llama.cpp yet. Keep the fork pinned to a known PrismML
   # tag until those formats land upstream.
@@ -46,29 +39,6 @@ let
     });
 in
 {
-  # TODO: Remove this source build and use nixpkgs' Nushell 0.116.0 once it
-  # is released.
-  nushell =
-    if !useCustomNushell then
-      prev.nushell
-    else
-      prev.nushell.overrideAttrs (old: {
-        version = "0.115.1-unstable";
-        src = nushellSrc;
-        cargoDeps = final.rustPlatform.fetchCargoVendor {
-          src = nushellSrc;
-          hash = "sha256-ZnaGMD+ONwFoJGEMQY3VX/J4BZSDnWajvgM2cBWR9M4=";
-        };
-        # The sandbox has no PTY, so these upstream tests see a 0-column table.
-        checkPhase =
-          final.lib.replaceStrings
-            [ "--test-threads=$NIX_BUILD_CORES" ]
-            [
-              "--test-threads=$NIX_BUILD_CORES --skip=eval::eval_rendered_matches::case_3_literal_range --skip=eval::eval_rendered_matches::case_4_literal_list --skip=eval::eval_rendered_matches::case_5_literal_record --skip=eval::eval_rendered_matches::case_6_literal_table --skip=eval::eval_rendered_matches::case_8_call_spread"
-            ]
-            old.checkPhase;
-      });
-
   herdr = inputs.llm-agents.packages.${targetSystem}.herdr;
 
   ashWrappers = import ./ash-portal-wrappers.nix {
