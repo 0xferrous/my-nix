@@ -803,11 +803,11 @@
     },
     "multiverse": {
       "locked": {
-        "lastModified": 1789237730,
-        "narHash": "sha256-nJUM/VbN/vpaLH5SoqD2lhF/BQi28UJ9xsHce8d0zYI=",
+        "lastModified": 1791482513,
+        "narHash": "sha256-+sFUL2Vykuk65yb5MxL2H3ykoJnZF9274v9GncvgO8s=",
         "owner": "fzakaria",
         "repo": "nixpkgs-multiverse",
-        "rev": "42f7c1a841ef59db94001175ec8bd897ad0d1c7b",
+        "rev": "555490a0100ea823302d845e07a75c493e07c973",
         "type": "github"
       },
       "original": {

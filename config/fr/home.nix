@@ -120,6 +120,7 @@ in
     home.sessionPath = [ "${config.home.homeDirectory}/bin" ];
 
     programs.nushell = {
+      package = lib.mkDefault config.multiverse.pinned.nushell;
       extraEnv = ''
         let paths_to_add = [
           $"($env.HOME)/dev/fr/open-source/virtle/result/bin"
@@ -141,7 +142,10 @@ in
       ];
     };
 
-    multiverse.enable = true;
+    multiverse = {
+      enable = true;
+      pins.nushell = lib.mkDefault "0.115.1";
+    };
 
     services.executor.enable = true;
 
