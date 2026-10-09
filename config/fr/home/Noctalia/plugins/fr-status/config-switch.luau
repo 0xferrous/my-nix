@@ -26,18 +26,28 @@ end
 
 -- The switch log is a terminal capture and may contain ANSI escape sequences
 -- (colors, cursor movement). Noctalia renders plain text without markup, so
--- strip the escapes instead of showing them literally.
+-- strip them instead of showing them literally. Some producers drop the ESC
+-- byte but keep the "[...m" tail, so also strip escape-stripped sequences.
 local function stripAnsi(text)
   if text == nil or text == "" then
     return ""
   end
-  -- CSI: colors (SGR), cursor movement, erase, etc.
+  -- ESC-prefixed CSI: colors (SGR), cursor movement, erase, etc.
   text = text:gsub("\27%[[0-?]*[ -/]*[@-~]", "")
   -- OSC: window title and friends, terminated by BEL or ST (ESC backslash).
   text = text:gsub("\27%][^\7\27]*\7", "")
   text = text:gsub("\27%][^\7\27]*\27\\", "")
-  -- Any remaining two-byte escape (e.g. charset selection).
+  -- Any remaining ESC-prefixed escape (e.g. charset selection).
   text = text:gsub("\27.", "")
+  -- Escape-stripped CSI tails, e.g. "[32;1m" or "[?2026h" without a leading ESC.
+  text = text:gsub("%[[0-9;?]+[A-Za-z]", "")
+  -- Remaining control characters except tab and newline.
+  text = text:gsub("%c", function(c)
+    if c == "\n" or c == "\t" then
+      return c
+    end
+    return ""
+  end)
   return text
 end
 
