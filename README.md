@@ -108,8 +108,8 @@ Packages provided by the overlay:
 | `google-authenticator-transfer-decode` | decode Google Authenticator transfer QR payloads to standard `otpauth` URIs |
 | `fr-frame-summon` | summon the Frame extension via local JSON-RPC WebSocket |
 | `fr-kbd-backlight` | Nushell helper for managing keyboard backlight brightness |
-| `install-bin` | symlink a binary into `~/bin` using the source path basename |
 | `waydroid-size` | Niri/Waydroid helper with height-fit and quarter-screen-width modes; reserves space for bars |
+| `install-bin` | symlink a binary into `~/bin` using the source path basename |
 | `ashWrappers` | guest-side wrappers for the Ash Portal |
 | `plannotator-pi-extension` | interactive plan and code review extension for Pi |
 | `frsNvimPackage` | the [`pkgs/frs-nvim`](./pkgs/frs-nvim/README.md) package |
