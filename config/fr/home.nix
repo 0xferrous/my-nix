@@ -77,6 +77,29 @@ in
   ];
 
   config = {
+    # Home Manager sets NIX_XDG_DESKTOP_PORTAL_DIR to the user profile when
+    # extra portal backends are configured. Include the system portal
+    # backends here too, otherwise ScreenCast/Screenshot descriptors from
+    # xdg-desktop-portal-gnome are hidden by the termfilechooser-only path.
+    xdg.portal.extraPortals = with pkgs; [
+      xdg-desktop-portal-gtk
+      xdg-desktop-portal-gnome
+    ];
+    # This Home Manager selector shadows the system niri-portals.conf, so
+    # retain the ScreenCast/Screenshot mappings here as well.
+    xdg.portal.config.niri = {
+      default = [
+        "gnome"
+        "gtk"
+      ];
+      "org.freedesktop.impl.portal.Access" = [ "gtk" ];
+      "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
+      "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
+      "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
+      "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
+      "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+    };
+
     nixpkgs.overlays = [
       (import ../../pkgs/overlay.nix {
         inputs = myNixInputs;
