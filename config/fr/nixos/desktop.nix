@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  myNixInputs,
   pkgs,
   ...
 }:
@@ -165,8 +166,18 @@ in
 
     hardware.uinput.enable = lib.mkDefault true;
 
+    # Install Ash system-wide so its narrowly scoped polkit action is visible
+    # to the system policy authority. Keep the Home Manager CLI on this same
+    # Ash input so its helper matches the installed polkit action.
+    environment.systemPackages = lib.mkAfter [
+      myNixInputs.ash.packages.${pkgs.stdenv.hostPlatform.system}.ash
+    ];
+
     users.users = lib.mkIf (cfg.user != "") {
-      ${cfg.user}.extraGroups = [ "uinput" ];
+      ${cfg.user}.extraGroups = [
+        "uinput"
+        "users"
+      ];
     };
 
     services.keyd = {

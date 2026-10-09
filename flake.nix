@@ -418,6 +418,7 @@
                 ;
             })
           ];
+          _module.args.myNixInputs = inputs;
           nixpkgs.overlays = [ overlay ];
         };
         agent = {
