@@ -61,6 +61,9 @@ in
     codex = inputs.llm-agents.packages.${targetSystem}.codex;
     pi = final.pi;
   };
+  bb-connect = final.callPackage ./bb-connect.nix {
+    bbPackage = final.bb;
+  };
   # Keep the Electron/Node build in the target-native package set so its
   # native-module closure can use the target's binary cache.
   bbSource = final.callPackage ./bb/source.nix {

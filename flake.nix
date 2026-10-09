@@ -295,6 +295,7 @@
                 msb
                 codex-desktop
                 bb
+                bb-connect
                 tolaria
                 ;
               "bb-source" = pkgs.bbSource;

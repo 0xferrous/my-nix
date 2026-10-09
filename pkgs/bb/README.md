@@ -23,6 +23,15 @@ set `BB_DESKTOP_REMOTE_URL` before starting `bb-desktop`:
 BB_DESKTOP_REMOTE_URL=https://bb.example.test bb-desktop
 ```
 
+Use `bb-connect` to keep remote connections in named configuration profiles:
+
+```bash
+bb-connect --profile work https://bb.example.test
+```
+
+Each profile uses its own `~/.config/bb-profiles/<name>` directory while
+preserving the normal bb data and provider configuration.
+
 The wrapper writes BB's existing custom-server target file before Electron
 starts. This skips the local server and host-daemon startup; Electron still
 keeps its normal client state under `XDG_CONFIG_HOME`.
