@@ -390,11 +390,16 @@
         inherit pkgs;
         extraSpecialArgs = {
           myNixInputs = inputs;
-          agentUseBbSource = true;
+          # Use the cached llm-agents bb-app server package instead of the
+          # source-built Electron desktop. The agent only runs `bb-app
+          # --server-bind-host`; the source build was a heavy local pnpm +
+          # Electron build with no binary cache. This matches the
+          # agent-microsandbox variants below.
+          agentUseBbSource = false;
           agentUseAshIntegration = true;
           agentUseProxy = true;
           includeOpenCodeDesktop = true;
-          bbPackageOverride = null;
+          bbPackageOverride = inputs.llm-agents.packages.${system}.bb-app;
         };
         modules = [ ./config/agent/home.nix ];
       };

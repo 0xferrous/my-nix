@@ -50,3 +50,25 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
   - Still need a GTK sanity test (`pavucontrol`, `nautilus`, etc.) to confirm the AT-SPI setup is sound.
   - The AT-SPI warning `Unknown object '/org/a11y/atspi/cache'` remains; unclear if harmful.
   - Overlay debounce is currently a `0.25s` workaround for launch-key leakage.
+
+- [ ] agent `bb-app` switch to llm-agents.nix package:
+  - `homeConfigurations.agent` now sets `agentUseBbSource = false` and
+    `bbPackageOverride = inputs.llm-agents.packages.${system}.bb-app`
+    (0.45.0, cached) instead of the locally built `pkgs.bbSource` (0.43.0),
+    matching the agent-microsandbox variants.
+  - Verified: `homeConfigurations.agent` evaluates and its
+    `home.activationPackage` builds; generated `bb-app.service` runs
+    `bb-app-0.45.0 --server-bind-host 0.0.0.0` and the profile no longer
+    references `bb-source-0.43.0`. Provider CLIs (`pi` in
+    `~/.nix-profile/bin`, `codex`/`opencode` in `/run/current-system/sw/bin`)
+    remain on the service's base PATH.
+  - Known caveat: the npm `bb-app` does not carry
+    `pkgs/bb/patches/non-posix-shell-path-probe.patch`. The agent's systemd
+    user env has `SHELL=/run/current-system/sw/bin/nu`, so the host-daemon's
+    user-shell PATH probe fails and falls back to the inherited PATH after a
+    warning. Confirm no terminal/env regressions before dropping the source
+    package; if needed, resolve non-POSIX login shells to `/bin/sh` for the
+    probe without changing the spawned terminal shell.
+  - Not yet applied live: switching would restart `bb-app.service` and drop
+    the running server session; the boot-time `agent-home-switch` will pick it
+    up on the next rebuild/reboot.
