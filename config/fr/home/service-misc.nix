@@ -1,4 +1,10 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  myNixInputs,
+  ...
+}:
 {
   services.opensnitch-ui.enable = true;
 
@@ -39,9 +45,10 @@
 
   services.activitywatch = {
     enable = true;
+    package = myNixInputs.self.packages.${pkgs.stdenv.hostPlatform.system}.activitywatch;
     watchers = {
       aw-watcher-afk = {
-        package = pkgs.activitywatch;
+        package = myNixInputs.self.packages.${pkgs.stdenv.hostPlatform.system}.activitywatch;
         settings = {
           timeout = 300;
           poll_time = 2;
