@@ -499,6 +499,7 @@
               impermanence
               nix-index-database
               ;
+            includeCodexDesktop = false;
           };
           modules = [
             ./config/agent/nash.nix
