@@ -61,3 +61,7 @@ switch-agent-nixos:
 
 switch-agent-hm:
   nh home switch . -c agent
+
+# Run the fr/kitty Noctalia plugin parser/search tests.
+test-fr-kitty:
+  ./config/fr/home/Noctalia/plugins/fr-kitty/tests/run-tests.sh

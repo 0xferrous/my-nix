@@ -1,0 +1,71 @@
+id = "fr/kitty"
+name = "Kitty Panes"
+version = "1.1.0"
+plugin_api = 24
+author = "fr"
+license = "MIT"
+icon = "cat"
+description = "Search Kitty panes across every OS window and tab, and focus the selected pane."
+dependencies = ["kitty", "jq"]
+tags = ["kitty", "terminal", "window-switcher"]
+
+# Shared by the launcher provider and the panel.
+[[setting]]
+key = "socket"
+type = "string"
+label_key = "settings.socket.label"
+description_key = "settings.socket.description"
+default = ""
+
+[[setting]]
+key = "focus_delay_ms"
+type = "int"
+label_key = "settings.focus_delay.label"
+description_key = "settings.focus_delay.description"
+default = 0
+min = 0
+max = 2000
+
+# Launcher provider: the primary, launcher-native search. Type `/kitty`.
+# Set `include_in_global_search = true` to also match pane titles/CWDs/commands
+# in the un-prefixed global search.
+[[launcher_provider]]
+id = "search"
+entry = "provider.luau"
+prefix = "kitty"
+glyph = "terminal-2"
+include_in_global_search = false
+debounce_ms = 120
+
+# Bar button that opens the dedicated pane switcher panel.
+[[widget]]
+id = "launcher"
+entry = "launcher.luau"
+
+  [[widget.setting]]
+  key = "glyph"
+  type = "glyph"
+  label_key = "settings.glyph.label"
+  description_key = "settings.glyph.description"
+  default = "cat"
+
+  [[widget.setting]]
+  key = "show_text"
+  type = "bool"
+  label_key = "settings.show_text.label"
+  description_key = "settings.show_text.description"
+  default = false
+
+# Dedicated panel: one-click from the bar, with a focused-pane breadcrumb and
+# inline socket errors. Keyboard focus is exclusive so the search field is ready
+# on open; the captured chords drive list navigation and refresh, while plain
+# printable keys still reach the input.
+[[panel]]
+id = "panes"
+entry = "panel.luau"
+width = 760
+height = 560
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+capture_keys = ["down", "up", "enter", "ctrl+r"]

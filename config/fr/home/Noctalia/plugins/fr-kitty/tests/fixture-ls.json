@@ -1,0 +1,281 @@
+[
+  {
+    "id": 1,
+    "platform_window_id": 4194305,
+    "is_active": false,
+    "is_focused": false,
+    "last_focused": true,
+    "wm_class": "kitty",
+    "wm_name": "devbox — nvim",
+    "background_opacity": 1,
+    "tabs": [
+      {
+        "id": 1,
+        "is_focused": false,
+        "is_active": true,
+        "title": "editor",
+        "layout": "splits",
+        "windows": [
+          {
+            "id": 1,
+            "is_focused": false,
+            "is_active": true,
+            "title": "nvim",
+            "pid": 1100,
+            "cwd": "/home/dmnt/dev/fr/project",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt/dev/fr/project",
+                "pid": 1101,
+                "cmdline": ["nvim", "src/main.rs"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 36,
+            "columns": 120
+          },
+          {
+            "id": 2,
+            "is_focused": false,
+            "is_active": false,
+            "title": "shell",
+            "pid": 1200,
+            "cwd": "/home/dmnt",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt/dev/fr/project",
+                "pid": 1201,
+                "cmdline": ["git", "status", "--short"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 18,
+            "columns": 60
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "is_focused": false,
+        "is_active": false,
+        "title": "tests",
+        "layout": "stack",
+        "windows": [
+          {
+            "id": 3,
+            "is_focused": false,
+            "is_active": true,
+            "title": "cargo test",
+            "pid": 1300,
+            "cwd": "/home/dmnt/dev/fr/project",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt/dev/fr/project",
+                "pid": 1301,
+                "cmdline": ["cargo", "test", "--workspace"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 40,
+            "columns": 120
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "platform_window_id": 4194306,
+    "is_active": true,
+    "is_focused": true,
+    "last_focused": false,
+    "wm_class": "kitty",
+    "wm_name": "ops — kitty",
+    "background_opacity": 1,
+    "tabs": [
+      {
+        "id": 97,
+        "is_focused": true,
+        "is_active": true,
+        "title": "work",
+        "layout": "splits",
+        "windows": [
+          {
+            "id": 220,
+            "is_focused": true,
+            "is_active": true,
+            "title": "notes.md",
+            "pid": 2200,
+            "cwd": "/home/dmnt/dev/fr/my-nix",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt/dev/fr/my-nix",
+                "pid": 2201,
+                "cmdline": ["nvim", "notes.md"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 40,
+            "columns": 120
+          },
+          {
+            "id": 221,
+            "is_focused": false,
+            "is_active": false,
+            "title": "prod ssh",
+            "pid": 2210,
+            "cwd": "/home/dmnt",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt",
+                "pid": 2211,
+                "cmdline": ["ssh", "prod.example.com"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 40,
+            "columns": 120
+          }
+        ]
+      },
+      {
+        "id": 98,
+        "is_focused": false,
+        "is_active": false,
+        "title": "logs",
+        "layout": "stack",
+        "windows": [
+          {
+            "id": 222,
+            "is_focused": false,
+            "is_active": true,
+            "title": "journalctl",
+            "pid": 2220,
+            "cwd": "/var/log",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/var/log",
+                "pid": 2221,
+                "cmdline": ["journalctl", "-fu", "kitty"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": true,
+            "lines": 40,
+            "columns": 120
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "platform_window_id": 4194307,
+    "is_active": false,
+    "is_focused": false,
+    "last_focused": false,
+    "wm_class": "kitty",
+    "wm_name": "misc",
+    "background_opacity": 1,
+    "tabs": [
+      {
+        "id": 12,
+        "is_focused": false,
+        "is_active": true,
+        "title": "media",
+        "layout": "splits",
+        "windows": [
+          {
+            "id": 300,
+            "is_focused": false,
+            "is_active": true,
+            "title": "now playing",
+            "pid": 3000,
+            "cwd": "/home/dmnt",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt/Videos",
+                "pid": 3001,
+                "cmdline": ["mpv", "video.mkv"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 40,
+            "columns": 120
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "is_focused": false,
+        "is_active": false,
+        "title": "downloads",
+        "layout": "stack",
+        "windows": [
+          {
+            "id": 301,
+            "is_focused": false,
+            "is_active": true,
+            "title": "curl",
+            "pid": 3010,
+            "cwd": "/home/dmnt/Downloads",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt/Downloads",
+                "pid": 3011,
+                "cmdline": ["curl", "-O", "file.tar.gz"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 40,
+            "columns": 120
+          },
+          {
+            "id": 302,
+            "is_focused": false,
+            "is_active": false,
+            "title": "pi",
+            "pid": 3020,
+            "cwd": "/home/dmnt/dev/thing",
+            "cmdline": ["/run/current-system/sw/bin/nu"],
+            "env": {},
+            "foreground_processes": [
+              {
+                "cwd": "/home/dmnt/dev/thing",
+                "pid": 3021,
+                "cmdline": ["pi", "fix the thing"]
+              }
+            ],
+            "at_prompt": false,
+            "needs_attention": false,
+            "lines": 40,
+            "columns": 120
+          }
+        ]
+      }
+    ]
+  }
+]
