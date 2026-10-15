@@ -28,6 +28,7 @@
     ./incus.nix
     ./llama-cpp.nix
     ./nix.nix
+    ./ssh.nix
     ./waydroid.nix
   ];
 }
