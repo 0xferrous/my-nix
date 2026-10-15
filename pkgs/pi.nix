@@ -97,6 +97,25 @@ let
 in
 pkgs.writeShellScriptBin "pi" ''
   export XDG_SESSION_TYPE=wayland
+
+  # Pi Voice's Linux recorder/transcriber addons load their native libraries
+  # with dlopen. NixOS does not expose those store paths through the system
+  # dynamic loader, so make them visible to the Node runtime used by Pi
+  # extensions.
+  pi_audio_library_path=${
+    lib.makeLibraryPath [
+      pkgs.libpulseaudio
+      pkgs.alsa-lib
+      pkgs.libjack2
+      pkgs.stdenv.cc.cc
+    ]
+  }
+  if [[ -n "''${LD_LIBRARY_PATH:-}" ]]; then
+    export LD_LIBRARY_PATH="$pi_audio_library_path:$LD_LIBRARY_PATH"
+  else
+    export LD_LIBRARY_PATH="$pi_audio_library_path"
+  fi
+
   export PATH=${
     lib.makeBinPath ([
       gitHunk
