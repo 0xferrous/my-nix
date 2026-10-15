@@ -4,6 +4,8 @@ with pkgs;
   # Screenshot / GUI interaction
   flameshot
   hints
+  satty
+  wl-clipboard
 
   # Media players and viewers
   mpv

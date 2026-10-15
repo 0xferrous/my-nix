@@ -669,6 +669,7 @@ binds {
     Shift+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
     Mod+Shift+4 { screenshot; }
+    Mod+Shift+S { spawn-sh "nu -l ~/.config/niri/screenshot.nu"; }
 
     Mod+Print { spawn-sh "nu -l -c 'ns ut screenshot-and-copy-path screenshot'"; }
     Mod+Ctrl+Print { spawn-sh "nu -l -c 'ns ut screenshot-and-copy-path screenshot-screen'"; }
