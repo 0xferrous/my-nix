@@ -24,7 +24,7 @@
     };
     # Stable host VM manager, independent from the moving development input.
     ash-stable = {
-      url = "github:0xferrous/ash/v0.1.15";
+      url = "github:0xferrous/ash/v0.1.16";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
