@@ -203,5 +203,14 @@ pkgs.writeShellScriptBin "pi" ''
     )
   fi
 
+  # Pi only recognizes management commands when they are the first
+  # positional arguments. Keep injected resource flags out of that path;
+  # otherwise `pi install` and friends are treated as session prompts.
+  case "''${1-}" in
+    install|remove|uninstall|update|list|config|auth|mcp)
+      exec ${piPackage}/bin/pi "$@"
+      ;;
+  esac
+
   exec ${piPackage}/bin/pi "''${resource_args[@]}" "$@"
 ''
