@@ -2,7 +2,6 @@
 with pkgs;
 [
   # Screenshot / GUI interaction
-  flameshot
   hints
   satty
   wl-clipboard
