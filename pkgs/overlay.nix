@@ -4,6 +4,67 @@
 final: prev:
 let
   targetSystem = final.stdenv.hostPlatform.system;
+  activitywatchSource = final.fetchFromGitHub {
+    owner = "ActivityWatch";
+    repo = "activitywatch";
+    tag = "v0.14.1";
+    hash = "sha256-Euom8p8pdwPRX7C4FuUZYp+6mhFaWIeGcVR4xOi+zXE=";
+    fetchSubmodules = true;
+  };
+  activitywatchBase = final.qt6Packages.callPackage (
+    inputs.nixpkgs + "/pkgs/applications/office/activitywatch"
+  ) { };
+  activitywatchWebui = activitywatchBase.aw-webui.overrideAttrs (old: {
+    version = "0.14.1";
+    src = "${activitywatchSource}/aw-server-rust/aw-webui";
+    npmDeps = final.fetchNpmDeps {
+      name = "aw-webui-0.14.1-npm-deps";
+      src = "${activitywatchSource}/aw-server-rust/aw-webui";
+      hash = "sha256-8/eM6t9bOdqXkCTgqF4tcDwnTXdcq1jPL6Wayijt+is=";
+    };
+    patches = [
+      (final.replaceVars (inputs.nixpkgs + "/pkgs/applications/office/activitywatch/commit-hash.patch") {
+        commit_hash = "v0.14.1";
+      })
+    ];
+    doCheck = false;
+  });
+  activitywatchServer = activitywatchBase.aw-server-rust.overrideAttrs (old: {
+    version = "0.14.1";
+    src = "${activitywatchSource}/aw-server-rust";
+    cargoDeps = final.rustPlatform.fetchCargoVendor {
+      pname = "aw-server-rust";
+      version = "0.14.1";
+      src = "${activitywatchSource}/aw-server-rust";
+      hash = "sha256-x6Qp8nW3EbQbeVPrvV1UQdKMkU83qachrtNOGh30HWw=";
+    };
+    patches = [ ];
+    postPatch = ''
+      substituteInPlace aw-server/src/version.rs \
+        --replace-fail 'format!("v{} (rust)", VERSION.unwrap_or("(unknown)"))' \
+        'String::from("v0.14.1 (rust)")'
+    '';
+    cargoBuildFlags = [
+      "-p"
+      "aw-server"
+    ];
+    cargoTestFlags = [
+      "-p"
+      "aw-server"
+    ];
+    env = (old.env or { }) // {
+      AW_WEBUI_DIR = activitywatchWebui;
+    };
+  });
+  activitywatchPackage =
+    final.callPackage (inputs.nixpkgs + "/pkgs/applications/office/activitywatch/wrapper.nix")
+      {
+        aw-server-rust = activitywatchServer;
+        aw-qt = activitywatchBase.aw-qt;
+        aw-notify = activitywatchBase.aw-notify;
+        aw-watcher-afk = activitywatchBase.aw-watcher-afk;
+        aw-watcher-window = activitywatchBase.aw-watcher-window;
+      };
   # Ternary Bonsai 2 uses PrismML's PTQ1_0/PQ2_0 GGUF formats, which are not
   # understood by stock llama.cpp yet. Keep the fork pinned to a known PrismML
   # tag until those formats land upstream.
@@ -39,6 +100,7 @@ let
     });
 in
 {
+  activitywatch = activitywatchPackage;
   herdr = inputs.llm-agents.packages.${targetSystem}.herdr;
 
   ashWrappers = import ./ash-portal-wrappers.nix {

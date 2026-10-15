@@ -82,6 +82,7 @@ Packages provided by the overlay:
 | package | description |
 | --- | --- |
 | `pi`, `abwrap`, `pi-acp` | `pi` wraps the llm-agents CLI with bundled extensions/theme and AI tooling; `abwrap` launches Nushell—or a directly selected entrypoint such as `pi`, `codex`, or `opencode`—inside Bubblewrap with a per-invocation writable Nix local-overlay store; `pi-acp` is the Agent Client Protocol adapter |
+| `activitywatch` | desktop time tracking with activity and window watchers, built from upstream v0.14.1 |
 | `herdr` | agent multiplexer that lives in your terminal |
 | `dev-essentials` | combined package exposing the shared development essentials on one `PATH` |
 | `executor` | Executor integration service and CLI, packaged from the upstream Linux release |

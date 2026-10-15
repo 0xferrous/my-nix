@@ -280,6 +280,7 @@
                 pi
                 piDev
                 abwrap
+                activitywatch
                 pi-acp
                 takopi
                 tron-wallet-cli
