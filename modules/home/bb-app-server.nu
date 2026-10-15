@@ -6,8 +6,6 @@
 # config. The OS hostname is deliberately not used: the Tailscale hostname can
 # differ from it (e.g. OS `nixos` vs Tailscale `fr-vm`).
 
-# Return this node's MagicDNS name without the trailing dot, or an empty string
-# when Tailscale is not running yet.
 def tailscale-dns-name [tailscale: string] {
   try {
     let status = (run-external $tailscale "status" "--json" | from json)
@@ -22,12 +20,12 @@ def tailscale-dns-name [tailscale: string] {
 }
 
 def main [
-  bb_app: string, # Path to the bb-app executable
-  tailscale: string, # Path to the tailscale CLI
+  bb_app: string,
+  tailscale: string,
+  server_bind_host: string,
 ] {
   if ($env.BB_APP_URL? | default "" | is-empty) {
     mut host = (tailscale-dns-name $tailscale)
-    # Wait briefly for Tailscale on a cold boot before starting without a URL.
     for _ in 1..15 {
       if ($host | is-not-empty) { break }
       sleep 1sec
@@ -40,5 +38,5 @@ def main [
     }
   }
 
-  exec $bb_app --server-bind-host 0.0.0.0
+  exec $bb_app --server-bind-host $server_bind_host
 }

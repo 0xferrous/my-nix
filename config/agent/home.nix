@@ -74,6 +74,7 @@ let
 in
 {
   imports = [
+    ../../modules/home/bb-app.nix
     ../../modules/home/programs/direnv.nix
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/nushell.nix
@@ -207,6 +208,13 @@ in
     };
   };
 
+  fr.services.bbApp = lib.mkIf (bbPackage != null) {
+    enable = true;
+    package = bbPackage;
+    serverBindHost = "0.0.0.0";
+    deriveUrlFromTailscale = true;
+  };
+
   systemd.user.services = {
     herdr = {
       Unit.Description = "Herdr agent multiplexer server";
@@ -245,19 +253,6 @@ in
         ExecStart = "${ashDbusProxy}/bin/ash-dbus-proxy connect --listen %t/ash-dbus-proxy/bus.sock --cid 2 --managed";
         Restart = "on-failure";
         RestartSec = 1;
-      };
-      Install.WantedBy = [ "default.target" ];
-    };
-  }
-  // lib.optionalAttrs (bbPackage != null) {
-    bb-app = {
-      Unit.Description = "bb agent server";
-      Service = {
-        # Derive BB_APP_URL from the machine's Tailscale MagicDNS name so
-        # generated links and browser origins point at the tailnet address.
-        ExecStart = "${pkgs.nushell}/bin/nu ${./bb-app-server.nu} ${bbPackage}/bin/bb-app ${pkgs.tailscale}/bin/tailscale";
-        Restart = "on-failure";
-        RestartSec = 2;
       };
       Install.WantedBy = [ "default.target" ];
     };

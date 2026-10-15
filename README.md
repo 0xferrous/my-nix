@@ -23,6 +23,7 @@ Current public building blocks include:
 - `homeManagerModules.vcs`: generic reusable Home Manager VCS identity projection module
 - `homeManagerModules.direnv`: reusable Home Manager direnv module with configurable Poetry/devenv stdlib helpers
 - `homeManagerModules.termfilechooser`: reusable Home Manager module for `xdg-desktop-portal-termfilechooser`
+- `homeManagerModules.bb-app`: reusable Home Manager service for the BB server, with configurable package, bind host, and optional Tailscale URL discovery
 - `homeConfigs.fr`: public `fr` Home Manager config intended to be imported from a private configuration
 - `nixosConfigs.fr`: public `fr` NixOS config intended to be imported from a private configuration
 
@@ -40,6 +41,7 @@ Root flake exports them separately:
 - `homeManagerModules.vcs` exports `modules/home/vcs.nix`
 - `homeManagerModules.direnv` exports `modules/home/programs/direnv.nix`
 - `homeManagerModules.termfilechooser` exports `modules/home/termfilechooser.nix`
+- `homeManagerModules.bb-app` exports `modules/home/bb-app.nix`
 - `nixosModules.k3sMicrovm` exports `modules/nixos/k3s-microvm.nix`
 - `homeConfigs.fr` exports `config/fr/home.nix`
 - `nixosConfigs.fr` exports `config/fr/nixos.nix`
