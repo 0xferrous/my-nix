@@ -20,10 +20,7 @@ in
     enable = true;
     user = "agent";
     emptyPassword = false;
-    sshReadySignal = {
-      afterUnits = [ "agent-home-switch.service" ];
-      requiredUnits = [ "agent-home-switch.service" ];
-    };
+    sshReadySignal.enable = true;
   };
 
   nix.settings = {
