@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  pkgs,
+  myNixInputs,
+  ...
+}:
 with pkgs;
 [
   # Productivity and organization
@@ -9,7 +14,7 @@ with pkgs;
   zk
 
   # Activity tracking
-  activitywatch
+  myNixInputs.self.packages.${pkgs.stdenv.hostPlatform.system}.activitywatch
 
   # Knowledge management and note-taking
   obsidian

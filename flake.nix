@@ -149,6 +149,7 @@
 
   outputs =
     inputs@{
+      self,
       frs-nvim,
       fenix,
       ghmd,
@@ -370,7 +371,9 @@
             ...
           }:
           let
-            myNixInputs = inputs;
+            myNixInputs = inputs // {
+              self = self;
+            };
           in
           {
             imports = [
@@ -384,7 +387,7 @@
                   ;
               })
             ];
-            _module.args.myNixInputs = inputs;
+            _module.args.myNixInputs = myNixInputs;
           };
       };
       homeConfigurations.agent = home-manager.lib.homeManagerConfiguration {
