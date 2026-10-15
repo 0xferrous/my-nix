@@ -1,10 +1,9 @@
 #!/usr/bin/env nu
 
-# Start the bb-app server with BB_APP_URL derived from this machine's
-# Tailscale MagicDNS name. bb-app uses BB_APP_URL for generated links, allowed
-# browser origins, and the allowed request Host header, so it must be the
-# tailnet address (not loopback) for the server to be reachable from other
-# devices. The OS hostname is deliberately not used: the Tailscale hostname can
+# Start bb-app with BB_APP_URL from the service environment when supplied;
+# otherwise derive it from this machine's Tailscale MagicDNS name. This lets a
+# per-machine systemd user drop-in override the URL without changing repo
+# config. The OS hostname is deliberately not used: the Tailscale hostname can
 # differ from it (e.g. OS `nixos` vs Tailscale `fr-vm`).
 
 # Return this node's MagicDNS name without the trailing dot, or an empty string
@@ -26,17 +25,19 @@ def main [
   bb_app: string, # Path to the bb-app executable
   tailscale: string, # Path to the tailscale CLI
 ] {
-  mut host = (tailscale-dns-name $tailscale)
-  # Wait briefly for Tailscale on a cold boot before falling back to local-only.
-  for _ in 1..15 {
-    if ($host | is-not-empty) { break }
-    sleep 1sec
-    $host = (tailscale-dns-name $tailscale)
-  }
+  if ($env.BB_APP_URL? | default "" | is-empty) {
+    mut host = (tailscale-dns-name $tailscale)
+    # Wait briefly for Tailscale on a cold boot before starting without a URL.
+    for _ in 1..15 {
+      if ($host | is-not-empty) { break }
+      sleep 1sec
+      $host = (tailscale-dns-name $tailscale)
+    }
 
-  if ($host | is-not-empty) {
-    let port = ($env.BB_SERVER_PORT? | default "38886")
-    $env.BB_APP_URL = $"http://($host):($port)"
+    if ($host | is-not-empty) {
+      let port = ($env.BB_SERVER_PORT? | default "38886")
+      $env.BB_APP_URL = $"http://($host):($port)"
+    }
   }
 
   exec $bb_app --server-bind-host 0.0.0.0
