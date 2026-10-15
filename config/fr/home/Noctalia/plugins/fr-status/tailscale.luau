@@ -68,7 +68,7 @@ local function refresh()
   if loading then return end
   loading = true
 
-  noctalia.runAsync({ "tailscale", "switch", "--list" }, function(result)
+  noctalia.runAsync({ "tailscale", "status", "--json" }, function(result)
     loading = false
     if result.exitCode ~= 0 then
       view = { kind = "down", message = "TS down" }
@@ -77,28 +77,37 @@ local function refresh()
       return
     end
 
-    local account = nil
-    local tailnet = nil
-    local id = nil
-    for line in string.gmatch(result.stdout, "[^\r\n]+") do
-      if string.find(line, "%*%s*$") then
-        local columns = {}
-        for column in string.gmatch(line, "%S+") do table.insert(columns, column) end
-        if #columns >= 3 then
-          id = columns[1]
-          account = string.gsub(columns[#columns], "%*$", "")
-          tailnet = table.concat(columns, " ", 2, #columns - 1)
-          break
-        end
-      end
+    local status, err = noctalia.json.decode(result.stdout)
+    if type(status) ~= "table" then
+      view = { kind = "down", message = "TS down" }
+      baseTooltip = "Could not parse Tailscale status"
+      noctalia.log("tailscale: json decode failed: " .. tostring(err))
+      render()
+      return
     end
 
+    if status.BackendState ~= "Running" then
+      view = { kind = "down", message = "Logged out" }
+      baseTooltip = "Tailscale is logged out (state: " .. tostring(status.BackendState) .. ")"
+      render()
+      return
+    end
+
+    local self = status.Self or {}
+    local users = status.User or {}
+    local userId = self.UserID
+    local user = users[tostring(userId)] or users[userId] or {}
+    local account = user.LoginName
+    local currentTailnet = status.CurrentTailnet or {}
+    local tailnet = currentTailnet.Name
+
     if account == nil then
-      view = { kind = "down", message = "TS down" }
-      baseTooltip = "No active Tailscale account"
+      view = { kind = "down", message = "No account" }
+      baseTooltip = "Tailscale is running without an active account"
     else
       view = { kind = "up", account = account }
-      baseTooltip = "Account: " .. account .. "\nTailnet: " .. tailnet .. "\nID: " .. id
+      baseTooltip = "Account: " .. account
+        .. "\nTailnet: " .. tostring(tailnet or "unknown")
       lastUpdatedMs = nowMs()
     end
     render()
