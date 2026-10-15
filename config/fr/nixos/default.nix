@@ -24,6 +24,7 @@
     ./desktop.nix
     ./dns.nix
     (import ./ghmd.nix { inherit fenix ghmd; })
+    ./ash-host.nix
     ./incus.nix
     ./llama-cpp.nix
     ./nix.nix
