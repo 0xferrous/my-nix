@@ -12,6 +12,7 @@ in
 {
   imports = [
     ./nixos.nix
+    ./ash.nix
   ];
 
   # Ash's shared GPU mode exposes QEMU's Venus VirtIO-GPU device. Restrict
