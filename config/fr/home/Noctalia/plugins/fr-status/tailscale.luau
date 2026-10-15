@@ -102,15 +102,43 @@ local function refresh()
     local tailnet = currentTailnet.Name
 
     if account == nil then
+      loading = false
       view = { kind = "down", message = "No account" }
       baseTooltip = "Tailscale is running without an active account"
-    else
-      view = { kind = "up", account = account }
-      baseTooltip = "Account: " .. account
+      render()
+      return
+    end
+
+    -- `status --json` confirms the daemon is logged in, but does not expose
+    -- the selected profile nickname. Read the profile list for the display
+    -- name while continuing to treat `status` as the source of truth for
+    -- authentication state.
+    noctalia.runAsync({ "tailscale", "switch", "--list", "--json" }, function(profileResult)
+      local profileName = nil
+      if profileResult.exitCode == 0 then
+        local profiles, profileErr = noctalia.json.decode(profileResult.stdout)
+        if type(profiles) == "table" then
+          for _, profile in ipairs(profiles) do
+            if type(profile) == "table" and profile.selected then
+              profileName = profile.nickname
+              break
+            end
+          end
+        else
+          noctalia.log("tailscale: profile json decode failed: " .. tostring(profileErr))
+        end
+      else
+        noctalia.log("tailscale: switch --list failed")
+      end
+
+      loading = false
+      view = { kind = "up", account = profileName or account }
+      baseTooltip = "Profile: " .. tostring(profileName or "unknown")
+        .. "\nAccount: " .. account
         .. "\nTailnet: " .. tostring(tailnet or "unknown")
       lastUpdatedMs = nowMs()
-    end
-    render()
+      render()
+    end)
   end)
 end
 
