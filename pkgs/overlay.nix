@@ -199,6 +199,17 @@ in
   # while this flake's newer nixpkgs pin is not.
   zoxide = inputs.llm-agents.inputs.nixpkgs.legacyPackages.${targetSystem}.zoxide;
 
+  # numr >= 0.8.0 moved its flake outputs to `numr.<system>.packages` instead
+  # of the conventional `numr.packages.<system>`, and its new unit tests build
+  # reqwest clients, which fail in the Nix sandbox without a CA bundle. Point
+  # them at nixpkgs' cacert so the upstream test suite still runs.
+  numr = inputs.numr.${targetSystem}.packages.default.overrideAttrs (old: {
+    nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ final.cacert ];
+    preCheck = (old.preCheck or "") + ''
+      export SSL_CERT_FILE=${final.cacert}/etc/ssl/certs/ca-bundle.crt
+    '';
+  });
+
   microsandbox = final.callPackage ./microsandbox.nix { };
   llama-cpp-prism-rocm = prismLlamaCpp "rocm";
   llama-cpp-prism-vulkan = prismLlamaCpp "vulkan";

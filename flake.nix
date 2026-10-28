@@ -24,7 +24,7 @@
     };
     # Stable host VM manager, independent from the moving development input.
     ash-stable = {
-      url = "github:0xferrous/ash/v0.1.16";
+      url = "github:0xferrous/ash/v0.1.17";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -33,6 +33,11 @@
     };
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
+    };
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      # Hermes' Nix build requires its newer nixpkgs pin; following this flake's
+      # older pin breaks patchelf's upstream patch during the Hermes build.
     };
     # OpenCode source flake; exposes the `opencode-desktop` Electron app built
     # from source (see ./nix/desktop.nix upstream). Pinned to a release tag so
@@ -70,6 +75,12 @@
       url = "github:lucc/nvimpager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Shared Rust toolchain overlay for package inputs that use rust-overlay,
+    # so they do not each pin their own (often stale) revision.
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # noogle-cli = {
     #   url = "github:juliamertz/noogle-cli";
     #   inputs.nixpkgs.follows = "nixpkgs";
@@ -77,6 +88,7 @@
     numr = {
       url = "github:nasedkinpv/numr";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
     wifitui = {
       url = "github:shazow/wifitui";
@@ -96,6 +108,7 @@
     agent-box = {
       url = "github:0xferrous/agent-box";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.rust-overlay.follows = "rust-overlay";
     };
     foundry-stable = {
       url = "github:shazow/foundry.nix/stable";
@@ -143,6 +156,15 @@
     };
     frs-nvim = {
       url = "path:./pkgs/frs-nvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    kero-src = {
+      url = "github:egoist/kero/v2.1.21";
+      flake = false;
+    };
+    # Host-side preview portal (see github:0xferrous/drydock).
+    drydock = {
+      url = "github:0xferrous/drydock";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
