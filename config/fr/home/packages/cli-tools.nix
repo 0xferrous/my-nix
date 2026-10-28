@@ -79,6 +79,7 @@ with pkgs;
   # CLI multimedia tools
   ffmpeg
   imagemagick
+  zbar
   chafa
   exiftool
   spotdl
