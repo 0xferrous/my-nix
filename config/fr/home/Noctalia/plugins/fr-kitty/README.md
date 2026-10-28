@@ -9,25 +9,19 @@ control, lets you search by pane title, working directory, pane ID, or running
 process/command, and focuses the selected pane. Focusing a pane also switches to
 its tab and OS window.
 
-## Entries
+## Entry
 
-- `panes` — **launcher provider**, the primary UI. Type `/kitty` in Noctalia's
+- `panes` — **launcher provider**, the only UI. Type `/kitty` in Noctalia's
   built-in launcher. Set `include_in_global_search = true` in `plugin.toml` to
   also match panes in the un-prefixed global search.
-- `panes` — **panel**, a dedicated one-click switcher opened by the bar button.
-- `launcher` — the bar button that opens the panel.
 
-All three share [`kitty.luau`](kitty.luau) (parse/search) and
-[`fetch.luau`](fetch.luau) (socket discovery + `kitten @ ls`).
+It is backed by [`kitty.luau`](kitty.luau) (parse/search) and
+[`fetch.luau`](fetch.luau) (socket discovery + `kitten @ ls`), driven by
+[`provider.luau`](provider.luau).
 
-The plugin is copied to Noctalia's data directory by Home Manager, enabled as
-`fr/kitty`, and the `kitty-panes` bar widget is placed on the bottom bar in
-`config/fr/home/noctalia.nix`. The launcher provider is reached with `/kitty`;
-the panel can also be toggled directly:
-
-```sh
-noctalia msg panel-toggle fr/kitty:panes
-```
+The plugin is copied to Noctalia's data directory by Home Manager and enabled
+as `fr/kitty` in `config/fr/home/noctalia.nix`. It has no bar widget and no
+panel; reach it with `/kitty` in the launcher.
 
 ## Requirements
 
@@ -96,26 +90,17 @@ Filters combine with each other and with plain tokens, e.g.
 `os:2 process:nvim` or `cwd:project -process:ssh`. An unknown `foo:bar` is
 treated as plain text.
 
-## Panel controls
+## Results
 
-The panel renders the panes as a collapsible tree:
+Results are a flat ranked list in Noctalia's launcher; each row shows the
+pane's `OS window › tab` breadcrumb and, when known, its working directory.
+`↑` / `↓` move the selection, `Enter` jumps to the pane (switching to its tab
+and OS window), and typing re-ranks live. The pane list is re-read on each fresh
+`/kitty` open, with results cached briefly for typed queries.
 
-- Click an **OS window** or **tab** header (the chevron) to collapse/expand it.
-  Only the selected pane and its ancestors/neighbours stay on screen; the list
-  follows the selection.
-- A pinned bar above the list shows the selected pane's `OS window › tab`, so
-  the context stays visible even when a header scrolls out of the window. On
-  open, the focused pane starts selected.
-- Type to filter — while a query is active the tree flattens to a ranked list.
-
-Keys:
-
-- `↑` / `↓` move the pane selection (hold to repeat), `Enter` focuses.
-- `Ctrl+R` or the refresh button re-reads `kitten @ ls`.
-- Clicking a pane row focuses it.
-
-Loading, missing-socket, missing-`kitten`, remote-control, and JSON errors are
-reported inline with a retry button.
+Loading failures (no socket, missing `kitten`, remote-control or JSON errors)
+are written to the Noctalia log with a `kitty:` prefix:
+`journalctl --user -u noctalia -e | grep 'kitty:'`.
 
 ## Tests
 

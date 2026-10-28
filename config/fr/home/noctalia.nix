@@ -332,7 +332,6 @@ in
           center = [ ];
           end = [
             "clipboard"
-            "kitty-panes"
             "crypto-prices"
             "cpu-usage"
             "memory-usage"
@@ -406,11 +405,6 @@ in
           };
           "config-switch" = {
             type = "fr/status:config-switch";
-            capsule = true;
-            capsule_border = "primary";
-          };
-          "kitty-panes" = {
-            type = "fr/kitty:launcher";
             capsule = true;
             capsule_border = "primary";
           };

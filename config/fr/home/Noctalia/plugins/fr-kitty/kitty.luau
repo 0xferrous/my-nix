@@ -72,8 +72,8 @@ end
 -- Kitty appends `-<pid>` to a `listen_on` value (unless it contains
 -- `{kitty_pid}`), and each kitty process listens on its own PID-suffixed
 -- socket. So a configured socket or `KITTY_LISTEN_ON` wins outright; otherwise
--- every `$XDG_RUNTIME_DIR/kitty*` entry is a candidate. The panel queries all
--- candidates and merges the trees.
+-- every `$XDG_RUNTIME_DIR/kitty*` entry is a candidate. The launcher queries
+-- all candidates and merges the trees.
 function M.socketCandidates(configured, kittyListenOn, xdgRuntimeDir, dirEntries)
   local direct = M.normalizeSocket(configured)
   if direct ~= nil then
@@ -100,8 +100,8 @@ function M.socketCandidates(configured, kittyListenOn, xdgRuntimeDir, dirEntries
 end
 
 -- Builds the weighted, lower-cased haystack used for a single pane. Keeping
--- this in one place means the panel's search and the tests route through the
--- exact same matching rules.
+-- this in one place means the launcher's search and the tests route through
+-- the exact same matching rules.
 local function buildFields(entry)
   local fields = {}
   local function add(text, weight)
@@ -152,8 +152,8 @@ end
 -- the remote-control target the tree came from, so focus actions and grouping
 -- stay correct when several kitty processes are merged together.
 --
--- The returned records carry both the raw-ish fields the panel renders and a
--- private `fields` list used by `M.score`. OS windows, tabs, and panes with a
+-- The returned records carry both the raw-ish fields the launcher renders and
+-- a private `fields` list used by `M.score`. OS windows, tabs, and panes with a
 -- malformed/empty shape are skipped rather than erroring so a partial kitty
 -- response still yields a usable list.
 function M.parse(tree, socket)

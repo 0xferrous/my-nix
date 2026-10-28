@@ -1,5 +1,5 @@
 --!nonstrict
--- Shared Kitty remote-control helpers for the fr/kitty entries.
+-- Shared Kitty remote-control helpers for the fr/kitty launcher provider.
 
 local kitty = require("./kitty.luau")
 

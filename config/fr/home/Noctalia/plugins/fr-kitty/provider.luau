@@ -1,6 +1,7 @@
 --!nonstrict
 -- Launcher provider: search Kitty panes from Noctalia's built-in launcher
--- (type `/kitty`, or match globally). Reuses the panel's fetch/filter logic.
+-- (type `/kitty`, or match globally). Reuses the shared parse/search and
+-- fetch helpers.
 
 local kitty = require("./kitty.luau")
 local fetch = require("./fetch.luau")
@@ -27,7 +28,7 @@ end
 local function publish(query)
   if #entries == 0 and loading then
     launcher.setResults(query, {
-      { id = "__loading", title = noctalia.tr("panel.loading"), glyph = "loader" },
+      { id = "__loading", title = noctalia.tr("launcher.loading"), glyph = "loader" },
     })
     return
   end
@@ -72,6 +73,11 @@ local function refreshIfStale(query)
     loading = false
     if #result.entries > 0 or #result.failed == 0 then
       entries = result.entries
+    end
+    if #result.sockets == 0 then
+      noctalia.log("kitty: no remote-control socket found")
+    elseif #result.entries == 0 and #result.failed > 0 then
+      noctalia.log("kitty: no panes from " .. table.concat(result.failed, "; "))
     end
     lastFetchMs = nowMs()
     if pendingQuery ~= nil then
