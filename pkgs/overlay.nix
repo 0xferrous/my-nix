@@ -144,6 +144,17 @@ in
   tolaria = final.callPackage ./tolaria/source.nix { };
   vicu = final.callPackage ./vicu.nix { };
   hibi = final.callPackage ./hibi.nix { };
+  lightpanda = final.callPackage ./lightpanda.nix { };
+  # Upstream Lightpanda Agent Skills: the `lightpanda` skill at the repo root
+  # plus its `pandascript` companion. Linked into ~/.agents/skills by
+  # `fr.skills`. Bump the rev and hash together (nix flake prefetch
+  # github:lightpanda-io/agent-skill).
+  lightpanda-skills = final.fetchFromGitHub {
+    owner = "lightpanda-io";
+    repo = "agent-skill";
+    rev = "387702e5b8d5034037a6a1ca7c41a727232e7cd4";
+    hash = "sha256-4V6xBDlg01QWT2m1iT0OR4bSY37hfx1MOzxwN67VBJA=";
+  };
   kero = final.callPackage ./kero.nix { source = inputs.kero-src; };
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${targetSystem};

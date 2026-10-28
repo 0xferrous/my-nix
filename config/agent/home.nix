@@ -93,6 +93,7 @@ in
         chatgpt
         pkgs.obscura
         pkgs.kero
+        pkgs.lightpanda
         piPackage
         pkgs.waypipe
         pkgs.xwayland-satellite

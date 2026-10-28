@@ -336,6 +336,7 @@
                 bb
                 bb-connect
                 hibi
+                lightpanda
                 kero
                 tolaria
                 vicu
