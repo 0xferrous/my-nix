@@ -78,6 +78,7 @@ in
     ../../modules/home/programs/direnv.nix
     ../../modules/home/programs/foundry.nix
     ../../modules/home/programs/nushell.nix
+    ../../modules/home/skills.nix
     ../../modules/home/programs/nushell-session-vars.nix
     ../fr/home/hunk.nix
     ../fr/home/jujutsu.nix
@@ -294,6 +295,16 @@ in
   };
 
   fr.nushell-session-vars.enable = true;
+
+  fr.skills = {
+    enable = true;
+    entries = {
+      # Lightpanda's browser skill and its PandaScript companion; the binary
+      # itself comes from pkgs.lightpanda.
+      lightpanda = pkgs.lightpanda-skills;
+      pandascript = "${pkgs.lightpanda-skills}/pandascript";
+    };
+  };
 
   programs.zoxide = {
     enable = true;

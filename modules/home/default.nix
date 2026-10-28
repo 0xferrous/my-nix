@@ -1,6 +1,7 @@
 {
   bb-app = import ./bb-app.nix;
   symlinks = import ./symlinks.nix;
+  skills = import ./skills.nix;
   termfilechooser = import ./termfilechooser.nix;
   vcs = import ./vcs.nix;
   executor = import ./executor.nix;
