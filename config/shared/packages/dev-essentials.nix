@@ -83,6 +83,9 @@ in
   nix-output-monitor
   nix-search-tv
 
+  # Secrets management
+  sops
+
   # Python/project workflows
   uv
 
