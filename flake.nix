@@ -538,6 +538,16 @@
           microsandbox = true;
         };
 
+        hermes = inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs.myNixInputs = inputs;
+          modules = [
+            # fr packages (e.g. lightpanda) via the shared overlay.
+            { nixpkgs.overlays = [ overlay ]; }
+            ./config/hermes.nix
+          ];
+        };
+
         nash = inputs.nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
