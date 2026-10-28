@@ -29,43 +29,72 @@ jobs:
     outputs:
       packages: ${{ steps.list.outputs.packages }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Enable Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v15
+        with:
+          use-flakehub: false
+
       - name: Build package matrix
         id: list
         env:
           REQUESTED: ${{ inputs.package }}
         run: |
           set -euo pipefail
-          packages=(
-            bb
-            bb-source
-            codex-desktop
-            executor
-            git-hunk
-            gruvbox-gtk-theme
-            hibi
-            ironclaw
-            iroh-ssh
-            jj-hunk
-            lightpanda
-            microsandbox
-            obscura
-            oh-my-pi
-            opensrc
-            pi-acp
-            takopi
-            terminal-control
-            tolaria
-            vicu
-          )
+
+          # Derive the matrix from packages that expose an update script.
+          # Aliases (same meta.position, e.g. microsandbox/msb) collapse to
+          # one entry so they do not race on the same files.
+          # shellcheck disable=SC2016  # Nix interpolation, not shell expansion
+          packages=$(nix eval --json .#packages.x86_64-linux --apply '
+            pkgs:
+            let
+              candidates = builtins.filter
+                (name: (pkgs.${name}.passthru.updateScript or null) != null)
+                (builtins.attrNames pkgs);
+              key = name:
+                let pkg = pkgs.${name};
+                in pkg.meta.position or (toString pkg.drvPath);
+              entries = map (name: { inherit name; k = key name; }) candidates;
+              dedup = acc: remaining:
+                if remaining == [ ] then
+                  acc
+                else
+                  let
+                    entry = builtins.head remaining;
+                    rest = builtins.tail remaining;
+                  in
+                  if builtins.any (existing: existing.k == entry.k) acc then
+                    dedup acc rest
+                  else
+                    dedup (acc ++ [ entry ]) rest;
+              names = map (entry: entry.name) (dedup [ ] entries);
+            in
+            builtins.sort (a: b: a < b) names
+          ')
+
+          if [ "$(jq 'length' <<<"$packages")" -eq 0 ]; then
+            echo "no updatable packages found" >&2
+            exit 1
+          fi
+
           if [ -n "$REQUESTED" ]; then
-            if ! printf '%s\n' "${packages[@]}" | grep -qxF "$REQUESTED"; then
+            if ! jq -e --arg p "$REQUESTED" 'index($p)' <<<"$packages" >/dev/null; then
               echo "unknown updatable package: $REQUESTED" >&2
+              echo "updatable packages: $(jq -r 'join(", ")' <<<"$packages")" >&2
               exit 1
             fi
-            packages=("$REQUESTED")
+            packages=$(jq -cn --arg p "$REQUESTED" '[$p]')
           fi
-          json=$(printf '%s\n' "${packages[@]}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "packages=$json" >> "$GITHUB_OUTPUT"
+
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
 
   update:
     name: ${{ matrix.package }}

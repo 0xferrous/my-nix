@@ -93,6 +93,11 @@ let
         LLAMA_BUILD_NUMBER=10743 npm run build
         popd
       '';
+      # This fork is pinned to a PrismML tag; do not let the dynamic package
+      # updater inherit llama.cpp's upstream update script.
+      passthru = (old.passthru or { }) // {
+        updateScript = null;
+      };
       meta = old.meta // {
         description = "PrismML llama.cpp fork with ternary Bonsai GGUF support";
         homepage = "https://github.com/PrismML-Eng/llama.cpp";
