@@ -336,6 +336,7 @@
                 bb
                 bb-connect
                 hibi
+                kero
                 tolaria
                 vicu
                 ;

@@ -92,6 +92,7 @@ in
       ++ [
         chatgpt
         pkgs.obscura
+        pkgs.kero
         piPackage
         pkgs.waypipe
         pkgs.xwayland-satellite

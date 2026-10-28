@@ -1,0 +1,8 @@
+diff --git a/internal/daemon/daemon.go b/internal/daemon/daemon.go
+--- a/internal/daemon/daemon.go
++++ b/internal/daemon/daemon.go
+@@ -467,0 +468,4 @@ func (d *Daemon) environment(sid, pid, shell string, extra []string) []string {
++		case k == "KERO_NIX_RUNTIME_LIBS":
++			continue
++		case k == "LD_LIBRARY_PATH" && os.Getenv("KERO_NIX_RUNTIME_LIBS") != "":
++			continue

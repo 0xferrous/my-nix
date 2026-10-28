@@ -96,6 +96,7 @@ with pkgs;
   # Uncertain macOS support — keeping in linux.nix
   # myNixInputs.agent-box.packages.${system}.portal
   myNixInputs.wifitui.packages.${system}.default
+  kero
   # `numr` comes from the overlay, which wraps the upstream flake package
   # (see pkgs/overlay.nix for the layout/check workarounds).
   numr

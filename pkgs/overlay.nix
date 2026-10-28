@@ -144,6 +144,7 @@ in
   tolaria = final.callPackage ./tolaria/source.nix { };
   vicu = final.callPackage ./vicu.nix { };
   hibi = final.callPackage ./hibi.nix { };
+  kero = final.callPackage ./kero.nix { source = inputs.kero-src; };
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${targetSystem};
   };
