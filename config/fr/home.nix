@@ -74,18 +74,21 @@ in
     myNixInputs.vicinae.homeManagerModules.default
     myNixInputs.noctalia.homeModules.default
     myNixInputs.voxtype.homeManagerModules.default
+  ]
+  ++ lib.optionals (myNixInputs.drydock ? homeManagerModules) [
     myNixInputs.drydock.homeManagerModules.drydock-portal
+    {
+      # Run the drydock host portal as a user service. Private defaults (flake,
+      # host, input overrides, path map) come from
+      # ~/.config/drydock/portal.json so they stay out of this public config.
+      services.drydock-portal = {
+        enable = true;
+        bindAddress = "192.168.127.1";
+      };
+    }
   ];
 
   config = {
-    # Run the drydock host portal as a user service. Private defaults (flake,
-    # host, input overrides, path map) come from
-    # ~/.config/drydock/portal.json so they stay out of this public config.
-    services.drydock-portal = {
-      enable = true;
-      bindAddress = "192.168.127.1";
-    };
-
     # Home Manager sets NIX_XDG_DESKTOP_PORTAL_DIR to the user profile when
     # extra portal backends are configured. Include the system portal
     # backends here too, otherwise ScreenCast/Screenshot descriptors from
