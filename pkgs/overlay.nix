@@ -194,6 +194,8 @@ in
     agentStuffSrc = inputs."agent-stuff";
     gitHunk = final.git-hunk;
     jjHunk = final.jj-hunk;
+    # Bundle the drydock skill so agents can preview OS config changes.
+    drydockSkill = if inputs ? drydock then "${inputs.drydock}/skills/drydock" else null;
     plannotatorPiExtension =
       if targetSystem == "x86_64-linux" then final.plannotator-pi-extension else null;
   };

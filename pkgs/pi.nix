@@ -7,6 +7,7 @@
   gitHunk,
   herdr,
   jjHunk,
+  drydockSkill ? null,
   plannotatorPiExtension ? null,
 }:
 let
@@ -89,6 +90,10 @@ let
     "${herdrPiExtension}"
     "--skill"
     "${jjHunk}/share/jj-hunk/skills/jj-hunk"
+  ]
+  ++ lib.optionals (drydockSkill != null) [
+    "--skill"
+    drydockSkill
   ]
   ++ lib.optionals (plannotatorPiExtension != null) [
     "--extension"
