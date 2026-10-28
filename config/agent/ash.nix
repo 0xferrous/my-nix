@@ -77,4 +77,10 @@ in
   networking.nameservers = lib.mkForce [ ];
   fr.ash-vm-mdns.enable = true;
   fr.agent.selfUpdate.enable = true;
+
+  # Remotely-managed Cloudflare Tunnel. The unit is inert until a tunnel token
+  # is installed at fr.agent.cloudflared.tokenFile; the systemd service does not
+  # inherit the session proxy variables, and this VM has direct egress, so
+  # cloudflared talks to the edge itself.
+  fr.agent.cloudflared.enable = true;
 }

@@ -15,6 +15,7 @@ let
   nvimPackage = if config.boot.isContainer then pkgs.neovim else pkgs.frsNvimPackage;
   impermanenceRoot = "/persist";
   cfg = config.fr.agent.selfUpdate;
+  cloudflaredCfg = config.fr.agent.cloudflared;
   binaryCaches = [
     {
       url = "https://cache.nixos.org";
@@ -67,6 +68,36 @@ in
       type = lib.types.str;
       default = "agent";
       description = "Home Manager configuration selected by the automatic user update.";
+    };
+  };
+
+  options.fr.agent.cloudflared = {
+    enable = lib.mkEnableOption "the cloudflared Cloudflare Tunnel client";
+    tokenFile = lib.mkOption {
+      type = lib.types.str;
+      default = "/persist/etc/cloudflared/tunnel-token";
+      description = ''
+        File holding a remotely-managed tunnel token from the Cloudflare Zero
+        Trust dashboard. It is only read at service start, so the token never
+        enters the Nix store or this repository.
+      '';
+    };
+    protocol = lib.mkOption {
+      type = lib.types.enum [
+        "auto"
+        "http2"
+        "quic"
+      ];
+      default = "auto";
+      description = ''
+        Transport used to reach the Cloudflare edge. Use `http2` when UDP/7844
+        is blocked or traffic has to go through an HTTP proxy.
+      '';
+    };
+    extraEnvironment = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = "Extra environment variables for the cloudflared service.";
     };
   };
 
@@ -158,7 +189,8 @@ in
         nvimPackage
       ]
       ++ lib.optional includeCodexDesktop codex-desktop
-      ++ lib.optional (system == "x86_64-linux") pkgs.ironclaw;
+      ++ lib.optional (system == "x86_64-linux") pkgs.ironclaw
+      ++ lib.optional cloudflaredCfg.enable pkgs.cloudflared;
 
     environment.shellAliases = {
       vi = "nvim";
@@ -181,7 +213,47 @@ in
     };
 
     services.tailscale.enable = true;
+    services.caddy = {
+      enable = true;
+      configFile = "/persist/etc/caddy/Caddyfile";
+    };
+    systemd.services.caddy.unitConfig.ConditionPathExists = "/persist/etc/caddy/Caddyfile";
     services.journald.storage = "persistent";
+
+    # Upstream services.cloudflared only supports locally-managed tunnels
+    # (tunnel UUID + credentials file + declarative ingress). The agent VM is
+    # reached from the outside through a remotely-managed tunnel configured in
+    # the Cloudflare dashboard, so run cloudflared from a token instead and let
+    # the dashboard own the ingress rules. The token is passed as a systemd
+    # credential so it stays out of the Nix store and the process environment.
+    systemd.services.cloudflared = lib.mkIf cloudflaredCfg.enable {
+      description = "Cloudflare Tunnel client (cloudflared)";
+      documentation = [
+        "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/"
+      ];
+      wantedBy = [ "multi-user.target" ];
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
+      # Stay inert instead of crash-looping until a token has been provisioned.
+      unitConfig.ConditionPathExists = cloudflaredCfg.tokenFile;
+      environment = cloudflaredCfg.extraEnvironment // {
+        HOME = "/var/lib/cloudflared";
+        TUNNEL_TRANSPORT_PROTOCOL = cloudflaredCfg.protocol;
+      };
+      serviceConfig = {
+        ExecStart = "${pkgs.cloudflared}/bin/cloudflared --no-autoupdate tunnel run --token-file %d/tunnel-token";
+        LoadCredential = [ "tunnel-token:${cloudflaredCfg.tokenFile}" ];
+        Restart = "on-failure";
+        RestartSec = 5;
+        StateDirectory = "cloudflared";
+        StateDirectoryMode = "0700";
+        DynamicUser = true;
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+      };
+    };
 
     systemd.timers.agent-auto-switch = lib.mkIf cfg.enable {
       description = "Trigger the agent NixOS self-update right after boot";
@@ -317,7 +389,10 @@ in
       "d /run/user/1000 0700 agent users - -"
       "d /run/user/1000/gnupg 0700 agent users - -"
       "r /run/user/1000/gnupg/S.gpg-agent - - - - -"
-    ];
+    ]
+    # Keep the tunnel token directory root-only; the unit reads it through
+    # LoadCredential.
+    ++ lib.optional cloudflaredCfg.enable "d ${builtins.dirOf cloudflaredCfg.tokenFile} 0700 root root - -";
 
     systemd.services.agent-tmpfiles-create = {
       description = "Create agent runtime tmpfiles";
@@ -341,6 +416,7 @@ in
       files = lib.optional (!config.boot.isContainer) "/etc/machine-id";
       directories = [
         "/var/lib/nixos"
+        "/var/lib/caddy"
         "/var/lib/tailscale"
         "/var/log/journal"
       ];
