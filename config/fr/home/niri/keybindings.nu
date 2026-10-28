@@ -50,8 +50,12 @@ def parse-file [path: string, stack: list<string>] {
       if ($trimmed | str starts-with 'include ') {
         let include_node = ($trimmed | from kdl | first)
         let include_path = ($file_path | path dirname | path join $include_node.args.0)
-        let included = (parse-file $include_path $next_stack)
-        $binds = (merge-binds $binds $included)
+        # Generated includes such as noctalia.kdl may not exist until Noctalia
+        # has written them; skip them instead of failing the whole listing.
+        if ($include_path | path exists) {
+          let included = (parse-file $include_path $next_stack)
+          $binds = (merge-binds $binds $included)
+        }
         continue
       }
 

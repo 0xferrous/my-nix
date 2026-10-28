@@ -9,6 +9,7 @@ local lastFetchMs = 0
 local loading = false
 local pendingQuery = nil
 local loadError = nil
+local announced = false
 
 local function nowMs()
   if type(noctalia.nowMs) == "function" then
@@ -86,6 +87,10 @@ local function refresh(query)
           end
         end
         loadError = nil
+        if not announced then
+          noctalia.log("niri: loaded " .. tostring(#binds) .. " titled keybindings")
+          announced = true
+        end
       else
         loadError = "invalid JSON from ~/.config/niri/keybindings.nu"
         binds = {}

@@ -9,6 +9,7 @@ let
   statusPluginDir = noctaliaDir + "/plugins/fr-status";
   kittyPluginDir = noctaliaDir + "/plugins/fr-kitty";
   niriPluginDir = noctaliaDir + "/plugins/fr-niri";
+  pythonToml = pkgs.python3.withPackages (ps: [ ps.tomli-w ]);
   # One entry per connector used across kanshi profiles. Clocks share a
   # 1920x1080 reference canvas (rescaled per real output); login geometry
   # is the editor-captured center on the same basis.
@@ -450,6 +451,17 @@ in
       stateFile="${config.home.homeDirectory}/.local/state/noctalia/settings.toml"
       if [ -f "$stateFile" ] && grep -q '^\[lockscreen_widgets\]' "$stateFile"; then
         ${pkgs.gnused}/bin/sed -i '/^\[lockscreen_widgets\]/,/^\[/ { /^\[/!d; /^\[lockscreen_widgets\]/d }' "$stateFile"
+      fi
+    '';
+
+    # The Settings GUI writes a [plugins].enabled override to settings.toml
+    # when a plugin is toggled, and that array wins over the declarative list
+    # in config.toml. Drop only that override on every switch so a newly added
+    # plugin is enabled from nix without discarding other plugin settings.
+    home.activation.noctaliaPrunePluginEnabledOverride = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      stateFile="${config.home.homeDirectory}/.local/state/noctalia/settings.toml"
+      if [ -f "$stateFile" ]; then
+        ${pythonToml}/bin/python ${./noctalia-prune-plugin-enabled.py} "$stateFile"
       fi
     '';
 
