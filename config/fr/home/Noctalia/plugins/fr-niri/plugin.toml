@@ -1,0 +1,18 @@
+id = "fr/niri"
+name = "Niri Keybindings"
+version = "1.0.0"
+plugin_api = 24
+author = "fr"
+license = "MIT"
+icon = "keyboard"
+description = "Search Niri keybindings and hotkey-overlay titles."
+dependencies = ["niri", "nushell"]
+tags = ["niri", "keyboard", "keybindings"]
+
+[[launcher_provider]]
+id = "search"
+entry = "provider.luau"
+prefix = "niri"
+glyph = "keyboard"
+include_in_global_search = false
+debounce_ms = 80

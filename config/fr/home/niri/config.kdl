@@ -665,9 +665,9 @@ binds {
     // Mod+Space       { switch-layout "next"; }
     // Mod+Shift+Space { switch-layout "prev"; }
 
-    Print { screenshot; }
-    Shift+Print { screenshot-screen; }
-    Alt+Print { screenshot-window; }
+    Print hotkey-overlay-title="Take a Screenshot" { screenshot; }
+    Shift+Print hotkey-overlay-title="Screenshot the Screen" { screenshot-screen; }
+    Alt+Print hotkey-overlay-title="Screenshot the Window" { screenshot-window; }
     Mod+Shift+4 { screenshot; }
     Mod+Shift+S { spawn-sh "nu -l ~/.config/niri/screenshot.nu"; }
 
@@ -683,7 +683,7 @@ binds {
     //
     // The allow-inhibiting=false property can be applied to other binds as well,
     // which ensures niri always processes them, even when an inhibitor is active.
-    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Mod+Escape allow-inhibiting=false hotkey-overlay-title="Toggle keyboard shortcuts inhibition" { toggle-keyboard-shortcuts-inhibit; }
 
     // The quit action will show a confirmation dialog to avoid accidental exits.
     Mod+Shift+E { quit; }

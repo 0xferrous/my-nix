@@ -8,6 +8,7 @@ let
   noctaliaDir = ./Noctalia;
   statusPluginDir = noctaliaDir + "/plugins/fr-status";
   kittyPluginDir = noctaliaDir + "/plugins/fr-kitty";
+  niriPluginDir = noctaliaDir + "/plugins/fr-niri";
   # One entry per connector used across kanshi profiles. Clocks share a
   # 1920x1080 reference canvas (rescaled per real output); login geometry
   # is the editor-captured center on the same basis.
@@ -268,6 +269,7 @@ in
           enabled = [
             "fr/status"
             "fr/kitty"
+            "fr/niri"
             "noctalia/notes"
           ];
           auto_update = "none";
@@ -458,6 +460,11 @@ in
 
     xdg.dataFile."noctalia/plugins/fr-kitty" = {
       source = kittyPluginDir;
+      recursive = true;
+    };
+
+    xdg.dataFile."noctalia/plugins/fr-niri" = {
+      source = niriPluginDir;
       recursive = true;
     };
   };
