@@ -103,7 +103,11 @@ Packages provided by the overlay:
 | `bb` | bb desktop package with `bb-desktop`, `bb`, and `bb-app` entrypoints; runs the published Linux AppImage through Nix with deterministic Codex/Pi provider paths and Electron-compatible server runtime |
 | `bb-connect` | CLI wrapper for launching bb against a remote server with an isolated named profile (`bb-connect --profile NAME URL`) |
 | `bb-android-x86_64` / `bb-android-arm64-v8a` | bb Android APK built for x86_64 Waydroid or ARM64 phones; `bb-android` aliases the x86_64 build |
-| `tolaria` | Tolaria markdown knowledge-base desktop app (Tauri 2); ships as `.deb` from GitHub releases (pinned via `pkgs/tolaria/source-lock.nix`), unpacked and wrapped here with `nodejs` on PATH for the bundled MCP server; bump with `pkgs/tolaria/update.sh` |
+| `tolaria` | Tolaria markdown knowledge-base desktop app (Tauri 2); ships as `.deb` from GitHub releases (pinned via `pkgs/tolaria/source-lock.nix`), unpacked and wrapped here with `nodejs` on PATH for the bundled MCP server |
+| `vicu` | Vicu, a keyboard-driven Vikunja desktop task manager; wraps the upstream Linux AppImage (x86_64 + arm64) in an FHS env and installs its desktop entry and icon |
+| `hibi` | Hibi local-first Markdown and document editor; wraps the official Linux AppImage (x86_64 + arm64) in an FHS env with its desktop entry, icon, and MIME types |
+| `lightpanda` | Lightpanda headless browser for AI agents and automation (Zig + V8, CDP/WebDriver BiDi server, `fetch`/`serve`/`agent` modes); ships as a prebuilt upstream release binary pinned by version and per-arch hash, since upstream's Nix build compiles Zig 0.17 against a V8 archive |
+| `kero` | Kero terminal for coding agents, built from the pinned upstream release with libghostty-vt and Linux desktop integration |
 | `hints` | click, scroll, and drag with your keyboard |
 | `opensrc` | fetch and cache source code for packages and repos |
 | `flake-utils` | synchronize selected flake input locks across local flakes with `sync` and `intersection` subcommands; use `sync --update` to refresh the canonical flake first |
