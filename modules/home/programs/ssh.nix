@@ -53,7 +53,10 @@ in
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      includes = [ "/etc/ssh/ssh_config" ];
+      includes = [
+        "/etc/ssh/ssh_config"
+        "~/.ssh/config.d/*"
+      ];
       settings = identityMatchBlocks // {
         "*" = {
           # Recommended by Filo Sottile's whoami.filippo.io to avoid
