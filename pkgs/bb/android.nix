@@ -13,6 +13,14 @@
 let
   pname = "bb-android-${androidAbi}";
   version = "0.43.0";
+  # Expo derives the Android version code from the semver release; do the
+  # same so a nix-update version bump keeps the APK metadata consistent.
+  versionCode =
+    let
+      parts = lib.splitVersion version;
+      part = i: lib.toInt (builtins.elemAt parts i);
+    in
+    part 0 * 10000 + part 1 * 100 + part 2;
   pnpm = pnpm_9;
   nodejs = nodejs_22;
   jdk = jdk17;
@@ -129,7 +137,7 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
     const appJsonPath = "apps/mobile/app.json";
     const appJson = JSON.parse(fs.readFileSync(appJsonPath, "utf8"));
     appJson.expo.version = "${version}";
-    appJson.expo.android.versionCode = 4300;
+    appJson.expo.android.versionCode = ${toString versionCode};
     fs.writeFileSync(appJsonPath, `''${JSON.stringify(appJson, null, 2)}\n`);
     NODE
 
@@ -182,7 +190,7 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
     runHook preInstallCheck
     test -s "$out/bb-${version}.apk"
     ${androidHome}/build-tools/36.0.0/aapt2 dump badging "$out/bb-${version}.apk" \
-      | grep -F "versionCode='4300' versionName='${version}'"
+      | grep -F "versionCode='${toString versionCode}' versionName='${version}'"
     runHook postInstallCheck
   '';
 
