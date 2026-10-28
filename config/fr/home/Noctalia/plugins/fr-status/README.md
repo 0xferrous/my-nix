@@ -26,6 +26,31 @@ Examples of the visible bar text include:
 
 The exact values depend on the configured symbols and live service responses.
 
+## Tailscale profile names
+
+The Tailscale widget displays the active profile nickname when profile access is
+available. Set a nickname when logging in:
+
+```bash
+sudo tailscale login --nickname my-profile
+```
+
+List the saved profiles and nicknames with:
+
+```bash
+sudo tailscale switch --list --json
+```
+
+For Noctalia to read profiles without `sudo`, grant the current user operator
+access once:
+
+```bash
+sudo tailscale set --operator="$USER"
+```
+
+If profile access is unavailable, the widget falls back to the Tailscale
+account login name.
+
 ## Dependencies
 
 - `codexbar` for `ai-usage`.
