@@ -7,6 +7,11 @@
 }:
 let
   cfg = config.fr.public;
+  systemdSshProxy = pkgs.runCommand "systemd-ssh-proxy-path" { } ''
+    mkdir -p "$out/bin"
+    ln -s "${pkgs.systemd}/lib/systemd/systemd-ssh-proxy" \
+      "$out/bin/systemd-ssh-proxy"
+  '';
 in
 {
   config = lib.mkIf cfg.enable {
@@ -171,6 +176,9 @@ in
     # Ash input so its helper matches the installed polkit action.
     environment.systemPackages = lib.mkAfter [
       myNixInputs.ash.packages.${pkgs.stdenv.hostPlatform.system}.ash
+      # systemd-ssh-proxy lives under lib/systemd, not bin; expose it on PATH
+      # for Ash's generated SSH config ProxyCommand lookup.
+      systemdSshProxy
     ];
 
     users.users = lib.mkIf (cfg.user != "") {
