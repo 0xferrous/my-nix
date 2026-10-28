@@ -11,6 +11,14 @@ flake-update-frs-nvim-wrapper-inputs:
     (cd ./pkgs/frs-nvim && nix flake lock --override-input nixpkgs "$nixpkgs_url" && nix flake update nix-wrapper-modules)
   nix flake update frs-nvim
 
+# Refresh one packaged upstream version through its passthru.updateScript.
+update-package package:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  export NIX_PATH="nixpkgs=$(nix eval --raw --impure --expr '(builtins.getFlake (toString ./.)).inputs.nixpkgs.outPath')"
+  nix shell --inputs-from . nixpkgs#nix-update -c \
+    nix-update --flake --use-update-script {{quote(package)}}
+
 # Refresh the codex-desktop pin (version + SRI hash) from OpenAI's moving
 # `latest/` URL.
 update-codex-desktop:

@@ -4,14 +4,15 @@
   stdenvNoCC,
   fetchurl,
   autoPatchelfHook,
+  nix-update-script,
 }:
 
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation rec {
   pname = "executor";
   version = "1.6.10";
 
   src = fetchurl {
-    url = "https://github.com/UsefulSoftwareCo/executor/releases/download/v1.6.10/executor-linux-x64.tar.gz";
+    url = "https://github.com/UsefulSoftwareCo/executor/releases/download/v${version}/executor-linux-x64.tar.gz";
     hash = "sha256-H1XzWzMImgGqJ/oRuR9rvZJyiEAfNWdpC/epiRDDiC8=";
   };
 
@@ -21,6 +22,10 @@ stdenvNoCC.mkDerivation {
   buildInputs = [ stdenv.cc.cc.lib ];
 
   dontStrip = true;
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
 
   installPhase = ''
     runHook preInstall

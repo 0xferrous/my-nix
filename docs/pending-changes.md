@@ -42,6 +42,22 @@ Rolling log of experiments, partial attempts, blocked work, and upcoming changes
   - Open question: per-VM token isolation and whether to add an `allowlist`
     in warn mode for the free audit data.
 
+- [ ] Package updater follow-ups:
+  - `iron-proxy` now carries its expired-certificate cache fix upstream, so the
+    `fetchpatch` in `pkgs/iron-proxy.nix` rejects once the version bumps past
+    v0.49.0. Remove the patch (and add `passthru.updateScript`) before enabling
+    it in the update workflow.
+  - `tron-wallet-cli` and `tron-wallet-cli-java` pin `src.rev` to a commit
+    hash, so nix-update cannot derive a tag; convert them to tag-based
+    `fetchFromGitHub` or write a custom update script that resolves
+    `wallet-cli-<version>` to a commit.
+  - `bb-android-*` cannot refresh its Gradle `mitmCache` yet: the generated
+    `fetch-deps.sh` writes into the read-only flake source instead of the
+    checkout, so keep its version and `pnpmDeps`/`android-deps.json` in step
+    manually.
+  - `takopi` updates the application but not its pinned `sulguk` Python
+    dependency; check that pin when the Telegram API layer changes.
+
 - [ ] hints follow-up — unresolved issues:
   - Electron/Chromium still need `--force-renderer-accessibility`; `ACCESSIBILITY_ENABLED=1` alone is not enough, and `~/.config/electron-flags.conf` is not honored by Nixpkgs Electron wrappers.
   - Signal works with AT-SPI only when launched with `--force-renderer-accessibility`; normal launch falls back to noisy OpenCV hints.

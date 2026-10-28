@@ -6,6 +6,7 @@
   gitMinimal,
   pkg-config,
   callPackage,
+  nix-update-script,
 }:
 let
   # Pinned by libghostty-vt-sys 0.2.1 (build.rs GHOSTTY_COMMIT). The build
@@ -24,18 +25,22 @@ let
     name = "terminal-control-ghostty-vt-zig-deps";
   };
 in
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "terminal-control";
   version = "0.6.0";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
     repo = "terminal-control";
-    rev = "v0.6.0";
+    rev = "v${finalAttrs.version}";
     hash = "sha256-gM3mBaIHuLnt3G3dxvdvqZaMNCb0sx8krnEThrcurbc=";
   };
 
   cargoHash = "sha256-7K2b3sbTHQvz+aezv/wOjYYJUvHokjy79GoR3loHgwc=";
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
 
   nativeBuildInputs = [
     zig_0_15
@@ -70,4 +75,4 @@ rustPlatform.buildRustPackage {
     mainProgram = "termctrl";
     platforms = lib.platforms.linux;
   };
-}
+})

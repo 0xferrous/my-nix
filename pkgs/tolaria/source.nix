@@ -3,7 +3,7 @@
 #
 # Not in nixpkgs and no upstream Nix build support; the official Linux
 # distribution is the GitHub-release amd64 deb (pinned via
-# ./source-lock.nix, bump with ./update.sh). The deb is a stock
+# ./source-lock.nix; bump with `just update-package tolaria`). The deb is a stock
 # Tauri bundle whose `Depends` is just libwebkit2gtk-4.1 and libgtk-3: a
 # single dynamically-linked binary in /usr/bin plus the bundled MCP server
 # (a CommonJS Node bundle) and agent docs under /usr/lib/Tolaria.
@@ -107,6 +107,11 @@ stdenv.mkDerivation (finalAttrs: {
       }'
     )
   '';
+
+  passthru.updateScript = [
+    "${stdenv.shell}"
+    "${./update.sh}"
+  ];
 
   meta = {
     description = "Desktop app for managing markdown knowledge bases";

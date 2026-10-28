@@ -1,0 +1,150 @@
+name: update packages
+
+# Refresh package versions through each package's `passthru.updateScript` and
+# open one pull request per package. The branch name is stable, so a package
+# that gets a new release before its previous PR is merged just updates the
+# existing PR instead of opening another one.
+#
+# Requires "Allow GitHub Actions to create and approve pull requests" in
+# Settings -> Actions -> General -> Workflow permissions.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package attribute to update (empty updates every package)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    name: Prepare package matrix
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.list.outputs.packages }}
+    steps:
+      - name: Build package matrix
+        id: list
+        env:
+          REQUESTED: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          packages=(
+            bb
+            bb-source
+            codex-desktop
+            executor
+            git-hunk
+            gruvbox-gtk-theme
+            hibi
+            ironclaw
+            iroh-ssh
+            jj-hunk
+            lightpanda
+            microsandbox
+            obscura
+            oh-my-pi
+            opensrc
+            pi-acp
+            takopi
+            terminal-control
+            tolaria
+            vicu
+          )
+          if [ -n "$REQUESTED" ]; then
+            if ! printf '%s\n' "${packages[@]}" | grep -qxF "$REQUESTED"; then
+              echo "unknown updatable package: $REQUESTED" >&2
+              exit 1
+            fi
+            packages=("$REQUESTED")
+          fi
+          json=$(printf '%s\n' "${packages[@]}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "packages=$json" >> "$GITHUB_OUTPUT"
+
+  update:
+    name: ${{ matrix.package }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.prepare.outputs.packages) }}
+    concurrency:
+      group: update-package-${{ matrix.package }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Enable Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v15
+        with:
+          use-flakehub: false
+
+      - name: Set NIX_PATH
+        # nix-update's --use-update-script runs the update script in a
+        # `nix develop` shell built from `<nixpkgs>`; point that at this
+        # flake's pinned nixpkgs instead of relying on channels.
+        run: |
+          nixpkgs=$(nix eval --raw --impure --expr '(builtins.getFlake (toString ./.)).inputs.nixpkgs.outPath')
+          echo "NIX_PATH=nixpkgs=$nixpkgs" >> "$GITHUB_ENV"
+
+      - name: Update ${{ matrix.package }}
+        id: update
+        env:
+          PACKAGE: ${{ matrix.package }}
+        run: |
+          set -euo pipefail
+          message_file=/tmp/commit-message
+          rm -f "$message_file"
+
+          nix shell --inputs-from . nixpkgs#nix-update -c \
+            nix-update --flake --use-update-script \
+            --write-commit-message "$message_file" "$PACKAGE"
+
+          if git diff --quiet; then
+            echo "$PACKAGE is already up to date"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          first_line=$(sed -n '1p' "$message_file")
+          subject="chore($PACKAGE): update ${first_line#*: }"
+          details=$(sed -n '2,$p' "$message_file")
+
+          {
+            echo "changed=true"
+            echo "subject=$subject"
+            echo "message<<EOF"
+            printf '%s\n%s\n' "$subject" "$details"
+            echo "EOF"
+            echo "body<<EOF"
+            printf 'Automated update of package %s.\n\n%s\n' "$PACKAGE" "$details"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create or update pull request
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          branch: update/${{ matrix.package }}
+          delete-branch: true
+          add-paths: pkgs
+          commit-message: ${{ steps.update.outputs.message }}
+          title: ${{ steps.update.outputs.subject }}
+          body: ${{ steps.update.outputs.body }}

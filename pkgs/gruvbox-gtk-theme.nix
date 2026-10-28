@@ -9,6 +9,7 @@
   themeVariants ? [ ],
   tweakVariants ? [ ],
   iconVariants ? [ ],
+  nix-update-script,
 }:
 
 let
@@ -66,6 +67,13 @@ lib.checkListOfEnum "${pname}: colorVariants" colorVariantList colorVariants lib
   {
     inherit pname;
     version = "0-unstable-2025-10-23";
+
+    passthru.updateScript = nix-update-script {
+      extraArgs = [
+        "--flake"
+        "--version=branch"
+      ];
+    };
 
     # nixpkgs removed this package because the upstream theme propagated the
     # obsolete GTK2 Murrine engine. Keep the GTK3/GTK4 assets locally until

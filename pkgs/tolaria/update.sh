@@ -10,7 +10,7 @@
 # digest, but the deb download also validates that the asset URL pattern
 # still holds.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(git rev-parse --show-toplevel)"
 
 repo="refactoringhq/tolaria"
 
@@ -24,7 +24,7 @@ url="https://github.com/$repo/releases/download/$tag/$asset"
 
 hash=$(nix store prefetch-file --json --hash-type sha256 "$url" | jq -er .hash)
 
-cat > source-lock.nix <<EOF
+cat > pkgs/tolaria/source-lock.nix <<EOF
 # Pin for the Tolaria Linux desktop app.
 #
 # Tolaria (https://github.com/refactoringhq/tolaria) ships Linux builds as

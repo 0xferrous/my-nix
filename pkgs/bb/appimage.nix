@@ -5,6 +5,7 @@
   git,
   lib,
   nodejs_22,
+  nix-update-script,
   pi,
   runCommand,
   stdenv,
@@ -187,6 +188,14 @@ stdenv.mkDerivation {
     runHook postInstallCheck
   '';
   passthru.category = "AI Coding Agents";
+  passthru.src = src;
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--flake"
+      "--version-regex"
+      "desktop-v(.+)"
+    ];
+  };
   meta = {
     description = "bb desktop app with deterministic Nix provider launch";
     homepage = "https://getbb.app";

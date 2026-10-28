@@ -7,7 +7,7 @@
 # uses the versioned pool URL from its Packages index rather than the moving
 # `latest/` URL, so it only goes stale when OpenAI ships a new version. This
 # is a fixed-output derivation over the amd64 deb, pinned via
-# ./codex-desktop-source.nix (bump with ./codex-desktop-update.sh).
+# ./codex-desktop-source.nix (bump with `just update-package codex-desktop`).
 #
 # The app is a closed-source Electron bundle that ships its own Chromium
 # runtime, the open-source Apache-2.0 `codex` CLI, and native node modules
@@ -244,6 +244,11 @@ stdenv.mkDerivation (finalAttrs: {
       --set FONTCONFIG_FILE '${fontsConf}' \
       "''${gappsWrapperArgs[@]}"
   '';
+
+  passthru.updateScript = [
+    "${stdenv.shell}"
+    "${./codex-desktop-update.sh}"
+  ];
 
   meta = {
     description = "ChatGPT desktop app for Linux (bundles the Codex agent), preview build";

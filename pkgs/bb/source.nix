@@ -26,6 +26,7 @@
   libGL,
   sourceOverride ? null,
   pnpmDepsHashOverride ? null,
+  nix-update-script,
 }:
 
 let
@@ -271,6 +272,14 @@ stdenv.mkDerivation (finalAttrs: {
 
         runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--flake"
+      "--version-regex"
+      "desktop-v(.+)"
+    ];
+  };
 
   meta = {
     description = "Agentic IDE that builds itself (source-built native Electron package)";

@@ -1,6 +1,7 @@
 {
   pkgs,
   lib ? pkgs.lib,
+  nix-update-script,
 }:
 
 let
@@ -16,6 +17,11 @@ pkgs.stdenvNoCC.mkDerivation {
   };
 
   dontUnpack = true;
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
+
   installPhase = ''
     install -Dm755 "$src" "$out/bin/opensrc"
   '';

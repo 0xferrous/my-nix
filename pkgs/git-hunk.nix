@@ -1,6 +1,7 @@
 {
   pkgs,
   lib ? pkgs.lib,
+  nix-update-script,
 }:
 
 pkgs.rustPlatform.buildRustPackage rec {
@@ -16,6 +17,10 @@ pkgs.rustPlatform.buildRustPackage rec {
 
   cargoHash = "sha256-iiqlFZTAlFF6jy5m8jMcqLcRvNLkPdRlK/XoQucceoQ=";
   doCheck = false;
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
 
   postInstall = ''
     install -Dm0644 SKILL.md "$out/share/git-hunk/skills/git-hunk/SKILL.md"

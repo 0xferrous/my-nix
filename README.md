@@ -121,6 +121,8 @@ Packages provided by the overlay:
 
 `packages.<system>.*` exposes all of the above except the overlay-only entries `herdr`, `ashWrappers`, `hints`, `plannotator-pi-extension`, and `frsNvimPackage`.
 
+Packages that track an upstream release expose `passthru.updateScript`. Refresh one from the repo root with `just update-package <name>` (equivalently `nix-update --flake --use-update-script <name>`; the scripts include `--flake` because released nix-update versions do not yet pass flake mode through to the script). The [`update packages`](./.github/workflows/update-packages.yml) workflow runs every updatable package weekly and keeps one pull request per package on the stable `update/<name>` branch, so a newer release updates the existing PR. Multi-architecture packages list their aarch64 packages under `legacyPackages.aarch64-linux`; their update scripts use [`pkgs/update-arch-hash.sh`](./pkgs/update-arch-hash.sh) to refresh the non-host hashes without building on the other architecture.
+
 ## Public `fr` config pattern
 
 This repo can export public Home Manager and NixOS config consumed from a private flake.

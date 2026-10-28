@@ -190,13 +190,12 @@
       ];
       system = defaultSystem;
       overlay = import ./pkgs/overlay.nix { inherit inputs; };
-      pkgs = import inputs.nixpkgs {
-        inherit system;
-        overlays = [ overlay ];
+      lib = inputs.nixpkgs.lib;
+      nixpkgsConfig = {
         # Mirror config/agent/nixos.nix: allow only the unfree packages needed
         # by the ChatGPT/Codex desktop app and the Android SDK used for the
         # bb mobile APK.
-        config.allowUnfreePredicate =
+        allowUnfreePredicate =
           pkg:
           builtins.elem (pkg.pname or "") [
             "codex-desktop"
@@ -216,12 +215,28 @@
           ];
         # gradle 7.x (needed by tron-wallet-cli-java's shadow-jar plugin) is marked
         # insecure in nixpkgs due to unfixed CVEs; required to build it.
-        config.permittedInsecurePackages = [
+        permittedInsecurePackages = [
           "gradle-7.6.6"
           "pnpm-9.15.9"
         ];
       };
-      lib = pkgs.lib;
+      pkgs = import inputs.nixpkgs {
+        inherit system;
+        overlays = [ overlay ];
+        config = nixpkgsConfig;
+      };
+      # Package sets for the systems we ship artifacts for. The default
+      # `packages` output is x86_64-only; this exposes aarch64 too so
+      # nix-update can refresh per-architecture hashes (e.g. hibi's arm64
+      # AppImage) via `legacyPackages.aarch64-linux.<attr>`.
+      legacyPackages = lib.genAttrs imageSystems (
+        targetSystem:
+        import inputs.nixpkgs {
+          system = targetSystem;
+          overlays = [ overlay ];
+          config = nixpkgsConfig;
+        }
+      );
       mkAgentMicrosandboxHome =
         targetSystem:
         let
@@ -282,6 +297,8 @@
     {
       overlays.default = overlay;
 
+      inherit legacyPackages;
+
       packages = lib.recursiveUpdate frs-nvim.packages (
         lib.recursiveUpdate
           {
@@ -313,10 +330,8 @@
                 ssh-tmp
                 flake-utils
                 gruvbox-gtk-theme
-                microsandbox
                 llama-cpp-prism-rocm
                 llama-cpp-prism-vulkan
-                msb
                 codex-desktop
                 bb
                 bb-connect
@@ -332,10 +347,19 @@
             };
           }
           (
-            lib.genAttrs imageSystems (targetSystem: {
-              microsandbox = mkMicrosandboxPackage targetSystem;
-              msb = mkMicrosandboxPackage targetSystem;
-            })
+            lib.genAttrs imageSystems (
+              targetSystem:
+              # Reuse the overlay package for the default system: rebuilding it
+              # through recursiveUpdate drops the attribute positions that
+              # nix-update needs to locate the version and source hashes.
+              if targetSystem == system then
+                { inherit (pkgs) microsandbox msb; }
+              else
+                {
+                  microsandbox = mkMicrosandboxPackage targetSystem;
+                  msb = mkMicrosandboxPackage targetSystem;
+                }
+            )
           )
       );
       apps = lib.recursiveUpdate frs-nvim.apps {

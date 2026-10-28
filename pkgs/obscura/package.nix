@@ -53,7 +53,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
     runHook postInstallCheck
   '';
 
-  passthru.updateScript = nix-update-script { };
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
 
   meta = {
     description = "Headless browser engine in Rust: V8, real DOM, CDP, stealth — a drop-in replacement for headless Chrome";

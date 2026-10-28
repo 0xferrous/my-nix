@@ -3,6 +3,7 @@
   fetchFromGitHub,
   lib,
   makeWrapper,
+  nix-update-script,
   pi,
 }:
 
@@ -20,6 +21,10 @@ buildNpmPackage rec {
   npmDepsHash = "sha256-sRBrTwBwo8pcOy5WGDxHE86fvldgOtlppuvcbiB+7uc=";
 
   nativeBuildInputs = [ makeWrapper ];
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
 
   postInstall = ''
     wrapProgram $out/bin/pi-acp \

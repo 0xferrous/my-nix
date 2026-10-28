@@ -3,6 +3,7 @@
   fetchurl,
   glibc,
   lib,
+  nix-update-script,
   stdenvNoCC,
 }:
 let
@@ -24,6 +25,10 @@ stdenvNoCC.mkDerivation {
 
   dontUnpack = true;
   dontStrip = true;
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
 
   installPhase = ''
     runHook preInstall

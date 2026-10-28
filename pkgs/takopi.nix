@@ -4,6 +4,7 @@
   fetchFromGitHub,
   git,
   makeWrapper,
+  nix-update-script,
 }:
 
 let
@@ -71,6 +72,10 @@ py.buildPythonApplication rec {
   ];
 
   nativeBuildInputs = [ makeWrapper ];
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [ "--flake" ];
+  };
 
   postInstall = ''
     wrapProgram $out/bin/takopi \
