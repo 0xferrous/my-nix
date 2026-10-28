@@ -142,6 +142,8 @@ in
   # Keep the original name as the Waydroid-compatible default.
   "bb-android" = final."bb-android-x86_64";
   tolaria = final.callPackage ./tolaria/source.nix { };
+  vicu = final.callPackage ./vicu.nix { };
+  hibi = final.callPackage ./hibi.nix { };
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${targetSystem};
   };

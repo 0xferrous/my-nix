@@ -335,7 +335,9 @@
                 codex-desktop
                 bb
                 bb-connect
+                hibi
                 tolaria
+                vicu
                 ;
               "bb-source" = pkgs.bbSource;
               "bb-android" = pkgs."bb-android";
