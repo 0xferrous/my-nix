@@ -18,4 +18,7 @@ with pkgs;
   halloy
   fluffychat
   element-desktop
+
+  # Editors
+  hibi
 ]
