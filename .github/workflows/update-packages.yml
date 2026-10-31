@@ -40,11 +40,6 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v23
 
-      - name: Enable Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v15
-        with:
-          use-flakehub: false
-
       - name: Build package matrix
         id: list
         env:
@@ -121,10 +116,16 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v23
 
-      - name: Enable Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v15
+      # The repo's own Cachix cache, see docs/repository-structure.md.
+      - name: Enable binary cache
+        uses: cachix/cachix-action@v15
         with:
-          use-flakehub: false
+          name: 0xferrous
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          # Fork pull requests never receive the token, and their build results
+          # must not enter a cache that this repo's machines substitute from.
+          skipPush: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          pushFilter: "(-source$|nixpkgs\\.tar\\.gz$)"
 
       - name: Set NIX_PATH
         # nix-update's --use-update-script runs the update script in a

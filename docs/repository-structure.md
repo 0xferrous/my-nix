@@ -235,6 +235,28 @@ docs/
   one pull request per package on the stable `update/<name>` branch, each
   bumped package built before its PR is opened.
 
+### Binary cache
+
+Every workflow that builds uses the repo's own Cachix cache
+(`0xferrous.cachix.org`, public key in `config/fr/nixos/nix.nix`) through
+`cachix/cachix-action`:
+
+- Pulling needs no credentials, so pull requests from forks still substitute
+  prebuilt paths.
+- Pushing needs the `CACHIX_AUTH_TOKEN` repository secret. `skipPush` keeps
+  fork pull requests from receiving it, so foreign build results cannot enter
+  a cache this repo's machines trust.
+- `pushFilter` keeps fetched sources and nixpkgs tarballs out of the cache.
+
+The host's harmonia cache (`http://192.168.127.1:5000`) serves the ash guests
+on the bridge and is not reachable from GitHub runners.
+
+Magic Nix Cache is deliberately unused: it uploads one GitHub Actions cache
+entry per store path in the build closure, which trips GitHub's cache-API
+throttle on bigger closures. It then disables itself for the rest of the run
+("Not trying to use it again on this run") and answers `418` to Nix, so the
+substituter is dropped mid-build and nothing is uploaded at all.
+
 ## Structural conventions
 
 - Put generic reusable Home Manager modules under `modules/home` and export them from `flake.nix` via `homeManagerModules.*`.

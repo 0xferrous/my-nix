@@ -26,11 +26,6 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v23
 
-      - name: Enable Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v15
-        with:
-          use-flakehub: false
-
       - name: Update llm-agents lock entry
         run: |
           nix flake update llm-agents
