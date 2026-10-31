@@ -27,16 +27,16 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "terminal-control";
-  version = "0.6.0";
+  version = "1.2.1";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
     repo = "terminal-control";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-gM3mBaIHuLnt3G3dxvdvqZaMNCb0sx8krnEThrcurbc=";
+    hash = "sha256-mFW6C99zyEyGzqichDN8gZgkDGJg1T9ORcGfx/QZMUM=";
   };
 
-  cargoHash = "sha256-7K2b3sbTHQvz+aezv/wOjYYJUvHokjy79GoR3loHgwc=";
+  cargoHash = "sha256-2X8NL68cgECf1kCBEgmCD1RRfNiiXiuSvfAgKm7IDd0=";
 
   passthru.updateScript = nix-update-script {
     extraArgs = [ "--flake" ];
