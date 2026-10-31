@@ -15,6 +15,7 @@
     pi
   ],
   pkg-config,
+  patchelf,
 
   electron,
 
@@ -34,6 +35,7 @@ let
   version = "0.48.1";
   pnpm = pnpm_9;
   electronArch = if stdenv.hostPlatform.system == "aarch64-linux" then "arm64" else "x64";
+  tsrsPlatform = "linux-${electronArch}-gnu";
   pnpmWorkspaces = [
     "bb-app..."
     "@bb/app..."
@@ -99,6 +101,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   nativeBuildInputs = [
     nodejs
+    patchelf
     pkg-config
     pnpm
     pnpmConfigHook
@@ -113,9 +116,15 @@ stdenv.mkDerivation (finalAttrs: {
     export npm_config_target=${electronVersion}
     export npm_config_build_from_source=true
 
-    better_sqlite_dir=$(echo node_modules/.pnpm/better-sqlite3@*/node_modules/better-sqlite3)
-    pnpm --dir "$better_sqlite_dir" run install
-    test -f "$better_sqlite_dir/build/Release/better_sqlite3.node"
+    tsrs_dir=$(echo node_modules/.pnpm/@tsrs+${tsrsPlatform}@*/node_modules/@tsrs/${tsrsPlatform})
+    patchelf --set-interpreter "$(cat ${stdenv.cc}/nix-support/dynamic-linker)" "$tsrs_dir/tsrs"
+
+    for better_sqlite_dir in node_modules/.pnpm/better-sqlite3@*/node_modules/better-sqlite3; do
+      pnpm --dir "$better_sqlite_dir" run --if-present install
+      if [ -d "$better_sqlite_dir/build" ]; then
+        test -f "$better_sqlite_dir/build/Release/better_sqlite3.node"
+      fi
+    done
 
     pnpm exec turbo run build --filter=bb-app --output-logs=new-only
     pnpm --dir apps/desktop run build

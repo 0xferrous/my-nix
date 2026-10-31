@@ -1,11 +1,10 @@
-diff --git a/apps/desktop/src/desktop-shell-path.ts b/apps/desktop/src/desktop-shell-path.ts
---- a/apps/desktop/src/desktop-shell-path.ts
-+++ b/apps/desktop/src/desktop-shell-path.ts
-@@ -1,6 +1,15 @@
- import { spawnSync } from "node:child_process";
-+import { basename } from "node:path";
- 
- const MACOS_LOGIN_SHELL = "/bin/zsh";
+diff --git a/packages/process-utils/src/host-toolchain.ts b/packages/process-utils/src/host-toolchain.ts
+--- a/packages/process-utils/src/host-toolchain.ts
++++ b/packages/process-utils/src/host-toolchain.ts
+@@ -34,6 +34,14 @@
+ ];
+ const SHELL_START = "__BB_SHELL_ENV_START__";
+ const SHELL_END = "__BB_SHELL_ENV_END__";
 +const NON_POSIX_SHELL_NAMES = new Set([
 +  "elvish",
 +  "fish",
@@ -14,72 +13,24 @@ diff --git a/apps/desktop/src/desktop-shell-path.ts b/apps/desktop/src/desktop-s
 +  "pwsh",
 +  "xonsh",
 +]);
- const SHELL_PATH_COMMAND = 'printf "%s" "$PATH"';
- const SHELL_PATH_TIMEOUT_MS = 2_000;
+ const PROBE_TIMEOUT_MS = 3000;
+ const PROBE_OUTPUT_MAX_CHARS = 1024 * 1024;
  
-@@ -71,6 +80,23 @@
-   };
- }
- 
-+function resolveLoginShell(
-+  env: NodeJS.ProcessEnv,
-+  platform: NodeJS.Platform,
-+): string {
-+  if (platform === "darwin") {
-+    return MACOS_LOGIN_SHELL;
-+  }
-+  const configuredShell = env.SHELL?.trim();
-+  if (
-+    configuredShell !== undefined &&
-+    !NON_POSIX_SHELL_NAMES.has(basename(configuredShell))
-+  ) {
-+    return configuredShell;
-+  }
-+  return "/bin/sh";
-+}
-+
- function warnShellPathFallback(
-   args: EnsurePackagedUserShellPathArgs,
-   message: string,
-@@ -95,9 +121,6 @@
-   const result = spawnLoginShellPath({
-     args: ["-ilc", SHELL_PATH_COMMAND],
--    command:
--      args.platform === "darwin"
--        ? MACOS_LOGIN_SHELL
--        : (args.env.SHELL ?? "/bin/bash"),
-+    command: resolveLoginShell(args.env, args.platform),
-     timeoutMs: SHELL_PATH_TIMEOUT_MS,
-   });
- 
-diff --git a/apps/host-daemon/src/runtime-shell-env.ts b/apps/host-daemon/src/runtime-shell-env.ts
---- a/apps/host-daemon/src/runtime-shell-env.ts
-+++ b/apps/host-daemon/src/runtime-shell-env.ts
-@@ -52,6 +52,14 @@
-   "env",
-   `printf '%s\\n' ${SHELL_ENV_END_MARKER}`,
- ].join("; ");
-+const NON_POSIX_SHELL_NAMES = new Set([
-+  "elvish",
-+  "fish",
-+  "nu",
-+  "nushell",
-+  "pwsh",
-+  "xonsh",
-+]);
- const USER_SHELL_ENV_TIMEOUT_MS = 3_000;
- const USER_SHELL_ENV_FORCE_KILL_AFTER_MS = 1_000;
- 
-@@ -277,7 +285,11 @@
-     return null;
+@@ -188,9 +196,15 @@
+       ? null
+       : { PATH: mergePath(...paths.map(expand), envValue(env, "PATH")) };
    }
-   const configuredShell = env.SHELL?.trim();
--  if (configuredShell && configuredShell.length > 0) {
-+  if (
-+    configuredShell &&
++  const configuredShell = env.SHELL?.trim();
+   const shell =
+-    env.SHELL?.trim() ||
+-    (process.platform === "darwin" ? "/bin/zsh" : "/bin/sh");
++    configuredShell !== undefined &&
 +    configuredShell.length > 0 &&
 +    !NON_POSIX_SHELL_NAMES.has(basename(configuredShell))
-+  ) {
-     return configuredShell;
-   }
-   return platform === "darwin" ? "/bin/zsh" : "/bin/sh";
++      ? configuredShell
++      : process.platform === "darwin"
++        ? "/bin/zsh"
++        : "/bin/sh";
+   const command = `printf '%s\\n' ${SHELL_START}; /usr/bin/env; printf '%s\\n' ${SHELL_END}`;
+   const shellArgs = ["sh", "dash"].includes(basename(shell))
+     ? ["-lc"]
