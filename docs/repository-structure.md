@@ -254,9 +254,13 @@ request or a fork.
 
 Configuration:
 
-- `AUTOFIX_MODEL` repository variable, e.g. `anthropic/claude-sonnet-4-5`.
-- One provider secret: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
-  `OPENROUTER_API_KEY`, `GEMINI_API_KEY` or `OPENCODE_API_KEY`. Without any of
+- Model: `AUTOFIX_MODEL` repository variable, default
+  `opencode-go/deepseek-v4.1-flash` (OpenCode Go). The free variant is
+  `opencode/deepseek-v4.1-flash-free`, which is a different provider id.
+  `opencode models | grep deepseek` lists what a credential can reach.
+- Credentials: `OPENCODE_API_KEY` (an OpenCode Console key) for OpenCode Go.
+  `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY` and
+  `GEMINI_API_KEY` are also passed through for other providers. Without any of
   them the agent is skipped and the leg fails as before.
 
 ### Binary cache

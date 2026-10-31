@@ -205,10 +205,13 @@ jobs:
           PACKAGE: ${{ matrix.package }}
           PR_BODY_FILE: ${{ runner.temp }}/pull-request-body
           AUTOFIX_ATTEMPTS: ${{ inputs.autofix-attempts || '3' }}
-          AUTOFIX_MODEL: ${{ vars.AUTOFIX_MODEL }}
-          # Provider credentials for the repair agent. Configure whichever one
-          # AUTOFIX_MODEL needs; without any of them the agent is skipped and a
-          # broken bump fails the leg, as it did before.
+          AUTOFIX_MODEL: ${{ vars.AUTOFIX_MODEL || 'opencode-go/deepseek-v4.1-flash' }}
+          # Provider credentials for the repair agent. The default model is
+          # OpenCode Go's deepseek-v4.1-flash, which authenticates with
+          # OPENCODE_API_KEY (OpenCode Console key); the other keys are there so
+          # a different AUTOFIX_MODEL works without touching the workflow.
+          # Without any of them the agent is skipped and a broken bump fails the
+          # leg, as it did before.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
