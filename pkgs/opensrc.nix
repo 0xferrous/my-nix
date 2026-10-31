@@ -5,7 +5,7 @@
 }:
 
 let
-  version = "0.7.2";
+  version = "0.7.3";
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "opensrc";
@@ -13,7 +13,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
   src = pkgs.fetchurl {
     url = "https://github.com/vercel-labs/opensrc/releases/download/v${version}/opensrc-linux-x64";
-    hash = "sha256-YGTm6ksC/Kix6g2qPAq4y5xZcvjYODxhdMahfWzgx9A=";
+    hash = "sha256-L0ciacLAXlbQmMlnvpp476nC0jOJspPuPeyULW9iyII=";
   };
 
   dontUnpack = true;
