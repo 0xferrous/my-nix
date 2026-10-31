@@ -56,6 +56,7 @@ in
     ./home/desktop-entries.nix
     ./home/noctalia.nix
     ./home/helix.nix
+    ./home/herdr-app.nix
     ./home/hunk.nix
     ./home/jujutsu.nix
     ./home/kitty.nix

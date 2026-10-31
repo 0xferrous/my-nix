@@ -95,6 +95,7 @@ in
         pkgs.obscura
         pkgs.kero
         pkgs.lightpanda
+        pkgs.herdr-core
         piPackage
         pkgs.waypipe
         pkgs.xwayland-satellite

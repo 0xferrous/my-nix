@@ -85,6 +85,8 @@ with pkgs;
   emacs-pgtk
   libreoffice-qt6
   fractal
+  herdr-app
+  herdr-core
 
   # FUSE
   google-drive-ocamlfuse
