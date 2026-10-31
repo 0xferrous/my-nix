@@ -4,9 +4,12 @@ name: update packages
 # open one pull request per package. Each bumped package is built before its
 # pull request is opened, so a release that no longer builds (patched binaries,
 # moved assets, new dependencies) fails the matrix leg instead of landing on
-# main unverified. The branch name is stable, so a package that gets a new
-# release before its previous PR is merged just updates the existing PR instead
-# of opening another one.
+# main unverified. A failed build is handed to a coding agent
+# (.github/scripts/build-or-autofix.sh) that tries to repair the package
+# expression and rebuild; the leg still fails, and no pull request is opened,
+# if the repair does not take. The branch name is stable, so a package that
+# gets a new release before its previous PR is merged just updates the
+# existing PR instead of opening another one.
 #
 # Requires "Allow GitHub Actions to create and approve pull requests" in
 # Settings -> Actions -> General -> Workflow permissions.
@@ -20,10 +23,25 @@ on:
         description: "Package attribute to update (empty updates every package)"
         required: false
         type: string
+      autofix-attempts:
+        description: "Repair attempts after a failed build (0 disables the agent)"
+        required: false
+        default: "3"
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
+
+env:
+  # The flake's `nixConfig` substituters are ignored unless a command passes
+  # `--accept-flake-config`, and pull request checkouts must never be allowed
+  # to nominate their own cache and key. Set the useful ones explicitly so
+  # llm-agents packages (codex, pi, opencode) substitute from numtide's cache
+  # instead of being compiled from source on every build.
+  NIX_CONFIG: |
+    extra-substituters = https://nix-community.cachix.org https://numtide.cachix.org https://cache.numtide.com https://noctalia.cachix.org
+    extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
 
 jobs:
   prepare:
@@ -141,16 +159,15 @@ jobs:
           PACKAGE: ${{ matrix.package }}
         run: |
           set -euo pipefail
-          message_file=/tmp/commit-message
-          rm -f "$message_file"
+          message_file="$RUNNER_TEMP/commit-message"
+          body_file="$RUNNER_TEMP/pull-request-body"
+          rm -f "$message_file" "$body_file"
 
-          # --build makes nix-update run `nix build .#PACKAGE` after the update
-          # script rewrites the version and hashes, so a bump that breaks the
-          # build fails this step before "Create or update pull request" and
-          # no unverified PR is opened. Without it only the source hashes are
-          # refreshed, which just proves the release assets still exist.
+          # The build is a separate step so a failure can be handed to the
+          # repair agent; bumping the version and refreshing hashes happens
+          # here, and only the version/asset part is trusted to nix-update.
           nix shell --inputs-from . nixpkgs#nix-update -c \
-            nix-update --flake --use-update-script --build \
+            nix-update --flake --use-update-script \
             --write-commit-message "$message_file" "$PACKAGE"
 
           if git diff --quiet; then
@@ -163,16 +180,41 @@ jobs:
           subject="chore($PACKAGE): update ${first_line#*: }"
           details=$(sed -n '2,$p' "$message_file")
 
+          printf 'Automated update of package %s.\n\n%s\n' "$PACKAGE" "$details" > "$body_file"
+
           {
             echo "changed=true"
             echo "subject=$subject"
             echo "message<<EOF"
             printf '%s\n%s\n' "$subject" "$details"
             echo "EOF"
-            echo "body<<EOF"
-            printf 'Automated update of package %s.\n\n%s\n' "$PACKAGE" "$details"
-            echo "EOF"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Install repair agent
+        if: steps.update.outputs.changed == 'true'
+        # Same pinned opencode this machine uses, from llm-agents.nix; it is a
+        # cache hit through cache.numtide.com (see NIX_CONFIG above).
+        run: |
+          agent=$(nix build --no-link --print-out-paths --impure --expr \
+            '(builtins.getFlake (toString ./.)).inputs.llm-agents.packages.${builtins.currentSystem}.opencode')
+          echo "$agent/bin" >> "$GITHUB_PATH"
+
+      - name: Build ${{ matrix.package }}
+        if: steps.update.outputs.changed == 'true'
+        env:
+          PACKAGE: ${{ matrix.package }}
+          PR_BODY_FILE: ${{ runner.temp }}/pull-request-body
+          AUTOFIX_ATTEMPTS: ${{ inputs.autofix-attempts || '3' }}
+          AUTOFIX_MODEL: ${{ vars.AUTOFIX_MODEL }}
+          # Provider credentials for the repair agent. Configure whichever one
+          # AUTOFIX_MODEL needs; without any of them the agent is skipped and a
+          # broken bump fails the leg, as it did before.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: .github/scripts/build-or-autofix.sh "$PACKAGE"
 
       - name: Create or update pull request
         if: steps.update.outputs.changed == 'true'
@@ -185,4 +227,4 @@ jobs:
           add-paths: pkgs
           commit-message: ${{ steps.update.outputs.message }}
           title: ${{ steps.update.outputs.subject }}
-          body: ${{ steps.update.outputs.body }}
+          body-file: ${{ runner.temp }}/pull-request-body

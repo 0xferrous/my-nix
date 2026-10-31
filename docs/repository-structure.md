@@ -233,7 +233,31 @@ docs/
   committed straight to `main`.
 - `update-packages.yml`: weekly or manual refresh of every updatable package,
   one pull request per package on the stable `update/<name>` branch, each
-  bumped package built before its PR is opened.
+  bumped package built before its PR is opened, with a failed build handed to
+  the repair agent described below.
+
+### Self-healing package updates
+
+`.github/scripts/build-or-autofix.sh` builds one package and, when the build
+fails, hands the log to `opencode run --auto` (the same pinned llm-agents CLI
+this machine uses) and asks it to repair the package expression under `pkgs/`.
+It rebuilds after every repair attempt and stops when the build passes, when
+the agent no longer changes anything, or after `AUTOFIX_ATTEMPTS` attempts
+(default 3; the `autofix-attempts` input on manual dispatch, `0` disables).
+
+A repaired package still gets its normal pull request, with a note in the body
+saying the bump did not build as-is and was repaired automatically. A package
+the agent cannot fix fails the matrix leg, so no pull request is opened and
+nothing unverified reaches `main`. The agent only runs in `update packages`,
+which is triggered by the schedule or by hand on `main`, never by a pull
+request or a fork.
+
+Configuration:
+
+- `AUTOFIX_MODEL` repository variable, e.g. `anthropic/claude-sonnet-4-5`.
+- One provider secret: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+  `OPENROUTER_API_KEY`, `GEMINI_API_KEY` or `OPENCODE_API_KEY`. Without any of
+  them the agent is skipped and the leg fails as before.
 
 ### Binary cache
 

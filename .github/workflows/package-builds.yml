@@ -28,6 +28,14 @@ concurrency:
 
 env:
   SYSTEM: x86_64-linux
+  # The flake's `nixConfig` substituters only apply with
+  # `--accept-flake-config`, and a pull request must never be able to nominate
+  # its own cache and key. Set the useful ones explicitly so llm-agents
+  # packages (codex, pi, opencode) substitute from numtide's cache instead of
+  # being compiled from source while a package that depends on them builds.
+  NIX_CONFIG: |
+    extra-substituters = https://nix-community.cachix.org https://numtide.cachix.org https://cache.numtide.com https://noctalia.cachix.org
+    extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
 
 jobs:
   build:
