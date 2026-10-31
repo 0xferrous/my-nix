@@ -250,12 +250,21 @@ longer changes anything under `pkgs/`, or after `AUTOFIX_ATTEMPTS` attempts
 (default 3; the `autofix-attempts` input on manual dispatch, `0` disables).
 Each attempt gets `AUTOFIX_TIMEOUT` seconds (default 45 minutes).
 
-A repaired package still gets its normal pull request, with a note in the body
-saying the bump did not build as-is and was repaired automatically. A package
-the agent cannot fix fails the matrix leg, so no pull request is opened and
-nothing unverified reaches `main`. The agent only runs in `update packages`,
-which is triggered by the schedule or by hand on `main`, never by a pull
-request or a fork.
+The bump is committed first and a successful repair lands as its own
+`fix(<package>): repair build after update` commit on top of it, so the pull
+request shows what the agent changed. A repaired package gets a normal ready
+pull request with a note in the body naming the model and attempt.
+
+When the agent gives up, the leg does not fail: its changes are dropped, the
+branch keeps the plain bump, and the pull request opens as a **draft** titled
+`[needs-human] chore(<package>): update …` with the last build output in the
+body and a line in the run summary. The pull request's own `package builds`
+check is the failing signal then, and the branch is the starting point for
+whoever finishes the fix. On a later run that succeeds, the step also runs
+`gh pr ready` because `create-pull-request` cannot convert a draft back itself.
+
+The agent only runs in `update packages`, which is triggered by the schedule or
+by hand on `main`, never by a pull request or a fork.
 
 Configuration:
 

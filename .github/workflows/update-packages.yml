@@ -182,6 +182,13 @@ jobs:
 
           printf 'Automated update of package %s.\n\n%s\n' "$PACKAGE" "$details" > "$body_file"
 
+          # Commit the bump here so the repair agent's changes are a second,
+          # reviewable commit instead of being merged into it.
+          printf '%s\n\n%s\n' "$subject" "$details" > "$message_file"
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -F "$message_file"
+
           {
             echo "changed=true"
             echo "subject=$subject"
@@ -200,7 +207,11 @@ jobs:
           echo "$agent/bin" >> "$GITHUB_PATH"
 
       - name: Build ${{ matrix.package }}
+        id: build
         if: steps.update.outputs.changed == 'true'
+        # A bump the agent cannot repair still opens a draft pull request for a
+        # human, so this step must not abort the job.
+        continue-on-error: true
         env:
           PACKAGE: ${{ matrix.package }}
           PR_BODY_FILE: ${{ runner.temp }}/pull-request-body
@@ -220,6 +231,7 @@ jobs:
         run: .github/scripts/build-or-autofix.sh "$PACKAGE"
 
       - name: Create or update pull request
+        id: pr
         if: steps.update.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
@@ -228,6 +240,28 @@ jobs:
           branch: update/${{ matrix.package }}
           delete-branch: true
           add-paths: pkgs
-          commit-message: ${{ steps.update.outputs.message }}
-          title: ${{ steps.update.outputs.subject }}
+          commit-message: ${{ steps.update.outputs.subject }}
+          # A healed bump opens ready for review; an unhealed one opens as a
+          # draft that says so in the title, so it is visible in the PR list
+          # without failing the run.
+          title: ${{ steps.build.outcome == 'failure' && format('[needs-human] {0}', steps.update.outputs.subject) || steps.update.outputs.subject }}
           body-file: ${{ runner.temp }}/pull-request-body
+          draft: ${{ steps.build.outcome == 'failure' }}
+
+      - name: Mark repaired pull request ready
+        if: steps.pr.outputs.pull-request-number != '' && steps.build.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # A pull request created by an earlier run may still be a draft.
+        run: gh pr ready "${{ steps.pr.outputs.pull-request-number }}" --repo "${{ github.repository }}" || true
+
+      - name: Summarize pull request outcome
+        if: steps.pr.outputs.pull-request-number != ''
+        run: |
+          if [ "${{ steps.build.outcome }}" = failure ]; then
+            printf '**%s** needs a human: the bump does not build and the repair agent gave up.\nThe draft pull request carries the build output.\n' \
+              "${{ matrix.package }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '**%s** updated: %s\n' "${{ matrix.package }}" \
+              "${{ steps.pr.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
+          fi

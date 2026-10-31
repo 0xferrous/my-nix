@@ -37,6 +37,26 @@ show_tail() {
   printf '==========================================\n'
 }
 
+bot_name="github-actions[bot]"
+bot_email="41898282+github-actions[bot]@users.noreply.github.com"
+
+# Commit only what the pull request can carry, so the repair shows up as its
+# own commit instead of being folded into the bump.
+commit_pkgs() {
+  local message=$1
+  if [ -z "$(git status --porcelain -- pkgs)" ]; then
+    return 0
+  fi
+  git add -A -- pkgs
+  git -c user.name="$bot_name" -c user.email="$bot_email" commit -q -m "$message"
+}
+
+pr_body_note() {
+  if [ -n "${PR_BODY_FILE:-}" ] && [ -f "$PR_BODY_FILE" ]; then
+    printf '%s\n' "$1" >>"$PR_BODY_FILE"
+  fi
+}
+
 changed_paths() {
   # `git status --porcelain` entries look like ` M path` or `R  old -> new`.
   git status --porcelain | sed -E 's/^...//; s/^.* -> //' | sort
@@ -140,7 +160,7 @@ PROMPT
     done <<<"$stray"
   fi
 
-  if git diff --quiet -- pkgs; then
+  if [ -z "$(git status --porcelain -- pkgs)" ]; then
     printf 'autofix attempt %d: nothing changed under pkgs/, stopping\n' "$attempt"
     break
   fi
@@ -150,10 +170,13 @@ PROMPT
 
   if build; then
     printf '::notice::autofix repaired .#%s on attempt %d\n' "$attribute" "$attempt"
-    if [ -n "${PR_BODY_FILE:-}" ] && [ -f "$PR_BODY_FILE" ]; then
-      printf '\nThe bumped package did not build as-is and was repaired by an\nautomated agent on attempt %d of %d. Review the package changes before\nmerging.\n' \
-        "$attempt" "$attempts" >>"$PR_BODY_FILE"
-    fi
+    commit_pkgs "fix($attribute): repair build after update
+
+Automated repair by ${AUTOFIX_MODEL:-the configured agent} on attempt $attempt of $attempts."
+    pr_body_note "The bumped package did not build as-is; commit 2 repairs it.
+
+The repair was written by an automated agent (\`${AUTOFIX_MODEL:-configured model}\`)
+on attempt $attempt of $attempts. Review those package changes before merging."
     exit 0
   fi
 
@@ -161,5 +184,22 @@ PROMPT
   show_tail
 done
 
-printf '::error::.#%s still fails to build after %d autofix attempt(s)\n' "$attribute" "$attempts"
+# Drop the agent's dead ends so the branch is the plain bump, which is the
+# useful starting point for whoever finishes the fix.
+git clean -fdq -- pkgs >/dev/null 2>&1 || true
+git checkout -- . >/dev/null 2>&1 || true
+
+note=$(printf 'The bumped package does not build and the automated repair did not
+succeed after %d attempt(s) (%s).
+
+<details><summary>Last build output</summary>
+
+```
+%s
+```
+
+</details>' "$attempts" "${AUTOFIX_MODEL:-configured model}" "$(tail -n 60 "$log")")
+pr_body_note "$note"
+
+printf '::warning::.#%s still fails to build after %d autofix attempt(s); opened as a draft for a human\n' "$attribute" "$attempts"
 exit 1
