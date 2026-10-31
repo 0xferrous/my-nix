@@ -1,9 +1,12 @@
 name: update packages
 
 # Refresh package versions through each package's `passthru.updateScript` and
-# open one pull request per package. The branch name is stable, so a package
-# that gets a new release before its previous PR is merged just updates the
-# existing PR instead of opening another one.
+# open one pull request per package. Each bumped package is built before its
+# pull request is opened, so a release that no longer builds (patched binaries,
+# moved assets, new dependencies) fails the matrix leg instead of landing on
+# main unverified. The branch name is stable, so a package that gets a new
+# release before its previous PR is merged just updates the existing PR instead
+# of opening another one.
 #
 # Requires "Allow GitHub Actions to create and approve pull requests" in
 # Settings -> Actions -> General -> Workflow permissions.
@@ -140,8 +143,13 @@ jobs:
           message_file=/tmp/commit-message
           rm -f "$message_file"
 
+          # --build makes nix-update run `nix build .#PACKAGE` after the update
+          # script rewrites the version and hashes, so a bump that breaks the
+          # build fails this step before "Create or update pull request" and
+          # no unverified PR is opened. Without it only the source hashes are
+          # refreshed, which just proves the release assets still exist.
           nix shell --inputs-from . nixpkgs#nix-update -c \
-            nix-update --flake --use-update-script \
+            nix-update --flake --use-update-script --build \
             --write-commit-message "$message_file" "$PACKAGE"
 
           if git diff --quiet; then
