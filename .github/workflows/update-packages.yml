@@ -259,7 +259,12 @@ jobs:
         if: steps.update.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # A PAT (or GitHub App token) in UPDATE_TOKEN makes the pull
+          # request belong to a real account. Pull requests created with the
+          # default GITHUB_TOKEN are authored by github-actions[bot], and
+          # GitHub holds every workflow run on them for manual approval, so
+          # the `package builds` check would never run on its own.
+          token: ${{ secrets.UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
           base: main
           branch: update/${{ matrix.package }}
           delete-branch: true
@@ -275,7 +280,7 @@ jobs:
       - name: Mark repaired pull request ready
         if: steps.pr.outputs.pull-request-number != '' && steps.build.outcome == 'success'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
         # A pull request created by an earlier run may still be a draft.
         run: gh pr ready "${{ steps.pr.outputs.pull-request-number }}" --repo "${{ github.repository }}" || true
 

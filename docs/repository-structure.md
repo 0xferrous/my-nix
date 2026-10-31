@@ -266,6 +266,22 @@ whoever finishes the fix. On a later run that succeeds, the step also runs
 The agent only runs in `update packages`, which is triggered by the schedule or
 by hand on `main`, never by a pull request or a fork.
 
+### Checks on update pull requests
+
+A pull request created with the default `GITHUB_TOKEN` is authored by
+`github-actions[bot]`, and GitHub holds every workflow run on such a pull
+request for manual approval ("This workflow requires approval from a
+maintainer"). That is why `create-pull-request` and `gh pr ready` prefer
+`secrets.UPDATE_TOKEN` and fall back to `GITHUB_TOKEN`:
+
+- create a fine-grained PAT (or a GitHub App token) with `Contents: read and
+  write` and `Pull requests: read and write` on this repository, and store it
+  as the `UPDATE_TOKEN` secret;
+- the update pull requests then belong to that account, so their
+  `package builds` check runs on its own instead of waiting for a click.
+
+Without the secret everything still works; the checks simply need approving.
+
 Configuration:
 
 - Model: `AUTOFIX_MODEL` repository variable, default
