@@ -183,11 +183,14 @@ jobs:
           printf 'Automated update of package %s.\n\n%s\n' "$PACKAGE" "$details" > "$body_file"
 
           # Commit the bump here so the repair agent's changes are a second,
-          # reviewable commit instead of being merged into it.
-          printf '%s\n\n%s\n' "$subject" "$details" > "$message_file"
+          # reviewable commit instead of being merged into it. nix-update leaves
+          # its edits unstaged, so they have to be added explicitly.
+          commit_message="$RUNNER_TEMP/commit-message-final"
+          printf '%s\n\n%s\n' "$subject" "$details" > "$commit_message"
+          git add -A -- pkgs
           git -c user.name="github-actions[bot]" \
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-              commit -q -F "$message_file"
+              commit -q -F "$commit_message"
 
           {
             echo "changed=true"
