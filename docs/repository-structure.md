@@ -312,6 +312,16 @@ throttle on bigger closures. It then disables itself for the rest of the run
 ("Not trying to use it again on this run") and answers `418` to Nix, so the
 substituter is dropped mid-build and nothing is uploaded at all.
 
+Quota: the free tier is 5 GB per open source cache. At 85% Cachix emails a
+warning; at 100% it evicts the least recently used entries, so pushes keep
+working and you simply start missing on old ones instead of hitting an error.
+Two things keep usage down: Cachix never stores paths that are in
+`cache.nixos.org`, and `pushFilter` drops downloaded artifacts (`.deb`,
+`.AppImage`, tarballs, `librusty_v8`, `msb-*`, `libkrunfw-*`) whose canonical
+URL is upstream, plus `-source$` checkouts. What is left is this repo's own
+outputs and their runtime dependencies, which is the part a cache is for.
+Check a path with `nix path-info --store https://0xferrous.cachix.org <path>`.
+
 ## Structural conventions
 
 - Put generic reusable Home Manager modules under `modules/home` and export them from `flake.nix` via `homeManagerModules.*`.

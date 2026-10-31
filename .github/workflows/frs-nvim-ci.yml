@@ -34,7 +34,11 @@ jobs:
           # Fork pull requests never receive the token, and their build results
           # must not enter a cache that this repo's machines substitute from.
           skipPush: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
-          pushFilter: "(-source$|nixpkgs\\.tar\\.gz$)"
+          # Only build outputs and their runtime deps are worth quota: the
+          # downloaded release artifacts below are recoverable from their
+          # canonical URLs, and one 500 MB .deb is a tenth of the free 5 GB
+          # cache. cache.nixos.org paths are skipped server-side already.
+          pushFilter: "(-source$|nixpkgs\\.tar\\.gz$|\\.deb$|\\.rpm$|\\.AppImage$|\\.tar\\.(gz|xz|zst|bz2)$|\\.tgz$|\\.zip$|\\.whl$|^msb-|^libkrunfw-|^librusty_v8)"
 
       - name: Run plugin smoke test
         run: nix run .#smoke
