@@ -415,6 +415,7 @@ in
     environment.persistence.${impermanenceRoot} = lib.mkIf config.fr.agent.impermanence.enable {
       files = lib.optional (!config.boot.isContainer) "/etc/machine-id";
       directories = [
+        "/etc/ssh"
         "/var/lib/nixos"
         "/var/lib/caddy"
         "/var/lib/tailscale"
