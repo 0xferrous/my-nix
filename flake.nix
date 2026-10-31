@@ -346,6 +346,7 @@
                 hibi
                 lightpanda
                 kero
+                framesh
                 tolaria
                 vicu
                 ;

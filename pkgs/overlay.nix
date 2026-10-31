@@ -169,6 +169,8 @@ in
         system = final.stdenv.hostPlatform.system;
       }).go_1_27;
   };
+  # nixpkgs removed Framesh as unmaintained; retain the pinned AppImage package.
+  framesh = final.callPackage ./framesh.nix { };
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${targetSystem};
   };

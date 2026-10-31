@@ -110,6 +110,7 @@ Packages provided by the overlay:
 | `hibi` | Hibi local-first Markdown and document editor; wraps the official Linux AppImage (x86_64 + arm64) in an FHS env with its desktop entry, icon, and MIME types |
 | `lightpanda` | Lightpanda headless browser for AI agents and automation (Zig + V8, CDP/WebDriver BiDi server, `fetch`/`serve`/`agent` modes); ships as a prebuilt upstream release binary pinned by version and per-arch hash, since upstream's Nix build compiles Zig 0.17 against a V8 archive |
 | `kero` | Kero terminal for coding agents, built from the pinned upstream release with libghostty-vt and Linux desktop integration |
+| `framesh` | Frame Ethereum wallet desktop app, packaged from its pinned Linux AppImage because nixpkgs removed it as unmaintained |
 | `hints` | click, scroll, and drag with your keyboard |
 | `opensrc` | fetch and cache source code for packages and repos |
 | `flake-utils` | synchronize selected flake input locks across local flakes with `sync` and `intersection` subcommands; use `sync --update` to refresh the canonical flake first |
