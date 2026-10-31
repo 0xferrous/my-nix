@@ -134,6 +134,16 @@
       url = "github:peteonrails/voxtype";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Hex local voice dictation. Upstream ships the Rust package expression,
+    # overlay, and Home Manager module (docs/nix.md). Pin a release tag and
+    # follow this flake's nixpkgs so Hex builds against the same glibc as the
+    # host's Vulkan drivers; otherwise Hex finds no adapter and opens no window.
+    # Bump with `nix flake update hex` after upstream tags a release.
+    hex = {
+      url = "github:anomalyco/hex/v3.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
     impermanence = {
       url = "github:nix-community/impermanence";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -319,6 +329,7 @@
                 ironclaw
                 herdr-app
                 herdr-core
+                hex
                 jj-hunk
                 google-authenticator-transfer-decode
                 oh-my-pi

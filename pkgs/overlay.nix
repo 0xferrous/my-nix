@@ -109,6 +109,16 @@ in
   herdr = inputs.llm-agents.packages.${targetSystem}.herdr;
   herdr-core = final.callPackage ./herdr-core.nix { };
   herdr-app = final.callPackage ./herdr-app.nix { inherit (final) herdr-core; };
+  # Hex local voice dictation: upstream maintains the Rust package expression,
+  # so reuse it instead of copying it here. Upstream packages x86_64-linux only.
+  hex =
+    if targetSystem == "x86_64-linux" then
+      inputs.hex.packages.${targetSystem}.default
+    else
+      final.writeShellScriptBin "hex" ''
+        echo "hex is packaged for x86_64-linux only" >&2
+        exit 1
+      '';
 
   ashWrappers = import ./ash-portal-wrappers.nix {
     inherit (final) lib runCommand symlinkJoin;

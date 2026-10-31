@@ -690,6 +690,30 @@
         "type": "github"
       }
     },
+    "hex": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793405621,
+        "narHash": "sha256-T+3g39WBjcAnpLAyEuxozX0T2ZXFWezDQq81JX4k54I=",
+        "owner": "anomalyco",
+        "repo": "hex",
+        "rev": "7b05b5fd1fa0e3b9c333209cd1644d9603693d5c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anomalyco",
+        "ref": "v3.0.0",
+        "repo": "hex",
+        "type": "github"
+      }
+    },
     "hints": {
       "flake": false,
       "locked": {
@@ -1561,6 +1585,7 @@
         "ghmd": "ghmd",
         "helium": "helium",
         "hermes-agent": "hermes-agent",
+        "hex": "hex",
         "hints": "hints",
         "home-manager": "home-manager_3",
         "impermanence": "impermanence",

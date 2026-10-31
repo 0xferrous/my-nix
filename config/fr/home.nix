@@ -74,6 +74,7 @@ in
     myNixInputs.vicinae.homeManagerModules.default
     myNixInputs.noctalia.homeModules.default
     myNixInputs.voxtype.homeManagerModules.default
+    myNixInputs.hex.homeManagerModules.default
   ]
   ++ lib.optionals (myNixInputs.drydock ? homeManagerModules) [
     myNixInputs.drydock.homeManagerModules.drydock-portal
@@ -204,6 +205,15 @@ in
           };
         };
       };
+    };
+
+    # Hex local voice dictation (Linux beta): installed with its systemd user
+    # unit, but not autostarted, because voxtype already handles dictation on
+    # this host and two listeners would compete for the microphone. Launch Hex
+    # on demand with `hex`, or set `autostart = true` to run it with the session.
+    programs.hex = {
+      enable = true;
+      package = pkgs.hex;
     };
 
     fr.termfilechooser = {

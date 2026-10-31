@@ -86,6 +86,7 @@ Packages provided by the overlay:
 | `herdr` | agent multiplexer that lives in your terminal |
 | `herdr-app` | Herdr desktop app for terminals and coding agents (Linux x86_64 and aarch64), wrapped with its core service |
 | `herdr-core` | Herdr's persistent terminal/agent service and `hc` CLI (Linux x86_64 and aarch64) |
+| `hex` | Hex local voice dictation (Linux beta); reuses the upstream flake package and keeps it on this flake's nixpkgs so its glibc matches the host's Vulkan drivers (x86_64 Linux only) |
 | `dev-essentials` | combined package exposing the shared development essentials on one `PATH` |
 | `executor` | Executor integration service and CLI, packaged from the upstream Linux release |
 | `git-hunk`, `jj-hunk` | non-interactive hunk staging for `git` and `jj` |
