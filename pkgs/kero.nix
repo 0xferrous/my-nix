@@ -72,7 +72,7 @@ in
   inherit version;
   src = source;
   patches = [ ./kero-runtime-libs.patch ];
-  vendorHash = "sha256-THQzo0XaNZKZla8XypjOnXkfeJNpoIY0EKdlN/OjzLI=";
+  vendorHash = "sha256-NCKPSQ7q91ZdcucbGSGs7kraW4YaSmQ6c0Q59lfvWmY=";
   ldflags = [
     "-X"
     "github.com/egoist/mygo.production=1"
@@ -80,16 +80,6 @@ in
   env.CGO_ENABLED = "0";
 
   nativeBuildInputs = [ makeWrapper ];
-
-  # The pinned nixpkgs Go 1.27 toolchain is currently a release candidate;
-  # keep the released source's patch-level go directive compatible with it.
-  postPatch = ''
-    substituteInPlace go.mod --replace-fail 'go 1.27.3' 'go 1.27'
-  '';
-
-  postConfigure = ''
-    substituteInPlace vendor/modules.txt --replace-fail 'go 1.27.3' 'go 1.27'
-  '';
 
   # The tests render native UI and depend on fonts unavailable in the sandbox.
   doCheck = false;

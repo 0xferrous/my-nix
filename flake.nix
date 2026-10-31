@@ -159,7 +159,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     kero-src = {
-      url = "github:egoist/kero/v2.1.21";
+      url = "github:egoist/kero/v2.1.24";
+      flake = false;
+    };
+    # Kero's latest release requires Go 1.27.3 even when consumers pin an
+    # older nixpkgs whose go_1_27 is still a release candidate.
+    kero-toolchain-nixpkgs = {
+      url = "github:nixos/nixpkgs/31ecbaca1bdefa45dffc409f0250bd8039ea0010";
       flake = false;
     };
     # Host-side preview portal (see github:0xferrous/drydock).

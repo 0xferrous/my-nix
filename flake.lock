@@ -835,17 +835,34 @@
     "kero-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792957964,
-        "narHash": "sha256-GRZZYiLcgoyb3XM2RBjt4mAFC7MQDiRJtiA2qUkMwqE=",
+        "lastModified": 1793068765,
+        "narHash": "sha256-ZWMMiHapkRJwn6RgwJ8ZWn4Ud/V5zJSeSiolAPchlNw=",
         "owner": "egoist",
         "repo": "kero",
-        "rev": "d6810859d9136b6729a3d7c59779c5648d65fe3b",
+        "rev": "53ee0e29562bb68c85d4d7434c5f91e8d2a3de0d",
         "type": "github"
       },
       "original": {
         "owner": "egoist",
-        "ref": "v2.1.21",
+        "ref": "v2.1.24",
         "repo": "kero",
+        "type": "github"
+      }
+    },
+    "kero-toolchain-nixpkgs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793110635,
+        "narHash": "sha256-dhoW6VgFWlaodSY5jrBn+CF2FLmaUvDVgM7+C7T2+NM=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "31ecbaca1bdefa45dffc409f0250bd8039ea0010",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "31ecbaca1bdefa45dffc409f0250bd8039ea0010",
         "type": "github"
       }
     },
@@ -1548,6 +1565,7 @@
         "home-manager": "home-manager_3",
         "impermanence": "impermanence",
         "kero-src": "kero-src",
+        "kero-toolchain-nixpkgs": "kero-toolchain-nixpkgs",
         "libgit2-patched": "libgit2-patched",
         "llm-agents": "llm-agents",
         "multiverse": "multiverse",

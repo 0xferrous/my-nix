@@ -162,7 +162,13 @@ in
     rev = "387702e5b8d5034037a6a1ca7c41a727232e7cd4";
     hash = "sha256-4V6xBDlg01QWT2m1iT0OR4bSY37hfx1MOzxwN67VBJA=";
   };
-  kero = final.callPackage ./kero.nix { source = inputs.kero-src; };
+  kero = final.callPackage ./kero.nix {
+    source = inputs.kero-src;
+    go_1_27 =
+      (import inputs.kero-toolchain-nixpkgs {
+        system = final.stdenv.hostPlatform.system;
+      }).go_1_27;
+  };
   dev-essentials = final.callPackage ./dev-essentials.nix {
     AIPackages = inputs.llm-agents.packages.${targetSystem};
   };
