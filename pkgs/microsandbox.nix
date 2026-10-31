@@ -17,13 +17,13 @@ stdenv.mkDerivation (
       {
         "x86_64-linux" = {
           arch = "x86_64";
-          msbHash = "sha256-vapsb8WPo9joXVL8KZEGoBPZee3Qp4G0vG3dIdoPixY=";
-          libkrunfwHash = "sha256-zpp0noRx6Jql4q2I3gwVgcM4TBALyxB6dbsSc5oS1ZA=";
+          msbHash = "sha256-AiMLDQzKtNpIfJYoLvBrw2amA/C5UgHpmc+eE98xdn4=";
+          libkrunfwHash = "sha256-OFTvzT/mJVKPoAIH2XWG2XkNuMQ2u2iBpDmGYEM20Y4=";
         };
         "aarch64-linux" = {
           arch = "aarch64";
-          msbHash = "sha256-M+T1J0ue76OgiNDwyLgKXkQP1glAwEafcaOJxpmMtxQ=";
-          libkrunfwHash = "sha256-mNARNxkN5wIqMTLG9VwkXvQ9AtZ9XX5pfuGcMD/Oh2k=";
+          msbHash = "sha256-zmuF1x1zFl2YJ0XTuFxCVgMVe4Ui9T8oeyBqT1At4tE=";
+          libkrunfwHash = "sha256-LOxmK8AxNNQm8xKqnXK/vRnYdvbznTY5XLTTSGIZTU4=";
         };
       }
       .${stdenv.hostPlatform.system}
@@ -53,7 +53,7 @@ stdenv.mkDerivation (
   in
   {
     pname = "microsandbox";
-    version = "0.7.2";
+    version = "0.7.11";
 
     passthru = {
       src = msb;
