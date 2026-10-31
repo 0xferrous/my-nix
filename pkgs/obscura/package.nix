@@ -38,16 +38,15 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # Tests need the obstacle-course companion repo and network fixtures.
   doCheck = false;
 
-  # Upstream keeps the workspace Cargo version at 0.1.0 even though release
-  # tags are v0.2.0+; the binary reports 0.1.0. Keep the package version in
-  # step with the tag and just sanity-check the binary reports 0.1.0.
+  # Upstream's workspace Cargo version tracks the release tag; keep the
+  # package version in step and sanity-check the binary reports 0.2.5.
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
     version=$(${placeholder "out"}/bin/obscura --version | awk '{print $2}')
     echo "obscura reports version $version"
-    if [ "$version" != "0.1.0" ]; then
-      echo "obscura --version did not report the upstream Cargo version 0.1.0" >&2
+    if [ "$version" != "0.2.5" ]; then
+      echo "obscura --version did not report the upstream Cargo version 0.2.5" >&2
       exit 1
     fi
     runHook postInstallCheck
