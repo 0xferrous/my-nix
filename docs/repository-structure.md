@@ -210,10 +210,30 @@ docs/
 
 ```text
 .github/workflows/
-└── frs-nvim-ci.yml
+├── bb-android-build.yml
+├── frs-nvim-ci.yml
+├── microsandbox-nixos-image.yml
+├── package-builds.yml
+├── pages.yml
+├── update-llm-agents.yml
+└── update-packages.yml
 ```
 
-- `frs-nvim-ci.yml`: CI for the portable Neovim flake/config.
+- `bb-android-build.yml`: manual dispatch that builds the bb Android APKs.
+- `frs-nvim-ci.yml`: smoke tests for the portable Neovim flake/config, run
+  for changes under `pkgs/frs-nvim` and to the flake files.
+- `microsandbox-nixos-image.yml`: builds the microsandbox NixOS image for both
+  architectures and pushes it to GHCR; runs for `config/microsandbox` changes
+  and by manual dispatch.
+- `package-builds.yml`: builds the packages whose `drvPath` changes in a pull
+  request, so package PRs (including the `update packages` ones) carry their
+  own build check.
+- `pages.yml`: publishes `pages/` to GitHub Pages from `main`.
+- `update-llm-agents.yml`: weekly refresh of the `llm-agents` lock entry,
+  committed straight to `main`.
+- `update-packages.yml`: weekly or manual refresh of every updatable package,
+  one pull request per package on the stable `update/<name>` branch, each
+  bumped package built before its PR is opened.
 
 ## Structural conventions
 

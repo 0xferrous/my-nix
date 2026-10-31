@@ -1,0 +1,95 @@
+name: package builds
+
+# Build the packages a pull request changes, so package PRs (in particular the
+# ones `update packages` opens under `pkgs/`) carry a build check of their own.
+# The update workflow builds what it bumps before it opens a PR, but a PR
+# branch only gets that signal once; this workflow is what keeps a red/green
+# build visible on the PR itself.
+#
+# The changed set comes from comparing `drvPath` for every package in
+# `packages.<system>` between the merge base and the PR head instead of mapping
+# changed files to attributes. That keeps shared edits exact: a change to
+# `pkgs/overlay.nix`, `lib/**`, or a patch inside a package directory selects
+# the packages it actually influences, and a PR that changes no derivation
+# builds nothing.
+
+on:
+  pull_request:
+    paths:
+      - "pkgs/**"
+      - ".github/workflows/package-builds.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-builds-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SYSTEM: x86_64-linux
+
+jobs:
+  build:
+    name: build changed packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # The base commit has to be in the repository to evaluate the
+          # package set on it.
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Enable Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v15
+        with:
+          use-flakehub: false
+
+      - name: Determine changed packages
+        id: changed
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          drv_paths='pkgs: builtins.mapAttrs
+            (name: pkg:
+              let
+                # A package that cannot be evaluated on this system carries no
+                # build to compare; treat it as unchanged.
+                result = builtins.tryEval pkg.drvPath;
+              in
+              if result.success then result.value else null)
+            pkgs'
+
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
+          base=$(cd "$RUNNER_TEMP/base" && nix eval --json ".#packages.$SYSTEM" --apply "$drv_paths")
+          head=$(nix eval --json ".#packages.$SYSTEM" --apply "$drv_paths")
+
+          packages=$(jq -cn --argjson base "$base" --argjson head "$head" '
+            $head | to_entries | map(select($base[.key] != .value) | .key)
+          ')
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          echo "changed packages: $(jq -r 'if length == 0 then "none" else join(", ") end' <<<"$packages")"
+
+      - name: Build changed packages
+        env:
+          PACKAGES: ${{ steps.changed.outputs.packages }}
+        run: |
+          set -euo pipefail
+
+          attrs=()
+          while IFS= read -r attr; do
+            attrs+=(".#packages.$SYSTEM.$attr")
+          done < <(jq -r '.[]' <<<"$PACKAGES")
+
+          if [ "${#attrs[@]}" -eq 0 ]; then
+            echo "no package derivations changed, nothing to build"
+            exit 0
+          fi
+
+          nix build --print-build-logs --keep-going "${attrs[@]}"
