@@ -14,13 +14,13 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "obscura";
-  version = "0.2.0";
+  version = "0.2.5";
 
   src = fetchFromGitHub {
     owner = "h4ckf0r0day";
     repo = "obscura";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-f09I77mKhQA1mCt8YmtVqbK/QIb9MrvhpYav+FJdkRI=";
+    hash = "sha256-92Y4sjlH9K8PBjpLaCq84y9tu8fcEDzIDFRBDjEU2a0=";
   };
 
   # The v8 crate's build script downloads librusty_v8.a at build time; the Nix
@@ -33,7 +33,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # both via wreq/BoringSSL).
   buildFeatures = [ "render" ];
 
-  cargoHash = "sha256-tBuPQjjqXkF+vcBRXXyi9+gcBzg8L3QH2jjixBzGODE=";
+  cargoHash = "sha256-kQ4RmRigvaHZ5D+QRlj/lNi9V2NXwjF6zezwlHSdB14=";
 
   # Tests need the obstacle-course companion repo and network fixtures.
   doCheck = false;
