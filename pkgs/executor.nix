@@ -9,11 +9,11 @@
 
 stdenvNoCC.mkDerivation rec {
   pname = "executor";
-  version = "1.6.10";
+  version = "1.6.11";
 
   src = fetchurl {
     url = "https://github.com/UsefulSoftwareCo/executor/releases/download/v${version}/executor-linux-x64.tar.gz";
-    hash = "sha256-H1XzWzMImgGqJ/oRuR9rvZJyiEAfNWdpC/epiRDDiC8=";
+    hash = "sha256-xIkTLEUeG31T0+rjBxuu05DLqgGOdlOgr+UgHlVJ0oU=";
   };
 
   sourceRoot = ".";
