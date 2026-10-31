@@ -129,27 +129,31 @@ pkgs.writeShellScriptBin "pi" ''
     ])
   }:$PATH
 
-  # Ensure ctrl+backspace kills a word like ctrl+w. pi has no CLI/env knob to
-  # inject bindings and the bundled binary is a compiled Bun executable that
-  # cannot be patched, so seed the user's keybindings.json instead. pi replaces
-  # a per-action default key list entirely with the user config, so the
-  # upstream defaults are preserved and ctrl+backspace is appended. The merge
-  # is idempotent, never clobbers unrelated user bindings, and leaves an
-  # unparsable file untouched (pi ignores those too).
+  # Seed keybindings.json because pi has no CLI/env knob to inject bindings
+  # and the bundled binary cannot be patched. Preserve custom search bindings
+  # but remove ctrl+shift+f; an empty list overrides pi's default. Also ensure
+  # ctrl+backspace kills a word like ctrl+w. The merge is idempotent, leaves
+  # unrelated bindings untouched, and leaves an unparsable file untouched (pi
+  # ignores those too).
   keybindings_file="$HOME/.pi/agent/keybindings.json"
   mkdir -p "$(dirname "$keybindings_file")"
   if [[ -f "$keybindings_file" ]]; then
     keybindings_tmp="$(mktemp)"
     if jq '
+      def key_list($key):
+        if (.[$key] | type) == "array" then .[$key]
+        elif (.[$key] | type) == "string" then [.[$key]]
+        else [] end;
+
       if type == "object" then
-        if has("tui.editor.deleteWordBackward") then
-          .["tui.editor.deleteWordBackward"] =
-            (((.["tui.editor.deleteWordBackward"] // []) | if type == "array" then . else [.] end)
-             + ["ctrl+backspace"]
-             | unique)
-        else
-          .["tui.editor.deleteWordBackward"] = ["ctrl+w", "alt+backspace", "ctrl+backspace"]
-        end
+        .["tui.editor.deleteWordBackward"] =
+          (if has("tui.editor.deleteWordBackward") then
+            (key_list("tui.editor.deleteWordBackward") + ["ctrl+backspace"] | unique)
+          else
+            ["ctrl+w", "alt+backspace", "ctrl+backspace"]
+          end)
+        | .["tui.altScreen.search"] =
+          (key_list("tui.altScreen.search") | map(select(. != "ctrl+shift+f")))
       else
         .
       end
@@ -159,7 +163,7 @@ pkgs.writeShellScriptBin "pi" ''
       rm -f "$keybindings_tmp"
     fi
   else
-    printf '%s\n' '{"tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace", "ctrl+backspace"]}' \
+    printf '%s\n' '{"tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace", "ctrl+backspace"], "tui.altScreen.search": []}' \
       > "$keybindings_file"
   fi
 
