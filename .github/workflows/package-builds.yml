@@ -33,6 +33,9 @@ jobs:
   build:
     name: build changed packages
     runs-on: ubuntu-latest
+    # A cold first build of a Rust package is the slow case; anything past an
+    # hour is a hang, not a build.
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,6 +59,16 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Skip the whole job when nothing under `pkgs/` can change a
+          # derivation: this workflow also triggers on its own file, and
+          # package READMEs live under `pkgs/` too.
+          changed=$(git diff --name-only "$BASE_SHA"...HEAD -- pkgs | grep -v '\.md$' || true)
+          if [ -z "$changed" ]; then
+            echo "no package sources changed, nothing to build"
+            echo "packages=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           drv_paths='pkgs: builtins.mapAttrs
             (name: pkg:
               let
@@ -67,12 +80,28 @@ jobs:
             pkgs'
 
           git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
-          base=$(cd "$RUNNER_TEMP/base" && nix eval --json ".#packages.$SYSTEM" --apply "$drv_paths")
-          head=$(nix eval --json ".#packages.$SYSTEM" --apply "$drv_paths")
 
-          packages=$(jq -cn --argjson base "$base" --argjson head "$head" '
-            $head | to_entries | map(select($base[.key] != .value) | .key)
-          ')
+          # Evaluate both trees concurrently. They share the flake inputs, and
+          # each evaluation instantiates every package, so running them one
+          # after another doubles the slowest part of this job.
+          base_status=
+          head_status=
+          (cd "$RUNNER_TEMP/base" && nix eval --json ".#packages.$SYSTEM" --apply "$drv_paths") \
+            > "$RUNNER_TEMP/base.json" &
+          base_pid=$!
+          nix eval --json ".#packages.$SYSTEM" --apply "$drv_paths" \
+            > "$RUNNER_TEMP/head.json" || head_status=$?
+          wait "$base_pid" || base_status=$?
+          if [ -n "$base_status" ] || [ -n "$head_status" ]; then
+            echo "evaluating the package set failed" >&2
+            exit 1
+          fi
+
+          packages=$(jq -cn \
+            --slurpfile base "$RUNNER_TEMP/base.json" \
+            --slurpfile head "$RUNNER_TEMP/head.json" '
+              $head[0] | to_entries | map(select($base[0][.key] != .value) | .key)
+            ')
           echo "packages=$packages" >> "$GITHUB_OUTPUT"
           echo "changed packages: $(jq -r 'if length == 0 then "none" else join(", ") end' <<<"$packages")"
 
