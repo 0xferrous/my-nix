@@ -9,16 +9,16 @@
 
 buildNpmPackage rec {
   pname = "pi-acp";
-  version = "0.0.32";
+  version = "0.0.34";
 
   src = fetchFromGitHub {
     owner = "svkozak";
     repo = "pi-acp";
     rev = "v${version}";
-    hash = "sha256-NksKacRpopm8lAaOG9tbHxJAcr4rlU0uL3dl/VkFbAA=";
+    hash = "sha256-QRwxOtTZOY+Np3PkAoy2o2PrUzEqjItM/372sCPlSMo=";
   };
 
-  npmDepsHash = "sha256-sRBrTwBwo8pcOy5WGDxHE86fvldgOtlppuvcbiB+7uc=";
+  npmDepsHash = "sha256-BvLNtFfp1cMVjzWcMRSdhTqiJrTfbFoUbWkkPW9200o=";
 
   nativeBuildInputs = [ makeWrapper ];
 
