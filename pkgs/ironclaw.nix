@@ -6,13 +6,13 @@
 }:
 stdenvNoCC.mkDerivation rec {
   pname = "ironclaw";
-  version = "1.0.0-rc.1";
+  version = "1.4.1";
 
   # IronClaw is not in nixpkgs. Use its upstream, statically linked release
   # rather than building its large Rust workspace locally.
   src = fetchurl {
     url = "https://github.com/nearai/ironclaw/releases/download/ironclaw-v${version}/ironclaw-x86_64-unknown-linux-musl.tar.gz";
-    hash = "sha256-uXnIMOna+bTCK5LFERi5qRYHa+DWGc1i7fXFTyLFtHg=";
+    hash = "sha256-wnRUuIanqPB10//bmb1vTXyvSI4DSin94Jg+JuWW/9s=";
   };
 
   sourceRoot = ".";
