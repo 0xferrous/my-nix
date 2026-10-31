@@ -166,9 +166,30 @@ jobs:
           # The build is a separate step so a failure can be handed to the
           # repair agent; bumping the version and refreshing hashes happens
           # here, and only the version/asset part is trusted to nix-update.
-          nix shell --inputs-from . nixpkgs#nix-update -c \
-            nix-update --flake --use-update-script \
-            --write-commit-message "$message_file" "$PACKAGE"
+          #
+          # The bump itself can fail before there is anything to build, e.g.
+          # when upstream pushes a tag but not the release assets yet. Report
+          # that, drop the half-finished bump, and retry on the next run
+          # instead of failing the job or opening a pull request with it.
+          update_log="$RUNNER_TEMP/update-log"
+          rm -f "$update_log"
+          if ! nix shell --inputs-from . nixpkgs#nix-update -c \
+                 nix-update --flake --use-update-script \
+                 --write-commit-message "$message_file" "$PACKAGE" >"$update_log" 2>&1; then
+            tail -n 40 "$update_log" | sed -e 's/^/  /'
+            git checkout -- . >/dev/null 2>&1 || true
+            git clean -fdq -- pkgs >/dev/null 2>&1 || true
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::$PACKAGE could not be bumped; nothing to build, retrying next run"
+            {
+              echo "### \`$PACKAGE\`: bump failed, retrying next run"
+              echo
+              echo "nix-update could not finish, so nothing was proposed. The usual"
+              echo "cause is an upstream tag without published release assets; the"
+              echo "output above has the details."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
 
           if git diff --quiet; then
             echo "$PACKAGE is already up to date"
