@@ -18,6 +18,11 @@ on:
     paths:
       - "pkgs/**"
       - ".github/workflows/package-builds.yml"
+  # The update workflow dispatches this on `update/<pkg>` branches. Pull
+  # requests created with GITHUB_TOKEN always land their `pull_request` runs in
+  # the approval queue (GitHub hard-codes that), while `workflow_dispatch` is
+  # one of the two event types that bypass it.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -40,6 +45,9 @@ env:
 jobs:
   build:
     name: build changed packages
+    # Update branches are checked by the dispatched run; a `pull_request` run
+    # for them would only sit in the approval queue.
+    if: github.event_name == 'workflow_dispatch' || !startsWith(github.head_ref, 'update/')
     runs-on: ubuntu-latest
     # A cold first build of a Rust package is the slow case; anything past an
     # hour is a hang, not a build.
@@ -72,6 +80,13 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
+
+          # A dispatched run compares the update branch with main; a pull
+          # request run compares the merge base with the PR head.
+          if [ -z "${BASE_SHA:-}" ]; then
+            git fetch --no-tags origin main
+            BASE_SHA=$(git rev-parse origin/main)
+          fi
 
           # Skip the whole job when nothing under `pkgs/` can change a
           # derivation: this workflow also triggers on its own file, and

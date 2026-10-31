@@ -32,6 +32,8 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # Dispatching the build check on the new branch.
+  actions: write
 
 env:
   # The flake's `nixConfig` substituters are ignored unless a command passes
@@ -259,12 +261,7 @@ jobs:
         if: steps.update.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          # A PAT (or GitHub App token) in UPDATE_TOKEN makes the pull
-          # request belong to a real account. Pull requests created with the
-          # default GITHUB_TOKEN are authored by github-actions[bot], and
-          # GitHub holds every workflow run on them for manual approval, so
-          # the `package builds` check would never run on its own.
-          token: ${{ secrets.UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           base: main
           branch: update/${{ matrix.package }}
           delete-branch: true
@@ -280,9 +277,25 @@ jobs:
       - name: Mark repaired pull request ready
         if: steps.pr.outputs.pull-request-number != '' && steps.build.outcome == 'success'
         env:
-          GH_TOKEN: ${{ secrets.UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # A pull request created by an earlier run may still be a draft.
         run: gh pr ready "${{ steps.pr.outputs.pull-request-number }}" --repo "${{ github.repository }}" || true
+
+      - name: Run the build check on the pull request
+        if: steps.pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: update/${{ matrix.package }}
+        run: |
+          set -euo pipefail
+          # GitHub always holds the `pull_request` runs that GITHUB_TOKEN
+          # itself raises in an approval queue, but `workflow_dispatch` is the
+          # documented exception, so dispatch the check explicitly instead of
+          # waiting for a click.
+          if ! gh workflow run package-builds.yml \
+                 --repo "${{ github.repository }}" --ref "$BRANCH"; then
+            echo "::warning::could not dispatch the build check for $BRANCH"
+          fi
 
       - name: Summarize pull request outcome
         if: steps.pr.outputs.pull-request-number != ''

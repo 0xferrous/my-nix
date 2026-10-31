@@ -268,30 +268,27 @@ by hand on `main`, never by a pull request or a fork.
 
 ### Checks on update pull requests
 
-A pull request created with the default `GITHUB_TOKEN` is authored by
-`github-actions[bot]`, and GitHub holds every workflow run on such a pull
-request for manual approval ("This workflow requires approval from a
-maintainer"). That is why `create-pull-request` and `gh pr ready` prefer
-`secrets.UPDATE_TOKEN` and fall back to `GITHUB_TOKEN`:
+GitHub hard-codes how `GITHUB_TOKEN` interacts with workflow events: events it
+raises do not start new runs, with two exceptions — `workflow_dispatch` and
+`repository_dispatch`. A `pull_request` event that `GITHUB_TOKEN` raises lands
+its runs in the approval queue instead ("This workflow requires approval from a
+maintainer"), and there is no repository or app setting that waives that.
 
-- create a fine-grained PAT (or a GitHub App token) with `Contents: read and
-  write` and `Pull requests: read and write` on this repository, and store it
-  as the `UPDATE_TOKEN` secret;
-- the update pull requests then belong to that account, so their
-  `package builds` check runs on its own instead of waiting for a click.
+So `update packages` dispatches the check itself once the pull request exists:
 
-Without the secret everything still works; the checks simply need approving.
+```sh
+gh workflow run package-builds.yml --ref "update/<pkg>"
+```
 
-Configuration:
+`package-builds.yml` accepts `workflow_dispatch`, derives the base from
+`origin/main`, and its `pull_request` trigger skips `update/*` branches so no
+run is ever left waiting for approval. The workflow needs `actions: write` on
+the token, which the workflow's `permissions` block grants.
 
-- Model: `AUTOFIX_MODEL` repository variable, default
-  `opencode-go/deepseek-v4.1-flash` (OpenCode Go). The free variant is
-  `opencode/deepseek-v4.1-flash-free`, which is a different provider id.
-  `opencode models | grep deepseek` lists what a credential can reach.
-- Credentials: `OPENCODE_API_KEY` (an OpenCode Console key) for OpenCode Go.
-  `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY` and
-  `GEMINI_API_KEY` are also passed through for other providers. Without any of
-  them the agent is skipped and the leg fails as before.
+A dispatched run's checks attach to the branch head, so they still show up on
+the pull request. Update pull requests therefore need no PAT, no login, and no
+approval click; a personal access token in the job would only be needed if the
+run had to be raised as a `pull_request` event.
 
 ### Binary cache
 
