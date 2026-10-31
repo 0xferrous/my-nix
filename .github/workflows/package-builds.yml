@@ -85,11 +85,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          # A dispatched run compares the update branch with main; a pull
-          # request run compares the merge base with the PR head.
+          # A dispatched run starts on the update branch, which may be behind
+          # main. Merge main in first so the comparison and the build both see
+          # what would actually land; otherwise every package main moved on
+          # since the branch was cut looks changed and gets rebuilt at its old
+          # version. Pull request runs already check out GitHub's merge commit.
           if [ -z "${BASE_SHA:-}" ]; then
             git fetch --no-tags origin main
             BASE_SHA=$(git rev-parse origin/main)
+            if ! git -c user.name="github-actions[bot]" \
+                   -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+                   merge --no-edit -q "origin/main"; then
+              git merge --abort >/dev/null 2>&1 || true
+              echo "::warning::could not merge origin/main into the branch; comparing against the merge base"
+              BASE_SHA=$(git merge-base "$BASE_SHA" HEAD)
+            fi
           fi
 
           # Skip the whole job when nothing under `pkgs/` can change a
