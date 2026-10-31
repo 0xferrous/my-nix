@@ -311,6 +311,8 @@
                 executor
                 git-hunk
                 ironclaw
+                herdr-app
+                herdr-core
                 jj-hunk
                 google-authenticator-transfer-decode
                 oh-my-pi

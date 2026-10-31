@@ -107,6 +107,8 @@ in
 {
   activitywatch = activitywatchPackage;
   herdr = inputs.llm-agents.packages.${targetSystem}.herdr;
+  herdr-core = final.callPackage ./herdr-core.nix { };
+  herdr-app = final.callPackage ./herdr-app.nix { inherit (final) herdr-core; };
 
   ashWrappers = import ./ash-portal-wrappers.nix {
     inherit (final) lib runCommand symlinkJoin;
