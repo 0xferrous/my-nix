@@ -18,7 +18,7 @@ set -uo pipefail
 
 attribute=${1:?usage: build-or-autofix.sh <attribute>}
 attempts=${AUTOFIX_ATTEMPTS:-3}
-timeout_seconds=${AUTOFIX_TIMEOUT:-1800}
+timeout_seconds=${AUTOFIX_TIMEOUT:-2700}
 log_line_limit=200
 
 cd "$(git rev-parse --show-toplevel)"
@@ -103,9 +103,11 @@ Rules:
 - Prefer the smallest correct change in the style of the surrounding code, and
   follow the comments already in the package file plus AGENTS.md.
 - Do not run \`git commit\`, \`git push\`, \`git checkout\` or \`git clean\`; the
-  harness commits and rebuilds for you.
-- You may read files, search the tree and run \`nix eval\`; do not start long
-  builds, the harness rebuilds as soon as you finish.
+  harness commits for you.
+- Verify your own fix before you stop: run
+  \`nix build .#$attribute --no-link --print-build-logs\` and keep iterating until it
+  succeeds. The harness rebuilds once more as a final gate, which is cheap
+  when your build already passed.
 PROMPT
   )
 

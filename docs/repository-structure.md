@@ -241,9 +241,14 @@ docs/
 `.github/scripts/build-or-autofix.sh` builds one package and, when the build
 fails, hands the log to `opencode run --auto` (the same pinned llm-agents CLI
 this machine uses) and asks it to repair the package expression under `pkgs/`.
-It rebuilds after every repair attempt and stops when the build passes, when
-the agent no longer changes anything, or after `AUTOFIX_ATTEMPTS` attempts
+`--auto` is required: without it a headless run would stall on the permission
+prompts that `bash`/`external_directory` raise. The agent is told to verify its
+own change with `nix build .#<attr> --no-link` and iterate until that passes;
+the harness rebuilds afterwards as the authoritative gate (a cache hit when the
+agent's build succeeded). It stops when the build passes, when the agent no
+longer changes anything under `pkgs/`, or after `AUTOFIX_ATTEMPTS` attempts
 (default 3; the `autofix-attempts` input on manual dispatch, `0` disables).
+Each attempt gets `AUTOFIX_TIMEOUT` seconds (default 45 minutes).
 
 A repaired package still gets its normal pull request, with a note in the body
 saying the bump did not build as-is and was repaired automatically. A package
