@@ -46,6 +46,7 @@ const FALLBACK = 60000;
 const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
 
 // Agent status, as the agents list drew it: urgency order, status words, icons.
+const RANK = { blocked: 4, done: 3, working: 2, idle: 1 };
 const kidStatus = (k, listed) => {
   const status = listed.get(k.address) ?? k.status;
   return status === "error" ? "blocked" : status === "done" ? "idle" : status;
@@ -53,6 +54,13 @@ const kidStatus = (k, listed) => {
 function agentIcon(program, size, color) {
   if (!program?.icon) return null;
   return program.tint ? svg(program.icon).size(size).flex_none().text_color(color) : image(program.icon).w(size).h(size).flex_none();
+}
+function duration(ms) {
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return "<1m";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
 }
 
 // A space speaks up only when something in it needs you.
@@ -82,12 +90,16 @@ export default class Spaces extends View {
     this.pressed = null;
     this.over = null;
     this.machines = [];
+    // Each agent's last state and when it changed (ms), kept across restarts.
+    this.changed = JSON.parse(localStorage.getItem("changed") ?? "{}");
     this.folded = new Set(JSON.parse(localStorage.getItem("machines.folded") ?? "[]"));
     this.foldedSpaces = new Set(JSON.parse(localStorage.getItem("spaces.folded") ?? "[]"));
     this.tabPressed = null; // tab id being dragged
     this.tabOver = null; // tab id under the pointer
     this.refreshMachines(cx);
     cx.timer.every(15000, cx => this.refreshMachines(cx));
+    // Keep the durations since a status change moving.
+    cx.timer.every(30000, (cx) => cx.notify());
     // `git status` walks the whole tree, on another machine a process there:
     // only when its answer could have changed (see `due`).
     cx.timer.every(250, (cx) => this.checkNew(cx));
@@ -278,6 +290,26 @@ export default class Spaces extends View {
     return out;
   }
 
+  // Stamps agents whose state changed. Done and idle count as one: looking at a
+  // finished agent turns done into idle, and looking isn't the agent doing anything.
+  track(list, now) {
+    let dirty = false;
+    for (const a of list) {
+      const s = a.status === "done" ? "idle" : a.status;
+      if (this.changed[a.address]?.s === s) continue;
+      this.changed[a.address] = { s, at: now };
+      dirty = true;
+    }
+    if (!dirty) return;
+    const listed = new Set(list.map((a) => a.address));
+    for (const [k, c] of Object.entries(this.changed)) if (!listed.has(k) && now - c.at > 30 * 86400000) delete this.changed[k];
+    localStorage.setItem("changed", JSON.stringify(this.changed));
+  }
+
+  since(agent) {
+    return this.changed[agent.address]?.at ?? 0;
+  }
+
   toggleSpaceTabFold(id, cx) {
     this.foldedSpaces.has(id) ? this.foldedSpaces.delete(id) : this.foldedSpaces.add(id);
     localStorage.setItem("spaces.folded", JSON.stringify([...this.foldedSpaces]));
@@ -289,9 +321,11 @@ export default class Spaces extends View {
   grouped(t, collapsed) {
     const rows = this.ordered();
     const ps = panes(), all = terminals(), list = agents();
+    const now = Date.now();
+    this.track(list, now);
     this.listed = new Map(list.map((a) => [a.address, a.status]));
     const shown = list.find((a) => a.focused)?.address;
-    const draw = (r) => (collapsed ? [this.compact(r, t)] : [this.row(r, t), ...this.tabRows(r, t, ps, all, list, shown)]);
+    const draw = (r) => (collapsed ? [this.compact(r, t)] : [this.row(r, t), ...this.tabRows(r, t, ps, all, list, shown, now)]);
     const remote = [...new Set([...rows.map(r => r.w.machine).filter(Boolean), ...this.machines.map(m => m.name)])].sort();
     const loading = m => {
       const layout = machines().find(k => k.name === m)?.layout;
@@ -398,7 +432,7 @@ export default class Spaces extends View {
 
   // A space's tabs. The icon sits in the gutter and the label lines up with the
   // space name. Agent status lives on the tab; helpers nest under it.
-  tabRows({ w }, t, ps, all, list, shown) {
+  tabRows({ w }, t, ps, all, list, shown, now) {
     if (this.foldedSpaces.has(w.id)) return [];
     return (w.tabs ?? []).flatMap((c) => {
       const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
@@ -411,6 +445,9 @@ export default class Spaces extends View {
       // Only the tab actually on screen is filled. Background spaces keep their
       // own focused tab brighter than its siblings, without looking open.
       const open = w.active && c.active;
+      const mine = list.filter((a) => a.tab === c.id);
+      const lead = mine.reduce((best, a) => ((RANK[a.status] ?? 0) > (RANK[best?.status] ?? -1) ? a : best), null);
+      const since = lead ? this.since(lead) : 0;
       const row = h_flex()
         .id(`tab-${c.id}`)
         .h(25)
@@ -442,8 +479,9 @@ export default class Spaces extends View {
         .when(Boolean(program?.icon), (el) => el.child(program.tint ? svg(program.icon).size(13).flex_none().text_color(t.muted) : image(program.icon).size(13).flex_none()))
         .when(!program?.icon, (el) => el.child(div().size(13).flex_none()))
         .child(div().flex_1().min_w(0).truncate().text_color(c.active ? t.foreground : t.muted).child(c.zoomed ? `${name} Z` : name))
+        .when(Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - since))))
         .when(Boolean(c.status), (el) => el.child(this.status(t, { status: c.status })));
-      const kids = list.filter((a) => a.tab === c.id).flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
+      const kids = mine.flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
       return [row, ...kids];
     });
   }
