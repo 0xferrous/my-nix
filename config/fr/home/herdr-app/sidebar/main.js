@@ -125,6 +125,7 @@ export default class Spaces extends View {
     this.foldedSpaces = new Set(JSON.parse(localStorage.getItem("spaces.folded") ?? "[]"));
     this.tabPressed = null; // tab id being dragged
     this.tabOver = null; // tab id under the pointer
+    this.hoveredSpace = null; // space initial showing its fold button
     this.refreshMachines(cx);
     cx.timer.every(15000, cx => this.refreshMachines(cx));
     // Tab splits are app state, not in spaces()/panes(): read the app doc.
@@ -509,19 +510,25 @@ export default class Spaces extends View {
       .border_r(1)
       .items_center()
       .py(2)
-      .gap(1)
       .cursor_pointer()
       .tooltip(w.name)
       .on_click(() => run("space.select", { id: w.id }))
       .on_mouse_down("right", () => this.menu(w))
-      .child(div().size(14).flex_none().rounded(4).bg(fill).text_size(9).font_bold().text_color("#ffffff")
-        .flex().items_center().justify_center().child([...w.name][0]?.toUpperCase() ?? "?"))
-      .child(div().id(`space-fold-${w.id}`).h(12).w_full().flex().items_center().justify_center()
-        .rounded(3)
-        .hover((s) => s.bg(t.hover))
+      .child(div().id(`space-fold-${w.id}`).size(14).flex_none().rounded(4).bg(fill)
+        .text_size(9).font_bold().text_color("#ffffff")
+        .flex().items_center().justify_center()
+        .cursor_pointer()
+        .hover((s) => s.opacity(0.9))
+        .on_hover((on, cx) => {
+          if (on) this.hoveredSpace = w.id;
+          else if (this.hoveredSpace === w.id) this.hoveredSpace = null;
+          cx.notify();
+        })
         .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
         .on_click((_e, cx) => { cx.stop_propagation(); this.toggleSpaceTabFold(w.id, cx); })
-        .child(svg(`mods/workspace-chrome/chevron-${this.foldedSpaces.has(w.id) ? "right" : "down"}.svg`).size(8).text_color(t.dim)));
+        .child(this.hoveredSpace === w.id
+          ? svg(`mods/workspace-chrome/chevron-${this.foldedSpaces.has(w.id) ? "right" : "down"}.svg`).size(9).text_color("#ffffff")
+          : div().child([...w.name][0]?.toUpperCase() ?? "?")));
   }
 
   row({ w, i, g, tree }, t) {
