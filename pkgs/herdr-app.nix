@@ -8,6 +8,7 @@
   libxkbcommon,
   wayland,
   vulkan-loader,
+  writeShellScript,
   herdr-core,
 }:
 let
@@ -67,6 +68,13 @@ stdenv.mkDerivation {
     StartupWMClass=herdr-app
     EOF
     runHook postInstall
+  '';
+
+  # The release manifest carries the version and both hashes that nix-update
+  # cannot derive on its own; herdr-update.sh bumps the pin from it.
+  passthru.updateScript = writeShellScript "update-${pname}" ''
+    set -euo pipefail
+    ${stdenv.shell} ${./herdr-update.sh} "''${UPDATE_NIX_ATTR_PATH:-${pname}}"
   '';
 
   meta = {
