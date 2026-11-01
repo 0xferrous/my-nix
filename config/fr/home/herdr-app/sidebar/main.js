@@ -1,9 +1,10 @@
-// Workspace spaces: stable colored avatars, worktrees under their checkout,
-// grouped by machine when more than one is known. After a space's name, the repo
-// its first terminal is in now, only where unusual: branch, ahead/behind. Agent state lives in the agents list, not here. Click to
-// switch, right-click for its menu, drag to reorder.
+// The workspace sidebar: stable colored avatars, worktrees under their checkout,
+// and each space's tabs under it, grouped by machine when more than one is known.
+// After a space's name, the repo its first terminal is in now, only where unusual:
+// branch, ahead/behind. Agent state lives in the agents list, not here. Click to
+// switch, right-click for its menu, drag to reorder. A space's chevron folds its tabs.
 
-import { View, div, svg } from "gpui-kit";
+import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout } from "herdr";
 
@@ -64,6 +65,9 @@ export default class Spaces extends View {
     this.over = null;
     this.machines = [];
     this.folded = new Set(JSON.parse(localStorage.getItem("machines.folded") ?? "[]"));
+    this.foldedSpaces = new Set(JSON.parse(localStorage.getItem("spaces.folded") ?? "[]"));
+    this.tabPressed = null; // tab id being dragged
+    this.tabOver = null; // tab id under the pointer
     this.refreshMachines(cx);
     cx.timer.every(15000, cx => this.refreshMachines(cx));
     // `git status` walks the whole tree, on another machine a process there:
@@ -256,10 +260,17 @@ export default class Spaces extends View {
     return out;
   }
 
-  // The rows, under a header per machine once one isn't this computer.
+  toggleSpaceTabFold(id, cx) {
+    this.foldedSpaces.has(id) ? this.foldedSpaces.delete(id) : this.foldedSpaces.add(id);
+    localStorage.setItem("spaces.folded", JSON.stringify([...this.foldedSpaces]));
+    cx.notify();
+  }
+
+  // The rows, under a header per machine once one isn't this computer. Each
+  // space brings its tabs along unless its chevron folded them.
   grouped(t, collapsed) {
     const rows = this.ordered();
-    const draw = (r) => (collapsed ? this.compact(r, t) : this.row(r, t));
+    const draw = (r) => (collapsed ? [this.compact(r, t)] : [this.row(r, t), ...this.tabRows(r, t)]);
     const remote = [...new Set([...rows.map(r => r.w.machine).filter(Boolean), ...this.machines.map(m => m.name)])].sort();
     const loading = m => {
       const layout = machines().find(k => k.name === m)?.layout;
@@ -267,7 +278,7 @@ export default class Spaces extends View {
         || spaces().some(s => (s.machine ?? null) === m && !this.shown.has(s.id));
     };
     const loadingRow = m => div().id(`machine-loading-${m ?? "local"}`).h(28).flex_none().px(8).text_size(12).text_color(t.dim).child(collapsed ? "…" : "Loading…");
-    if (!remote.length) return loading(null) && !rows.length ? [loadingRow(null)] : rows.map(draw);
+    if (!remote.length) return loading(null) && !rows.length ? [loadingRow(null)] : rows.flatMap(draw);
     const machineNames = [null, ...remote];
     return machineNames.flatMap((m) => {
       const mine = rows.filter((r) => (r.w.machine ?? null) === m);
@@ -292,7 +303,7 @@ export default class Spaces extends View {
         .text_size(12).text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
         .on_click(() => run("space.new", m ? { machine: m } : {}))
         .child(svg("mods/workspace-chrome/plus.svg").size(12)).when(!collapsed, el => el.child("New space there"));
-      return [head, ...(folded ? [] : mine.length ? mine.map(draw) : [loading(m) ? loadingRow(m) : empty])];
+      return [head, ...(folded ? [] : mine.length ? mine.flatMap(draw) : [loading(m) ? loadingRow(m) : empty])];
     });
   }
 
@@ -355,8 +366,57 @@ export default class Spaces extends View {
           .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child([...w.name][0]?.toUpperCase() ?? "?")))
           .child(div().flex_shrink(0).max_w(150).truncate().text_color(t.foreground).child(w.name))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1())
-          .when(Boolean(jj), (el) => el.child(div().flex_none().max_w(110).truncate().text_size(11.5).text_color(t.dim).child(`jj ${jj.name}`))),
+          .when(Boolean(jj), (el) => el.child(div().flex_none().max_w(110).truncate().text_size(11.5).text_color(t.dim).child(`jj ${jj.name}`)))
+          .child(div().id(`space-fold-${w.id}`).flex_none().p(3).rounded(4).text_color(t.dim).cursor_pointer()
+            .hover(s => s.bg(t.hover).text_color(t.foreground))
+            .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+            .on_click((_e, cx) => { cx.stop_propagation(); this.toggleSpaceTabFold(w.id, cx); })
+            .child(svg(`mods/workspace-chrome/chevron-${this.foldedSpaces.has(w.id) ? "right" : "down"}.svg`).size(11).flex_none())),
       );
+  }
+
+  // A space's tabs, indented under its name. Their status is the same as the old
+  // top bar's: a spinner while working, a dot when they need you.
+  tabRows({ w }, t) {
+    if (this.foldedSpaces.has(w.id)) return [];
+    const ps = panes();
+    return (w.tabs ?? []).map((c) => {
+      const program = ps.find((p) => p.tab === c.id && p.program?.agent)?.program ?? ps.find((p) => p.tab === c.id)?.program;
+      const name = /^tb\d+$/.test(c.name) ? program?.name ?? "Terminal" : c.name;
+      return h_flex()
+        .id(`tab-${c.id}`)
+        .h(25)
+        .flex_none()
+        .pl(35)
+        .pr(8)
+        .gap(7)
+        .items_center()
+        .rounded(6)
+        .text_size(12)
+        .when(c.active, (el) => el.bg(t.selected))
+        .when(!c.active, (el) => el.hover((s) => s.bg(t.hover)))
+        .when(this.tabPressed !== null && this.tabOver === c.id && this.tabPressed !== c.id, (el) => el.border_t(2).border_color(t.accent))
+        .on_mouse_down("left", (e, cx) => {
+          cx.stop_propagation();
+          this.tabPressed = c.id;
+          this.tabOver = c.id;
+          if (e.click_count === 2) run("tab.rename", { id: c.id });
+        })
+        .on_mouse_up("left", (_e, cx) => {
+          const from = this.tabPressed;
+          this.tabPressed = null;
+          if (from !== null && from !== c.id) {
+            if (w.tabs.some((x) => x.id === from)) run("tab.move", { id: from, index: c.index + 1 });
+          } else run("tab.select", { id: c.id });
+          cx.notify();
+        })
+        .on_mouse_down("right", () => openOverlay({ mod: "menu-jj", kind: "popup", width: 200, height: 240, props: { tab: "tab", target: { id: c.id, space: w.id } } }))
+        .when(Boolean(program?.icon), (el) => el.child(program.tint ? svg(program.icon).size(13).flex_none().text_color(t.muted) : image(program.icon).size(13).flex_none()))
+        .when(!program?.icon, (el) => el.child(div().size(13).flex_none()))
+        .child(div().flex_1().min_w(0).truncate().text_color(c.active ? t.foreground : t.muted).child(c.zoomed ? `${name} Z` : name))
+        .when(c.status === "working", (el) => el.child(svg("mods/workspace-chrome/spinner.svg").size(11).flex_none().text_color(t.working).spin(900)))
+        .when(c.status === "blocked" || c.status === "done", (el) => el.child(div().size(6).rounded(3).flex_none().bg(t[c.status])));
+    });
   }
 
   compact({ w, i }, t) {
@@ -393,7 +453,7 @@ export default class Spaces extends View {
         .when(!collapsed, el => el.child("Spaces"))
         .child(div().id("space-new").p(4).rounded(5).hover(s => s.bg(t.hover).text_color(t.foreground)).on_click(() => run("space.new")).child("+")))
       .child(v_flex().flex_1().min_h(0).px(8).pb(14).overflow_y_scrollbar().mode("always")
-        .on_mouse_up("left", (_e, cx) => { this.pressed = null; cx.notify(); })
+        .on_mouse_up("left", (_e, cx) => { this.pressed = null; this.tabPressed = null; this.tabOver = null; cx.notify(); })
         .children(this.grouped(t, collapsed)));
   }
 }

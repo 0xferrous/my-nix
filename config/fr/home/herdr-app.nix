@@ -3,8 +3,12 @@
     target = "config/fr/home/herdr-app/gruvbox-dark-hard.json";
   };
 
-  fr.symlinks.configFiles."herdr-app/mods/spaces-jj" = {
-    target = "config/fr/home/herdr-app/spaces-jj";
+  fr.symlinks.configFiles."herdr-app/mods/sidebar" = {
+    target = "config/fr/home/herdr-app/sidebar";
+    recursive = true;
+  };
+  fr.symlinks.configFiles."herdr-app/mods/tabs-bar" = {
+    target = "config/fr/home/herdr-app/tabs-bar";
     recursive = true;
   };
   fr.symlinks.configFiles."herdr-app/mods/menu-jj" = {

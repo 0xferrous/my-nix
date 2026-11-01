@@ -50,7 +50,7 @@
               },
               "min": 90,
               "content": {
-                "mod": "spaces-jj"
+                "mod": "sidebar"
               }
             },
             {
@@ -94,7 +94,7 @@
           },
           "window_drag": true,
           "content": {
-            "mod": "tabs"
+            "mod": "tabs-bar"
           }
         },
         {
