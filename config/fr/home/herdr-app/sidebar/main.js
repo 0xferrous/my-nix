@@ -375,8 +375,9 @@ export default class Spaces extends View {
       );
   }
 
-  // A space's tabs, indented under its name. Their status is the same as the old
-  // top bar's: a spinner while working, a dot when they need you.
+  // A space's tabs. The icon sits in the gutter and the label lines up with the
+  // space name. Their status is the same as the old top bar's: a spinner while
+  // working, a dot when they need you.
   tabRows({ w }, t) {
     if (this.foldedSpaces.has(w.id)) return [];
     const ps = panes();
@@ -387,7 +388,7 @@ export default class Spaces extends View {
         .id(`tab-${c.id}`)
         .h(25)
         .flex_none()
-        .pl(35)
+        .pl(15)
         .pr(8)
         .gap(7)
         .items_center()
