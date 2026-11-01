@@ -501,8 +501,8 @@ export default class Spaces extends View {
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
   }
 
-  // The space is a thin neutral rail with a color stripe and its initial.
-  // The full name is in the tooltip; no header row and no stacked letters.
+  // The space is a thin colored rail with its initial. The full name is in
+  // the tooltip; no header row and no stacked letters.
   spaceBanner({ w }, t) {
     const colors = shared("space.colors") ?? {};
     const color = colors[w.id] ?? "ansi6";
@@ -513,17 +513,16 @@ export default class Spaces extends View {
       .flex_none()
       .min_h(0)
       .rounded_l(7)
-      .bg(t.chrome)
-      .border_l(3)
-      .border_color(fill)
+      .bg(fill)
       .border_r(1)
+      .border_color(t.border)
       .items_center()
       .py(2)
       .cursor_pointer()
       .tooltip(w.name)
       .on_click(() => run("space.select", { id: w.id }))
       .on_mouse_down("right", () => this.menu(w))
-      .child(div().id(`space-fold-${w.id}`).size(14).flex_none().rounded(4).bg(fill)
+      .child(div().id(`space-fold-${w.id}`).size(14).flex_none().rounded(4)
         .text_size(9).font_bold().text_color("#ffffff")
         .flex().items_center().justify_center()
         .cursor_pointer()
