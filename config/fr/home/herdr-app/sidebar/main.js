@@ -7,7 +7,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { spaces, machines, panes, agents, terminals, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, home } from "herdr";
+import { spaces, machines, panes, agents, terminals, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, home, nextCommand } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -103,6 +103,14 @@ export default class Spaces extends View {
     // `git status` walks the whole tree, on another machine a process there:
     // only when its answer could have changed (see `due`).
     cx.timer.every(250, (cx) => this.checkNew(cx));
+    // <mod>.<command> actions from keys.json and `herdr-app do`.
+    cx.spawn(async (cx) => {
+      for (;;) {
+        const command = await nextCommand();
+        if (command === "next") this.stepTab(1, cx);
+        else if (command === "prev") this.stepTab(-1, cx);
+      }
+    });
   }
 
   checkNew(cx) {
@@ -308,6 +316,17 @@ export default class Spaces extends View {
 
   since(agent) {
     return this.changed[agent.address]?.at ?? 0;
+  }
+
+  // The next/prev tab across spaces, not around this space only.
+  stepTab(direction, cx) {
+    const all = spaces();
+    const current = all.find((s) => s.active)?.tabs.find((t) => t.active)?.id;
+    const tabs = all.flatMap((s) => (s.tabs ?? []).filter((t) => !t.settled).map((t) => t.id));
+    const at = tabs.indexOf(current);
+    if (at < 0 || !tabs.length) return;
+    run("tab.select", { id: tabs[(at + direction + tabs.length) % tabs.length] });
+    cx.notify();
   }
 
   toggleSpaceTabFold(id, cx) {
