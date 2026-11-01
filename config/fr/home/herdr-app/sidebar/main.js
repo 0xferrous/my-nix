@@ -86,7 +86,7 @@ function paneHeight(node) {
   const heights = (node.children ?? []).map(paneHeight).filter((h) => h > 0);
   if (!heights.length) return 0;
   if (node.type === "row") return Math.max(...heights);
-  if (node.type === "column") return heights.reduce((n, h) => n + h, 0) + 2 * (heights.length - 1);
+  if (node.type === "column") return heights.reduce((n, h) => n + h, 0) + (heights.length - 1);
   return 24;
 }
 // A space speaks up only when something in it needs you.
@@ -612,12 +612,23 @@ export default class Spaces extends View {
     }
     if (node.type === "row" || node.type === "column") {
       const row = node.type === "row";
-      const kids = (node.children ?? []).map((c, i) => {
-        const kid = this.paneTree(c, ps, machine, t, row ? height : paneHeight(c), now, menu, compact);
+      const nodes = (node.children ?? []).filter((c) => !c.hidden);
+      const weights = nodes.map((c) => Math.max(0.01, c.size?.weight ?? 1));
+      const totalWeight = weights.reduce((n, w) => n + w, 0) || 1;
+      const available = Math.max(nodes.length, height - (nodes.length - 1));
+      let used = 0;
+      const heights = nodes.map((c, i) => {
+        if (i === nodes.length - 1) return Math.max(1, available - used);
+        const h = Math.max(1, Math.round(available * weights[i] / totalWeight));
+        used += h;
+        return h;
+      });
+      const kids = nodes.map((c, i) => {
+        const kid = this.paneTree(c, ps, machine, t, row ? height : heights[i], now, menu, compact);
         if (!kid) return null;
         return div()
           .flex()
-          .when(row, (el) => el.flex_1().min_w(0).h(height).flex_grow(c.size?.weight ?? 1))
+          .when(row, (el) => el.flex_1().min_w(0).h(height).flex_grow(weights[i]))
           .when(!row, (el) => el.w_full().flex_none())
           .when(i > 0 && row, (el) => el.border_l(1).border_color(t.border))
           .when(i > 0 && !row, (el) => el.border_t(1).border_color(t.border))
