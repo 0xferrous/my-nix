@@ -76,14 +76,23 @@ function leafCount(node) {
   }
   return (node.children ?? []).reduce((n, c) => n + leafCount(c), 0);
 }
-function paneHeight(node) {
-  if (!node || node.hidden) return 0;
-  if (node.type === "block") return 24;
+function hasPane(node, ps, machine) {
+  if (!node || node.hidden) return false;
+  if (node.type === "block") return ps.some((p) => p.pane === paneId(node.id, machine));
   if (node.type === "stack") {
     const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
-    return paneHeight(active);
+    return hasPane(active, ps, machine);
   }
-  const heights = (node.children ?? []).map(paneHeight).filter((h) => h > 0);
+  return (node.children ?? []).some((c) => hasPane(c, ps, machine));
+}
+function paneHeight(node, ps, machine) {
+  if (!node || node.hidden) return 0;
+  if (node.type === "block") return ps.some((p) => p.pane === paneId(node.id, machine)) ? 24 : 0;
+  if (node.type === "stack") {
+    const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
+    return paneHeight(active, ps, machine);
+  }
+  const heights = (node.children ?? []).filter((c) => hasPane(c, ps, machine)).map((c) => paneHeight(c, ps, machine)).filter((h) => h > 0);
   if (!heights.length) return 0;
   if (node.type === "row") return Math.max(...heights);
   if (node.type === "column") return heights.reduce((n, h) => n + h, 0) + (heights.length - 1);
@@ -590,7 +599,7 @@ export default class Spaces extends View {
       const kids = list.filter((a) => a.tab === c.id).flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
       let panes;
       if (tree && leafCount(tree) > 1) {
-        panes = this.paneTree(tree, ps, w.machine, t, paneHeight(tree), now, menu, true);
+        panes = this.paneTree(tree, ps, w.machine, t, paneHeight(tree, ps, w.machine), now, menu, true);
       } else {
         const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
         panes = pane ? this.paneButton(pane, t, 24, now, c.named ? c.name : null, menu, false) : null;
@@ -604,7 +613,7 @@ export default class Spaces extends View {
 
   // A tab's panes as real buttons, laid out like its split tree. Clicking one
   // focuses that pane (and selects its tab/space).
-  paneTree(node, ps, machine, t, height = paneHeight(node), now = 0, menu = null, compact = false) {
+  paneTree(node, ps, machine, t, height = paneHeight(node, ps, machine), now = 0, menu = null, compact = false) {
     if (!node || node.hidden) return null;
     if (node.type === "stack") {
       const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
@@ -612,7 +621,7 @@ export default class Spaces extends View {
     }
     if (node.type === "row" || node.type === "column") {
       const row = node.type === "row";
-      const nodes = (node.children ?? []).filter((c) => !c.hidden);
+      const nodes = (node.children ?? []).filter((c) => !c.hidden && hasPane(c, ps, machine));
       const weights = nodes.map((c) => Math.max(0.01, c.size?.weight ?? 1));
       const totalWeight = weights.reduce((n, w) => n + w, 0) || 1;
       const available = Math.max(nodes.length, height - (nodes.length - 1));
