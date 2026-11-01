@@ -585,8 +585,14 @@ export default class Spaces extends View {
         const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
         panes = pane ? this.paneButton(pane, t, 24, now, c.named ? c.name : null, menu, false) : null;
       }
-      return panes ? [div().w_full().pr(2).pb(2).child(panes), ...kids] : kids;
+      return panes ? [div().w_full().pr(2).pb(2).child(this.paneGroup(panes, t)), ...kids] : kids;
     });
+  }
+
+  // One rounded surface for the whole tab; internal lines split the clickable
+  // pane segments, instead of a separate pill per pane.
+  paneGroup(body, t) {
+    return div().w_full().rounded(6).border(1).border_color(t.border).overflow_hidden().bg(t.chrome).child(body);
   }
 
   // A tab's panes as real buttons, laid out like its split tree. Clicking one
@@ -599,18 +605,20 @@ export default class Spaces extends View {
     }
     if (node.type === "row" || node.type === "column") {
       const row = node.type === "row";
-      const kids = (node.children ?? []).map((c) => {
+      const kids = (node.children ?? []).map((c, i) => {
         const kid = this.paneTree(c, ps, machine, t, row ? height : paneHeight(c), now, menu, compact);
         if (!kid) return null;
         return div()
           .flex()
-          .when(row, (el) => el.flex_1().min_w(0).flex_grow(c.size?.weight ?? 1))
+          .when(row, (el) => el.flex_1().min_w(0).h(height).flex_grow(c.size?.weight ?? 1))
           .when(!row, (el) => el.w_full().flex_none())
+          .when(i > 0 && row, (el) => el.border_l(1).border_color(t.border))
+          .when(i > 0 && !row, (el) => el.border_t(1).border_color(t.border))
           .child(kid);
       }).filter(Boolean);
       if (!kids.length) return null;
       if (kids.length === 1) return kids[0];
-      return (row ? h_flex() : v_flex()).h(height).w_full().min_w(0).gap(2).children(kids);
+      return (row ? h_flex() : v_flex()).h(height).w_full().min_w(0).children(kids);
     }
     if (node.type !== "block") return null;
     const pane = ps.find((p) => p.pane === paneId(node.id, machine));
@@ -632,9 +640,6 @@ export default class Spaces extends View {
       .px(6)
       .gap(6)
       .items_center()
-      .rounded(6)
-      .border(1)
-      .border_color(t.border)
       .when(pane.focused, (el) => el.bg(t.raised))
       .when(!pane.focused, (el) => el.hover((s) => s.bg(t.hover)))
       .on_click(() => run("pane.focus", { pane: pane.pane }))
