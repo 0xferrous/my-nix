@@ -67,15 +67,6 @@ function duration(ms) {
 // local to that machine; the model's are qualified when the space is remote.
 const localId = (id, machine) => (machine && id.startsWith(`${machine}/`) ? id.slice(machine.length + 1) : id);
 const paneId = (id, machine) => (machine ? `${machine}/${id}` : id);
-function leafCount(node) {
-  if (!node || node.hidden) return 0;
-  if (node.type === "block") return 1;
-  if (node.type === "stack") {
-    const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
-    return leafCount(active);
-  }
-  return (node.children ?? []).reduce((n, c) => n + leafCount(c), 0);
-}
 function hasPane(node, ps, machine) {
   if (!node || node.hidden) return false;
   if (node.type === "block") return ps.some((p) => p.pane === paneId(node.id, machine));
@@ -97,6 +88,38 @@ function paneHeight(node, ps, machine) {
   if (node.type === "row") return Math.max(...heights);
   if (node.type === "column") return heights.reduce((n, h) => n + h, 0) + (heights.length - 1);
   return 24;
+}
+function buildLayout(node, ps, machine, height) {
+  if (!node || node.hidden) return null;
+  if (node.type === "stack") {
+    const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
+    return buildLayout(active, ps, machine, height);
+  }
+  if (node.type === "row" || node.type === "column") {
+    const row = node.type === "row";
+    const nodes = (node.children ?? []).filter((c) => !c.hidden && hasPane(c, ps, machine));
+    if (!nodes.length) return null;
+    const weights = nodes.map((c) => Math.max(0.01, c.size?.weight ?? 1));
+    const totalWeight = weights.reduce((n, w) => n + w, 0) || 1;
+    const available = Math.max(nodes.length, height - (nodes.length - 1));
+    let used = 0;
+    const heights = nodes.map((c, i) => {
+      if (i === nodes.length - 1) return Math.max(1, available - used);
+      const h = Math.max(1, Math.round(available * weights[i] / totalWeight));
+      used += h;
+      return h;
+    });
+    const children = nodes.map((c, i) => {
+      const child = buildLayout(c, ps, machine, row ? height : heights[i]);
+      return child && { weight: weights[i], node: child };
+    }).filter(Boolean);
+    if (!children.length) return null;
+    if (children.length === 1) return children[0].node;
+    return { kind: row ? "row" : "column", height, children };
+  }
+  if (node.type !== "block") return null;
+  const id = paneId(node.id, machine);
+  return ps.some((p) => p.pane === id) ? { kind: "block", pane: id, height } : null;
 }
 // A space speaks up only when something in it needs you.
 export function glyph(status) {
@@ -129,6 +152,7 @@ export default class Spaces extends View {
     this.changed = JSON.parse(localStorage.getItem("changed") ?? "{}");
     this.layouts = {}; // machine -> app layout document (tab split trees)
     this.layoutVersions = {}; // machine -> doc version, so unchanged fetches do not redraw
+    this.tabModels = {}; // tab id -> cached split model
     this.layoutsBusy = false;
     this.layoutSig = "";
     this.folded = new Set(JSON.parse(localStorage.getItem("machines.folded") ?? "[]"));
@@ -166,6 +190,7 @@ export default class Spaces extends View {
     const sig = sp.map((s) => `${s.id}:${(s.tabs ?? []).map((t) => `${t.id}:${t.panes}:${t.zoomed}:${(byTab[t.id] ?? []).join(",")}`).join(",")}`).join("|");
     if (sig !== this.layoutSig) {
       this.layoutSig = sig;
+      this.tabModels = {};
       this.refreshLayouts(cx);
     }
     for (const s of sp) if (!this.shown.has(s.id)) this.born[s.id] ??= now;
@@ -389,6 +414,7 @@ export default class Spaces extends View {
         }
         if (changed) {
           this.layouts = next;
+          this.tabModels = {};
           cx.notify();
         }
       } catch {} finally {
@@ -438,6 +464,7 @@ export default class Spaces extends View {
   // space brings its tabs along unless its chevron folded them.
   grouped(t, collapsed) {
     const ps = panes();
+    const byPane = new Map(ps.map((p) => [p.pane, p]));
     const rows = this.ordered(ps);
     const all = terminals(), list = agents();
     const now = Date.now();
@@ -449,7 +476,7 @@ export default class Spaces extends View {
       if (collapsed) return this.compact(r, t);
       const content = h_flex().w_full().items_stretch().children([
         this.spaceBanner(r, t),
-        v_flex().flex_1().min_w(0).children(this.tabRows(r, t, ps, all, list, shown, now)),
+        v_flex().flex_1().min_w(0).children(this.tabRows(r, t, ps, byPane, all, list, shown, now)),
       ]);
       return v_flex().w_full().my(3).rounded(8).border(1)
         .border_color(r.w.active ? t.selected : t.border)
@@ -601,7 +628,7 @@ export default class Spaces extends View {
   // A space's tabs are their panes: no separate tab row. A split tab is the
   // pane tree itself; a single-pane tab is one pane button (with the tab's
   // name, when it has one).
-  tabRows({ w }, t, ps, all, list, shown, now) {
+  tabRows({ w }, t, ps, byPane, all, list, shown, now) {
     if (this.foldedSpaces.has(w.id)) return [];
     return (w.tabs ?? []).flatMap((c, ti) => {
       const doc = this.layouts[w.machine ?? ""];
@@ -610,9 +637,16 @@ export default class Spaces extends View {
       const tree = tabDoc?.root;
       const menu = () => openOverlay({ mod: "menu-jj", kind: "popup", width: 200, height: 240, props: { tab: "tab", target: { id: c.id, space: w.id } } });
       const kids = list.filter((a) => a.tab === c.id).flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
-      let panes;
-      if (tree && leafCount(tree) > 1) {
-        panes = this.paneTree(tree, ps, w.machine, t, paneHeight(tree, ps, w.machine), now, menu, true);
+      let panes = null;
+      if (tree) {
+        if (!(c.id in this.tabModels)) this.tabModels[c.id] = buildLayout(tree, ps, w.machine, paneHeight(tree, ps, w.machine));
+        const model = this.tabModels[c.id];
+        if (model?.kind === "block") {
+          const pane = byPane.get(model.pane);
+          panes = pane ? this.paneButton(pane, t, model.height, now, c.named ? c.name : null, menu, false) : null;
+        } else if (model) {
+          panes = this.paneTree(model, byPane, t, now, menu, true);
+        }
       } else {
         const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
         panes = pane ? this.paneButton(pane, t, 24, now, c.named ? c.name : null, menu, false) : null;
@@ -624,45 +658,29 @@ export default class Spaces extends View {
     });
   }
 
-  // A tab's panes as real buttons, laid out like its split tree. Clicking one
-  // focuses that pane (and selects its tab/space).
-  paneTree(node, ps, machine, t, height = paneHeight(node, ps, machine), now = 0, menu = null, compact = false) {
-    if (!node || node.hidden) return null;
-    if (node.type === "stack") {
-      const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
-      return this.paneTree(active, ps, machine, t, height, now, menu, compact);
+  // A tab's panes as real buttons, laid out from the cached split model.
+  // Clicking one focuses that pane (and selects its tab/space).
+  paneTree(model, byPane, t, now = 0, menu = null, compact = false) {
+    if (!model) return null;
+    if (model.kind === "block") {
+      const pane = byPane.get(model.pane);
+      return pane ? this.paneButton(pane, t, model.height, now, null, menu, compact) : null;
     }
-    if (node.type === "row" || node.type === "column") {
-      const row = node.type === "row";
-      const nodes = (node.children ?? []).filter((c) => !c.hidden && hasPane(c, ps, machine));
-      const weights = nodes.map((c) => Math.max(0.01, c.size?.weight ?? 1));
-      const totalWeight = weights.reduce((n, w) => n + w, 0) || 1;
-      const available = Math.max(nodes.length, height - (nodes.length - 1));
-      let used = 0;
-      const heights = nodes.map((c, i) => {
-        if (i === nodes.length - 1) return Math.max(1, available - used);
-        const h = Math.max(1, Math.round(available * weights[i] / totalWeight));
-        used += h;
-        return h;
-      });
-      const kids = nodes.map((c, i) => {
-        const kid = this.paneTree(c, ps, machine, t, row ? height : heights[i], now, menu, compact);
-        if (!kid) return null;
-        return div()
-          .flex()
-          .when(row, (el) => el.flex_1().min_w(0).h(height).flex_grow(weights[i]))
-          .when(!row, (el) => el.w_full().flex_none())
-          .when(i > 0 && row, (el) => el.border_l(1).border_color(t.border))
-          .when(i > 0 && !row, (el) => el.border_t(1).border_color(t.border))
-          .child(kid);
-      }).filter(Boolean);
-      if (!kids.length) return null;
-      if (kids.length === 1) return kids[0];
-      return (row ? h_flex() : v_flex()).h(height).w_full().min_w(0).children(kids);
-    }
-    if (node.type !== "block") return null;
-    const pane = ps.find((p) => p.pane === paneId(node.id, machine));
-    return pane ? this.paneButton(pane, t, height, now, null, menu, compact) : null;
+    const row = model.kind === "row";
+    const kids = model.children.map(({ weight, node }, i) => {
+      const kid = this.paneTree(node, byPane, t, now, menu, compact);
+      if (!kid) return null;
+      return div()
+        .flex()
+        .when(row, (el) => el.flex_1().min_w(0).h(model.height).flex_grow(weight))
+        .when(!row, (el) => el.w_full().flex_none())
+        .when(i > 0 && row, (el) => el.border_l(1).border_color(t.border))
+        .when(i > 0 && !row, (el) => el.border_t(1).border_color(t.border))
+        .child(kid);
+    }).filter(Boolean);
+    if (!kids.length) return null;
+    if (kids.length === 1) return kids[0];
+    return (row ? h_flex() : v_flex()).h(model.height).w_full().min_w(0).children(kids);
   }
 
   paneButton(pane, t, height = 24, now = 0, label = null, menu = null, compact = false) {
