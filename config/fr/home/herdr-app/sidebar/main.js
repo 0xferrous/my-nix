@@ -423,9 +423,15 @@ export default class Spaces extends View {
     const shown = list.find((a) => a.focused)?.address;
     const draw = (r) => {
       if (collapsed) return this.compact(r, t);
+      const content = this.foldedSpaces.has(r.w.id)
+        ? this.row(r, t)
+        : h_flex().w_full().items_stretch().gap(4).children([
+            this.spaceBanner(r, t),
+            v_flex().flex_1().min_w(0).children(this.tabRows(r, t, ps, all, list, shown, now)),
+          ]);
       return v_flex().w_full().rounded(8)
         .when(r.w.active, (el) => el.border(1).border_color(t.border))
-        .children([this.row(r, t), ...this.tabRows(r, t, ps, all, list, shown, now)]);
+        .child(content);
     };
     const remote = [...new Set([...rows.map(r => r.w.machine).filter(Boolean), ...this.machines.map(m => m.name)])].sort();
     const loading = m => {
@@ -483,6 +489,38 @@ export default class Spaces extends View {
       .when(Boolean(where), (el) => el.child(div().min_w(0).truncate().child(where)))
       .when(g.ahead > 0, (el) => el.child(div().flex_none().text_color(t.ansi2).child(`\u2191${g.ahead}`)))
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
+  }
+
+  // The space itself is a colored vertical ribbon, not a header row. Its name
+  // runs down the spine; the tabs/pane buttons sit to its right.
+  spaceBanner({ w }, t) {
+    const colors = shared("space.colors") ?? {};
+    const color = colors[w.id] ?? "ansi6";
+    const fill = color.startsWith("#") ? color : (MARK[color] ?? t[color]);
+    const folded = this.foldedSpaces.has(w.id);
+    const chars = [...w.name];
+    const shown = chars.length > 16 ? [...chars.slice(0, 15), "…"] : chars;
+    return v_flex()
+      .id(`space-banner-${w.id}`)
+      .w(18)
+      .flex_none()
+      .min_h(shown.length * 9 + 24)
+      .overflow_hidden()
+      .rounded(6)
+      .bg(fill)
+      .items_center()
+      .py(3)
+      .gap(2)
+      .cursor_pointer()
+      .on_click(() => run("space.select", { id: w.id }))
+      .on_mouse_down("right", () => this.menu(w))
+      .child(div().id(`space-fold-${w.id}`).h(16).w_full().flex().items_center().justify_center()
+        .hover((s) => s.bg("#ffffff22"))
+        .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+        .on_click((_e, cx) => { cx.stop_propagation(); this.toggleSpaceTabFold(w.id, cx); })
+        .child(svg(`mods/workspace-chrome/chevron-${folded ? "right" : "down"}.svg`).size(9).text_color("#ffffff")))
+      .child(v_flex().flex_1().min_h(0).items_center().justify_center().gap(0)
+        .children(shown.map((ch) => div().text_size(10).line_height("9px").text_color("#ffffff").child(ch === " " ? "·" : ch))));
   }
 
   row({ w, i, g, tree }, t) {
@@ -549,7 +587,7 @@ export default class Spaces extends View {
         const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
         panes = pane ? this.paneButton(pane, t, 24, now, c.named ? c.name : null, menu, false) : null;
       }
-      return panes ? [div().w_full().pl(15).pr(8).pb(2).child(panes), ...kids] : kids;
+      return panes ? [div().w_full().pr(2).pb(2).child(panes), ...kids] : kids;
     });
   }
 
