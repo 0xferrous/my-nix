@@ -1,4 +1,6 @@
 {
+  fr.symlinks.configFiles."herdr-app/keys.json".target = "config/fr/home/herdr-app/keys.json";
+
   fr.symlinks.configFiles."herdr-app/themes/gruvbox-dark-hard.json" = {
     target = "config/fr/home/herdr-app/gruvbox-dark-hard.json";
   };
