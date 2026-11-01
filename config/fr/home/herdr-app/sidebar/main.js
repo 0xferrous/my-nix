@@ -504,7 +504,7 @@ export default class Spaces extends View {
       .flex_none()
       .min_h(0)
       .rounded_l(7)
-      .bg(t.raised)
+      .bg(t.chrome)
       .border_l(3)
       .border_color(fill)
       .border_r(1)
