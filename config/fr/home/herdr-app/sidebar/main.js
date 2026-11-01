@@ -63,6 +63,32 @@ function duration(ms) {
   return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
 }
 
+// The app's machine layout doc has each tab's split tree. Pane ids in it are
+// local to that machine; the model's are qualified when the space is remote.
+const localId = (id, machine) => (machine && id.startsWith(`${machine}/`) ? id.slice(machine.length + 1) : id);
+const paneId = (id, machine) => (machine ? `${machine}/${id}` : id);
+function leafCount(node) {
+  if (!node || node.hidden) return 0;
+  if (node.type === "block") return 1;
+  if (node.type === "stack") {
+    const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
+    return leafCount(active);
+  }
+  return (node.children ?? []).reduce((n, c) => n + leafCount(c), 0);
+}
+function paneHeight(node) {
+  if (!node || node.hidden) return 0;
+  if (node.type === "block") return 24;
+  if (node.type === "stack") {
+    const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
+    return paneHeight(active);
+  }
+  const heights = (node.children ?? []).map(paneHeight).filter((h) => h > 0);
+  if (!heights.length) return 0;
+  if (node.type === "row") return Math.max(...heights);
+  if (node.type === "column") return heights.reduce((n, h) => n + h, 0) + 2 * (heights.length - 1);
+  return 24;
+}
 // A space speaks up only when something in it needs you.
 export function glyph(status) {
   return status === "blocked" || status === "done" ? "●" : "·";
@@ -92,12 +118,18 @@ export default class Spaces extends View {
     this.machines = [];
     // Each agent's last state and when it changed (ms), kept across restarts.
     this.changed = JSON.parse(localStorage.getItem("changed") ?? "{}");
+    this.layouts = {}; // machine -> app layout document (tab split trees)
+    this.layoutsBusy = false;
+    this.layoutSig = "";
     this.folded = new Set(JSON.parse(localStorage.getItem("machines.folded") ?? "[]"));
     this.foldedSpaces = new Set(JSON.parse(localStorage.getItem("spaces.folded") ?? "[]"));
     this.tabPressed = null; // tab id being dragged
     this.tabOver = null; // tab id under the pointer
     this.refreshMachines(cx);
     cx.timer.every(15000, cx => this.refreshMachines(cx));
+    // Tab splits are app state, not in spaces()/panes(): read the app doc.
+    this.refreshLayouts(cx);
+    cx.timer.every(5000, (cx) => this.refreshLayouts(cx));
     // Keep the durations since a status change moving.
     cx.timer.every(30000, (cx) => cx.notify());
     // `git status` walks the whole tree, on another machine a process there:
@@ -116,6 +148,11 @@ export default class Spaces extends View {
   checkNew(cx) {
     const now = Date.now();
     const sp = spaces();
+    const sig = sp.map((s) => `${s.id}:${(s.tabs ?? []).map((t) => `${t.id}:${t.panes}:${t.zoomed}`).join(",")}`).join("|");
+    if (sig !== this.layoutSig) {
+      this.layoutSig = sig;
+      this.refreshLayouts(cx);
+    }
     for (const s of sp) if (!this.shown.has(s.id)) this.born[s.id] ??= now;
     const due = this.due(now, sp, panes());
     if (due.size) this.refreshGit(due, cx);
@@ -298,6 +335,45 @@ export default class Spaces extends View {
     return out;
   }
 
+  // One hc connect call for every machine's app doc; the response carries the
+  // tab split trees. The doc is app-owned, so a missing/garbled one just means
+  // the old single icon stays.
+  refreshLayouts(cx) {
+    if (this.layoutsBusy) return;
+    const sp = spaces();
+    const targets = [];
+    if (sp.some((s) => !s.machine)) targets.push("");
+    for (const m of new Set(sp.map((s) => s.machine).filter(Boolean))) targets.push(m);
+    if (!targets.length) return;
+    const quote = (s) => `'${s.replace(/'/g, "'\\''")}'`;
+    const requests = targets.map((m, i) => {
+      const params = { name: "herdr-app" };
+      if (m) params.on = m;
+      return JSON.stringify({ jsonrpc: "2.0", id: i + 1, method: "doc.get", params });
+    });
+    const cmd = `printf '%s\\n' ${requests.map(quote).join(" ")} | hc connect`;
+    this.layoutsBusy = true;
+    cx.spawn(async (cx) => {
+      try {
+        const r = await exec("sh", ["-c", cmd]);
+        if (r.code !== 0) return;
+        const next = {};
+        for (const line of r.stdout.split("\n")) {
+          if (!line.trim()) continue;
+          try {
+            const reply = JSON.parse(line);
+            const m = targets[(reply.id ?? 0) - 1];
+            if (m !== undefined && reply.result?.value) next[m] = reply.result.value;
+          } catch {}
+        }
+        this.layouts = next;
+        cx.notify();
+      } catch {} finally {
+        this.layoutsBusy = false;
+      }
+    });
+  }
+
   // Stamps agents whose state changed. Done and idle count as one: looking at a
   // finished agent turns done into idle, and looking isn't the agent doing anything.
   track(list, now) {
@@ -464,6 +540,12 @@ export default class Spaces extends View {
       // Only the tab actually on screen is filled. Background spaces keep their
       // own focused tab brighter than its siblings, without looking open.
       const open = w.active && c.active;
+      const doc = this.layouts[w.machine ?? ""];
+      const spaceDoc = doc?.spaces?.find((s) => s.id === localId(w.id, w.machine));
+      const tabDoc = spaceDoc?.tabs?.find((t) => t.id === localId(c.id, w.machine));
+      const tree = tabDoc?.root;
+      const split = tree && leafCount(tree) > 1;
+      const panes = split ? this.paneTree(tree, ps, w.machine, t) : null;
       const mine = list.filter((a) => a.tab === c.id);
       const lead = mine.reduce((best, a) => ((RANK[a.status] ?? 0) > (RANK[best?.status] ?? -1) ? a : best), null);
       const since = lead ? this.since(lead) : 0;
@@ -501,8 +583,60 @@ export default class Spaces extends View {
         .when(Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - since))))
         .when(Boolean(c.status), (el) => el.child(this.status(t, { status: c.status })));
       const kids = mine.flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
-      return [row, ...kids];
+      return [row, ...(panes ? [div().w_full().pl(30).pr(8).pb(2).child(panes)] : []), ...kids];
     });
+  }
+
+  // A tab's panes as real buttons, laid out like its split tree. Clicking one
+  // focuses that pane (and selects its tab/space).
+  paneTree(node, ps, machine, t, height = paneHeight(node)) {
+    if (!node || node.hidden) return null;
+    if (node.type === "stack") {
+      const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
+      return this.paneTree(active, ps, machine, t, height);
+    }
+    if (node.type === "row" || node.type === "column") {
+      const row = node.type === "row";
+      const kids = (node.children ?? []).map((c) => {
+        const kid = this.paneTree(c, ps, machine, t, row ? height : paneHeight(c));
+        if (!kid) return null;
+        return div()
+          .flex()
+          .when(row, (el) => el.flex_1().min_w(0).flex_grow(c.size?.weight ?? 1))
+          .when(!row, (el) => el.w_full().flex_none())
+          .child(kid);
+      }).filter(Boolean);
+      if (!kids.length) return null;
+      if (kids.length === 1) return kids[0];
+      return (row ? h_flex() : v_flex()).h(height).w_full().min_w(0).gap(2).children(kids);
+    }
+    if (node.type !== "block") return null;
+    const pane = ps.find((p) => p.pane === paneId(node.id, machine));
+    return pane ? this.paneButton(pane, t, height) : null;
+  }
+
+  paneButton(pane, t, height = 24) {
+    const program = pane.program;
+    const title = (pane.title ?? "").replace(/^[^\p{L}\p{N}]+/u, "").trim();
+    const name = (!program?.shell && program?.name) || cwdName(pane.cwd) || title || program?.name || "Terminal";
+    return h_flex()
+      .id(`pane-${pane.pane}`)
+      .h(height)
+      .w_full()
+      .min_w(0)
+      .px(6)
+      .gap(6)
+      .items_center()
+      .rounded(6)
+      .border(1)
+      .border_color(t.border)
+      .when(pane.focused, (el) => el.bg(t.raised))
+      .when(!pane.focused, (el) => el.hover((s) => s.bg(t.hover)))
+      .on_click(() => run("pane.focus", { pane: pane.pane }))
+      .when(Boolean(program?.icon), (el) => el.child(agentIcon(program, 12, t.muted)))
+      .when(!program?.icon, (el) => el.child(div().size(12).flex_none()))
+      .child(div().flex_1().min_w(0).truncate().text_color(pane.focused ? t.foreground : t.muted).child(pane.zoomed ? `${name} Z` : name))
+      .when(Boolean(pane.status), (el) => el.child(this.status(t, { status: pane.status }, true)));
   }
 
   peek(address) {
@@ -549,9 +683,10 @@ export default class Spaces extends View {
 
   // The same status marks the agents list used: spinner, Needs you, idle ring,
   // done dot. Tabs without an agent draw none of them.
-  status(t, a) {
+  status(t, a, compact = false) {
     const color = t[a.status] ?? t.dim;
     if (a.status === "working") return svg("mods/workspace-chrome/spinner.svg").size(12).mx(1).flex_none().text_color(t.working).spin(900);
+    if (a.status === "blocked" && compact) return div().size(14).flex_none().rounded(4).bg(t.blocked + "26").text_size(10.5).font_bold().text_color(t.blocked).flex().items_center().justify_center().child("!");
     if (a.status === "blocked") return div().flex_none().px(6).h(18).rounded(5).bg(t.blocked + "26").text_size(10.5).font_semibold().text_color(t.blocked).flex().items_center().child("Needs you");
     if (a.status === "idle") return div().size(7).mx(3).flex_none().rounded(4).border(1.5).border_color(t.idle ?? t.dim);
     return div().size(7).mx(3).flex_none().rounded(4).bg(a.status === "done" ? color : t.dim + "00");
