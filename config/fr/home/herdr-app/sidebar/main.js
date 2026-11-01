@@ -1,12 +1,13 @@
 // The workspace sidebar: stable colored avatars, worktrees under their checkout,
 // and each space's tabs under it, grouped by machine when more than one is known.
 // After a space's name, the repo its first terminal is in now, only where unusual:
-// branch, ahead/behind. Agent state lives in the agents list, not here. Click to
-// switch, right-click for its menu, drag to reorder. A space's chevron folds its tabs.
+// branch, ahead/behind. Agent state lives on the tab, and its helpers nest under it.
+// Click to switch, right-click for its menu, drag to reorder. A space's chevron
+// folds its tabs.
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, home } from "herdr";
+import { spaces, machines, panes, agents, terminals, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, home } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -43,6 +44,16 @@ const FALLBACK = 60000;
 // What a stored color name looks like on an avatar (the same in every mod
 // that draws space avatars): one strong color per hue, light and dark alike.
 const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
+
+// Agent status, as the agents list drew it: urgency order, status words, icons.
+const kidStatus = (k, listed) => {
+  const status = listed.get(k.address) ?? k.status;
+  return status === "error" ? "blocked" : status === "done" ? "idle" : status;
+};
+function agentIcon(program, size, color) {
+  if (!program?.icon) return null;
+  return program.tint ? svg(program.icon).size(size).flex_none().text_color(color) : image(program.icon).w(size).h(size).flex_none();
+}
 
 // A space speaks up only when something in it needs you.
 export function glyph(status) {
@@ -277,7 +288,10 @@ export default class Spaces extends View {
   // space brings its tabs along unless its chevron folded them.
   grouped(t, collapsed) {
     const rows = this.ordered();
-    const draw = (r) => (collapsed ? [this.compact(r, t)] : [this.row(r, t), ...this.tabRows(r, t)]);
+    const ps = panes(), all = terminals(), list = agents();
+    this.listed = new Map(list.map((a) => [a.address, a.status]));
+    const shown = list.find((a) => a.focused)?.address;
+    const draw = (r) => (collapsed ? [this.compact(r, t)] : [this.row(r, t), ...this.tabRows(r, t, ps, all, list, shown)]);
     const remote = [...new Set([...rows.map(r => r.w.machine).filter(Boolean), ...this.machines.map(m => m.name)])].sort();
     const loading = m => {
       const layout = machines().find(k => k.name === m)?.layout;
@@ -383,12 +397,10 @@ export default class Spaces extends View {
   }
 
   // A space's tabs. The icon sits in the gutter and the label lines up with the
-  // space name. Their status is the same as the old top bar's: a spinner while
-  // working, a dot when they need you.
-  tabRows({ w }, t) {
+  // space name. Agent status lives on the tab; helpers nest under it.
+  tabRows({ w }, t, ps, all, list, shown) {
     if (this.foldedSpaces.has(w.id)) return [];
-    const ps = panes();
-    return (w.tabs ?? []).map((c) => {
+    return (w.tabs ?? []).flatMap((c) => {
       const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
       const program = ps.find((p) => p.tab === c.id && p.program?.agent)?.program ?? pane?.program;
       // Unnamed tabs get the foreground process, or their folder while only the
@@ -399,7 +411,7 @@ export default class Spaces extends View {
       // Only the tab actually on screen is filled. Background spaces keep their
       // own focused tab brighter than its siblings, without looking open.
       const open = w.active && c.active;
-      return h_flex()
+      const row = h_flex()
         .id(`tab-${c.id}`)
         .h(25)
         .flex_none()
@@ -430,9 +442,62 @@ export default class Spaces extends View {
         .when(Boolean(program?.icon), (el) => el.child(program.tint ? svg(program.icon).size(13).flex_none().text_color(t.muted) : image(program.icon).size(13).flex_none()))
         .when(!program?.icon, (el) => el.child(div().size(13).flex_none()))
         .child(div().flex_1().min_w(0).truncate().text_color(c.active ? t.foreground : t.muted).child(c.zoomed ? `${name} Z` : name))
-        .when(c.status === "working", (el) => el.child(svg("mods/workspace-chrome/spinner.svg").size(11).flex_none().text_color(t.working).spin(900)))
-        .when(c.status === "blocked" || c.status === "done", (el) => el.child(div().size(6).rounded(3).flex_none().bg(t[c.status])));
+        .when(Boolean(c.status), (el) => el.child(this.status(t, { status: c.status })));
+      const kids = list.filter((a) => a.tab === c.id).flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
+      return [row, ...kids];
     });
+  }
+
+  peek(address) {
+    run("terminal.peek", { terminal: address });
+  }
+
+  // Live sub-agents under their tab, depth first, with the tree lines in front.
+  tree(all, address, lead = []) {
+    const kids = all.filter((k) => k.parent === address && k.state === "live");
+    return kids.flatMap((k, i) => {
+      const last = i === kids.length - 1;
+      return [
+        { t: k, lines: [...lead, last ? "└" : "├"] },
+        ...this.tree(all, k.address, [...lead, last ? "" : "│"]),
+      ];
+    });
+  }
+
+  subRow(t, s, shown) {
+    const k = s.t;
+    const status = kidStatus(k, this.listed);
+    const pic = agentIcon(k.program, 14, t.foreground);
+    const on = k.address === shown;
+    return h_flex()
+      .id(`sub-${k.address}`)
+      .pl(22)
+      .pr(8)
+      .rounded(8)
+      .h(26)
+      .flex_none()
+      .gap(0)
+      .items_center()
+      .text_size(12.5)
+      .when(on, (el) => el.bg(t.raised))
+      .hover((s) => s.bg(t.hover))
+      .on_click(() => this.peek(k.address))
+      .children(s.lines.map((l) => div().self_start().mt(-4).w(9).h(17).mr(4).flex_none()
+        .when(Boolean(l), el => el.border_l(1.5).border_color(t.input))
+        .when(l === "└" || l === "├", el => el.border_b(1.5).rounded_bl(6))))
+      .when(Boolean(pic), el => el.child(div().mr(8).child(pic)))
+      .child(div().flex_1().truncate().text_color(on ? t.foreground : t.muted).child(k.name || k.template || k.program?.name || k.address))
+      .child(this.status(t, { status }));
+  }
+
+  // The same status marks the agents list used: spinner, Needs you, idle ring,
+  // done dot. Tabs without an agent draw none of them.
+  status(t, a) {
+    const color = t[a.status] ?? t.dim;
+    if (a.status === "working") return svg("mods/workspace-chrome/spinner.svg").size(12).mx(1).flex_none().text_color(t.working).spin(900);
+    if (a.status === "blocked") return div().flex_none().px(6).h(18).rounded(5).bg(t.blocked + "26").text_size(10.5).font_semibold().text_color(t.blocked).flex().items_center().child("Needs you");
+    if (a.status === "idle") return div().size(7).mx(3).flex_none().rounded(4).border(1.5).border_color(t.idle ?? t.dim);
+    return div().size(7).mx(3).flex_none().rounded(4).bg(a.status === "done" ? color : t.dim + "00");
   }
 
   compact({ w, i }, t) {
