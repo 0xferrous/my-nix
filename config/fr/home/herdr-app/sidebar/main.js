@@ -427,7 +427,7 @@ export default class Spaces extends View {
         this.spaceBanner(r, t),
         v_flex().flex_1().min_w(0).children(this.tabRows(r, t, ps, all, list, shown, now)),
       ]);
-      return v_flex().w_full().rounded(8).border(1)
+      return v_flex().w_full().my(3).rounded(8).border(1)
         .border_color(r.w.active ? t.selected : t.border)
         .overflow_hidden()
         .bg(t.chrome)
