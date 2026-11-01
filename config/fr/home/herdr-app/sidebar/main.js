@@ -128,6 +128,7 @@ export default class Spaces extends View {
     // Each agent's last state and when it changed (ms), kept across restarts.
     this.changed = JSON.parse(localStorage.getItem("changed") ?? "{}");
     this.layouts = {}; // machine -> app layout document (tab split trees)
+    this.layoutVersions = {}; // machine -> doc version, so unchanged fetches do not redraw
     this.layoutsBusy = false;
     this.layoutSig = "";
     this.folded = new Set(JSON.parse(localStorage.getItem("machines.folded") ?? "[]"));
@@ -136,15 +137,16 @@ export default class Spaces extends View {
     this.tabOver = null; // tab id under the pointer
     this.hoveredSpace = null; // space initial showing its fold button
     this.refreshMachines(cx);
-    cx.timer.every(15000, cx => this.refreshMachines(cx));
+    cx.timer.every(30000, cx => this.refreshMachines(cx));
     // Tab splits are app state, not in spaces()/panes(): read the app doc.
+    // The signature check below fetches on split changes; this is a fallback.
     this.refreshLayouts(cx);
-    cx.timer.every(5000, (cx) => this.refreshLayouts(cx));
+    cx.timer.every(20000, (cx) => this.refreshLayouts(cx));
     // Keep the durations since a status change moving.
     cx.timer.every(30000, (cx) => cx.notify());
     // `git status` walks the whole tree, on another machine a process there:
     // only when its answer could have changed (see `due`).
-    cx.timer.every(250, (cx) => this.checkNew(cx));
+    cx.timer.every(500, (cx) => this.checkNew(cx));
     // <mod>.<command> actions from keys.json and `herdr-app do`.
     cx.spawn(async (cx) => {
       for (;;) {
@@ -158,13 +160,16 @@ export default class Spaces extends View {
   checkNew(cx) {
     const now = Date.now();
     const sp = spaces();
-    const sig = sp.map((s) => `${s.id}:${(s.tabs ?? []).map((t) => `${t.id}:${t.panes}:${t.zoomed}`).join(",")}`).join("|");
+    const ps = panes();
+    const byTab = {};
+    for (const p of ps) (byTab[p.tab] ??= []).push(p.pane);
+    const sig = sp.map((s) => `${s.id}:${(s.tabs ?? []).map((t) => `${t.id}:${t.panes}:${t.zoomed}:${(byTab[t.id] ?? []).join(",")}`).join(",")}`).join("|");
     if (sig !== this.layoutSig) {
       this.layoutSig = sig;
       this.refreshLayouts(cx);
     }
     for (const s of sp) if (!this.shown.has(s.id)) this.born[s.id] ??= now;
-    const due = this.due(now, sp, panes());
+    const due = this.due(now, sp, ps);
     if (due.size) this.refreshGit(due, cx);
     if (sp.some((s) => !this.shown.has(s.id))) cx.notify();
   }
@@ -325,8 +330,8 @@ export default class Spaces extends View {
   }
 
   // Spaces in order, each worktree space moved under its main checkout's.
-  ordered() {
-    const sp = spaces(), ps = panes();
+  ordered(ps = panes()) {
+    const sp = spaces();
     const ready = (w) => this.shown.has(w.id) || where(w, ps) in this.git || Date.now() - (this.born[w.id] ??= Date.now()) > 1500;
     for (const w of sp) if (!this.shown.has(w.id) && ready(w)) this.shown.add(w.id);
     const list = sp.map((w, i) => ({ w, i, g: this.git[where(w, ps)] ?? null })).filter((r) => this.shown.has(r.w.id));
@@ -367,17 +372,25 @@ export default class Spaces extends View {
       try {
         const r = await exec("sh", ["-c", cmd]);
         if (r.code !== 0) return;
-        const next = {};
+        const next = { ...this.layouts };
+        let changed = false;
         for (const line of r.stdout.split("\n")) {
           if (!line.trim()) continue;
           try {
             const reply = JSON.parse(line);
             const m = targets[(reply.id ?? 0) - 1];
-            if (m !== undefined && reply.result?.value) next[m] = reply.result.value;
+            if (m === undefined || reply.result?.version === undefined) continue;
+            if (reply.result.version === this.layoutVersions[m]) continue;
+            this.layoutVersions[m] = reply.result.version;
+            if (reply.result.value) next[m] = reply.result.value;
+            else delete next[m];
+            changed = true;
           } catch {}
         }
-        this.layouts = next;
-        cx.notify();
+        if (changed) {
+          this.layouts = next;
+          cx.notify();
+        }
       } catch {} finally {
         this.layoutsBusy = false;
       }
@@ -424,8 +437,9 @@ export default class Spaces extends View {
   // The rows, under a header per machine once one isn't this computer. Each
   // space brings its tabs along unless its chevron folded them.
   grouped(t, collapsed) {
-    const rows = this.ordered();
-    const ps = panes(), all = terminals(), list = agents();
+    const ps = panes();
+    const rows = this.ordered(ps);
+    const all = terminals(), list = agents();
     const now = Date.now();
     this.track(list, now);
     this.listed = new Map(list.map((a) => [a.address, a.status]));
