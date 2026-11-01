@@ -384,6 +384,9 @@ export default class Spaces extends View {
     return (w.tabs ?? []).map((c) => {
       const program = ps.find((p) => p.tab === c.id && p.program?.agent)?.program ?? ps.find((p) => p.tab === c.id)?.program;
       const name = /^tb\d+$/.test(c.name) ? program?.name ?? "Terminal" : c.name;
+      // Only the tab actually on screen is filled. Background spaces keep their
+      // own focused tab brighter than its siblings, without looking open.
+      const open = w.active && c.active;
       return h_flex()
         .id(`tab-${c.id}`)
         .h(25)
@@ -394,8 +397,8 @@ export default class Spaces extends View {
         .items_center()
         .rounded(6)
         .text_size(12)
-        .when(c.active, (el) => el.bg(t.selected))
-        .when(!c.active, (el) => el.hover((s) => s.bg(t.hover)))
+        .when(open, (el) => el.bg(t.selected))
+        .when(!open, (el) => el.hover((s) => s.bg(t.hover)))
         .when(this.tabPressed !== null && this.tabOver === c.id && this.tabPressed !== c.id, (el) => el.border_t(2).border_color(t.accent))
         .on_mouse_down("left", (e, cx) => {
           cx.stop_propagation();
