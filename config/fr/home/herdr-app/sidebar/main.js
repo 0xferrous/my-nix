@@ -423,12 +423,14 @@ export default class Spaces extends View {
     const shown = list.find((a) => a.focused)?.address;
     const draw = (r) => {
       if (collapsed) return this.compact(r, t);
-      const content = h_flex().w_full().items_stretch().gap(4).children([
+      const content = h_flex().w_full().items_stretch().children([
         this.spaceBanner(r, t),
         v_flex().flex_1().min_w(0).children(this.tabRows(r, t, ps, all, list, shown, now)),
       ]);
-      return v_flex().w_full().rounded(8)
-        .when(r.w.active, (el) => el.border(1).border_color(t.border))
+      return v_flex().w_full().rounded(8).border(1)
+        .border_color(r.w.active ? t.selected : t.border)
+        .overflow_hidden()
+        .bg(t.chrome)
         .child(content);
     };
     const remote = [...new Set([...rows.map(r => r.w.machine).filter(Boolean), ...this.machines.map(m => m.name)])].sort();
@@ -500,10 +502,10 @@ export default class Spaces extends View {
       .w(20)
       .flex_none()
       .min_h(0)
-      .rounded(6)
       .bg(t.raised)
       .border_l(3)
       .border_color(fill)
+      .border_r(1)
       .items_center()
       .py(2)
       .gap(1)
@@ -571,7 +573,7 @@ export default class Spaces extends View {
   // name, when it has one).
   tabRows({ w }, t, ps, all, list, shown, now) {
     if (this.foldedSpaces.has(w.id)) return [];
-    return (w.tabs ?? []).flatMap((c) => {
+    return (w.tabs ?? []).flatMap((c, ti) => {
       const doc = this.layouts[w.machine ?? ""];
       const spaceDoc = doc?.spaces?.find((s) => s.id === localId(w.id, w.machine));
       const tabDoc = spaceDoc?.tabs?.find((t) => t.id === localId(c.id, w.machine));
@@ -585,14 +587,11 @@ export default class Spaces extends View {
         const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
         panes = pane ? this.paneButton(pane, t, 24, now, c.named ? c.name : null, menu, false) : null;
       }
-      return panes ? [div().w_full().pr(2).pb(2).child(this.paneGroup(panes, t)), ...kids] : kids;
+      const content = [panes, ...kids].filter(Boolean);
+      return content.length ? [v_flex().w_full().min_w(0)
+        .when(ti > 0, (el) => el.border_t(2).border_color(t.border))
+        .children(content)] : [];
     });
-  }
-
-  // One rounded surface for the whole tab; internal lines split the clickable
-  // pane segments, instead of a separate pill per pane.
-  paneGroup(body, t) {
-    return div().w_full().rounded(6).border(1).border_color(t.border).overflow_hidden().bg(t.chrome).child(body);
   }
 
   // A tab's panes as real buttons, laid out like its split tree. Clicking one
