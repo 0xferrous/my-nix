@@ -6,7 +6,7 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout } from "herdr";
+import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, home } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -29,6 +29,13 @@ function place(s, ps) {
 const rowHeight = ({ tree }) => (tree ? 28 : 30);
 const where = (s, ps) => JSON.stringify([s.machine ?? null, place(s, ps)]);
 const base = (path) => path.replace(/\/+$/, "").split("/").pop();
+// The folder part of a tab's live cwd, with the home folder shortened.
+function cwdName(path) {
+  if (!path) return "";
+  const clean = path.replace(/\\/g, "/").replace(/\/+$/, "");
+  if (clean === home().replace(/\/+$/, "")) return "~";
+  return clean.split("/").pop() || "/";
+}
 // Changes made outside Herdr (an editor's save, a commit in another app): looked
 // for this often, in repos the list shows, while the window is in front.
 const FALLBACK = 60000;
@@ -382,8 +389,13 @@ export default class Spaces extends View {
     if (this.foldedSpaces.has(w.id)) return [];
     const ps = panes();
     return (w.tabs ?? []).map((c) => {
-      const program = ps.find((p) => p.tab === c.id && p.program?.agent)?.program ?? ps.find((p) => p.tab === c.id)?.program;
-      const name = /^tb\d+$/.test(c.name) ? program?.name ?? "Terminal" : c.name;
+      const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
+      const program = ps.find((p) => p.tab === c.id && p.program?.agent)?.program ?? pane?.program;
+      // Unnamed tabs get the foreground process, or their folder while only the
+      // shell is in front. Named tabs keep exactly the name someone gave them.
+      const folder = cwdName(pane?.cwd);
+      const fallback = (!program?.shell && program?.name) || folder || program?.name || pane?.title || "Terminal";
+      const name = c.named ? c.name : fallback;
       // Only the tab actually on screen is filled. Background spaces keep their
       // own focused tab brighter than its siblings, without looking open.
       const open = w.active && c.active;
