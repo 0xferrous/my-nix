@@ -423,12 +423,10 @@ export default class Spaces extends View {
     const shown = list.find((a) => a.focused)?.address;
     const draw = (r) => {
       if (collapsed) return this.compact(r, t);
-      const content = this.foldedSpaces.has(r.w.id)
-        ? this.row(r, t)
-        : h_flex().w_full().items_stretch().gap(4).children([
-            this.spaceBanner(r, t),
-            v_flex().flex_1().min_w(0).children(this.tabRows(r, t, ps, all, list, shown, now)),
-          ]);
+      const content = h_flex().w_full().items_stretch().gap(4).children([
+        this.spaceBanner(r, t),
+        v_flex().flex_1().min_w(0).children(this.tabRows(r, t, ps, all, list, shown, now)),
+      ]);
       return v_flex().w_full().rounded(8)
         .when(r.w.active, (el) => el.border(1).border_color(t.border))
         .child(content);
@@ -491,36 +489,36 @@ export default class Spaces extends View {
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
   }
 
-  // The space itself is a colored vertical ribbon, not a header row. Its name
-  // runs down the spine; the tabs/pane buttons sit to its right.
+  // The space is a thin neutral rail with a color stripe and its initial.
+  // The full name is in the tooltip; no header row and no stacked letters.
   spaceBanner({ w }, t) {
     const colors = shared("space.colors") ?? {};
     const color = colors[w.id] ?? "ansi6";
     const fill = color.startsWith("#") ? color : (MARK[color] ?? t[color]);
-    const folded = this.foldedSpaces.has(w.id);
-    const chars = [...w.name];
-    const shown = chars.length > 16 ? [...chars.slice(0, 15), "…"] : chars;
     return v_flex()
       .id(`space-banner-${w.id}`)
-      .w(18)
+      .w(20)
       .flex_none()
-      .min_h(shown.length * 9 + 24)
-      .overflow_hidden()
+      .min_h(0)
       .rounded(6)
-      .bg(fill)
+      .bg(t.raised)
+      .border_l(3)
+      .border_color(fill)
       .items_center()
-      .py(3)
-      .gap(2)
+      .py(2)
+      .gap(1)
       .cursor_pointer()
+      .tooltip(w.name)
       .on_click(() => run("space.select", { id: w.id }))
       .on_mouse_down("right", () => this.menu(w))
-      .child(div().id(`space-fold-${w.id}`).h(16).w_full().flex().items_center().justify_center()
-        .hover((s) => s.bg("#ffffff22"))
+      .child(div().size(14).flex_none().rounded(4).bg(fill).text_size(9).font_bold().text_color("#ffffff")
+        .flex().items_center().justify_center().child([...w.name][0]?.toUpperCase() ?? "?"))
+      .child(div().id(`space-fold-${w.id}`).h(12).w_full().flex().items_center().justify_center()
+        .rounded(3)
+        .hover((s) => s.bg(t.hover))
         .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
         .on_click((_e, cx) => { cx.stop_propagation(); this.toggleSpaceTabFold(w.id, cx); })
-        .child(svg(`mods/workspace-chrome/chevron-${folded ? "right" : "down"}.svg`).size(9).text_color("#ffffff")))
-      .child(v_flex().flex_1().min_h(0).items_center().justify_center().gap(0)
-        .children(shown.map((ch) => div().text_size(10).line_height("9px").text_color("#ffffff").child(ch === " " ? "·" : ch))));
+        .child(svg(`mods/workspace-chrome/chevron-${this.foldedSpaces.has(w.id) ? "right" : "down"}.svg`).size(8).text_color(t.dim)));
   }
 
   row({ w, i, g, tree }, t) {
