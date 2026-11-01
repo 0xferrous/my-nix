@@ -419,6 +419,7 @@ export default class Spaces extends View {
     const now = Date.now();
     this.track(list, now);
     this.listed = new Map(list.map((a) => [a.address, a.status]));
+    this.agentByPane = new Map(list.filter((a) => a.pane).map((a) => [a.pane, a]));
     const shown = list.find((a) => a.focused)?.address;
     const draw = (r) => {
       if (collapsed) return this.compact(r, t);
@@ -529,80 +530,41 @@ export default class Spaces extends View {
       );
   }
 
-  // A space's tabs. The icon sits in the gutter and the label lines up with the
-  // space name. Agent status lives on the tab; helpers nest under it.
+  // A space's tabs are their panes: no separate tab row. A split tab is the
+  // pane tree itself; a single-pane tab is one pane button (with the tab's
+  // name, when it has one).
   tabRows({ w }, t, ps, all, list, shown, now) {
     if (this.foldedSpaces.has(w.id)) return [];
     return (w.tabs ?? []).flatMap((c) => {
-      const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
-      const program = ps.find((p) => p.tab === c.id && p.program?.agent)?.program ?? pane?.program;
-      // Unnamed tabs get the foreground process, or their folder while only the
-      // shell is in front. Named tabs keep exactly the name someone gave them.
-      const folder = cwdName(pane?.cwd);
-      const fallback = (!program?.shell && program?.name) || folder || program?.name || pane?.title || "Terminal";
-      const name = c.named ? c.name : fallback;
-      // Only the tab actually on screen is filled. Background spaces keep their
-      // own focused tab brighter than its siblings, without looking open.
-      const open = w.active && c.active;
       const doc = this.layouts[w.machine ?? ""];
       const spaceDoc = doc?.spaces?.find((s) => s.id === localId(w.id, w.machine));
       const tabDoc = spaceDoc?.tabs?.find((t) => t.id === localId(c.id, w.machine));
       const tree = tabDoc?.root;
-      const split = tree && leafCount(tree) > 1;
-      const panes = split ? this.paneTree(tree, ps, w.machine, t) : null;
-      const mine = list.filter((a) => a.tab === c.id);
-      const lead = mine.reduce((best, a) => ((RANK[a.status] ?? 0) > (RANK[best?.status] ?? -1) ? a : best), null);
-      const since = lead ? this.since(lead) : 0;
-      const row = h_flex()
-        .id(`tab-${c.id}`)
-        .h(25)
-        .flex_none()
-        .pl(15)
-        .pr(8)
-        .gap(7)
-        .items_center()
-        .rounded(6)
-        .text_size(12)
-        .when(open, (el) => el.bg(t.selected))
-        .when(!open, (el) => el.hover((s) => s.bg(t.hover)))
-        .when(this.tabPressed !== null && this.tabOver === c.id && this.tabPressed !== c.id, (el) => el.border_t(2).border_color(t.accent))
-        .on_mouse_down("left", (e, cx) => {
-          cx.stop_propagation();
-          this.tabPressed = c.id;
-          this.tabOver = c.id;
-          if (e.click_count === 2) run("tab.rename", { id: c.id });
-        })
-        .on_mouse_up("left", (_e, cx) => {
-          const from = this.tabPressed;
-          this.tabPressed = null;
-          if (from !== null && from !== c.id) {
-            if (w.tabs.some((x) => x.id === from)) run("tab.move", { id: from, index: c.index + 1 });
-          } else run("tab.select", { id: c.id });
-          cx.notify();
-        })
-        .on_mouse_down("right", () => openOverlay({ mod: "menu-jj", kind: "popup", width: 200, height: 240, props: { tab: "tab", target: { id: c.id, space: w.id } } }))
-        .when(Boolean(program?.icon), (el) => el.child(program.tint ? svg(program.icon).size(13).flex_none().text_color(t.muted) : image(program.icon).size(13).flex_none()))
-        .when(!program?.icon, (el) => el.child(div().size(13).flex_none()))
-        .child(div().flex_1().min_w(0).truncate().text_color(c.active ? t.foreground : t.muted).child(c.zoomed ? `${name} Z` : name))
-        .when(Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - since))))
-        .when(Boolean(c.status), (el) => el.child(this.status(t, { status: c.status })));
-      const kids = mine.flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
-      return [row, ...(panes ? [div().w_full().pl(30).pr(8).pb(2).child(panes)] : []), ...kids];
+      const menu = () => openOverlay({ mod: "menu-jj", kind: "popup", width: 200, height: 240, props: { tab: "tab", target: { id: c.id, space: w.id } } });
+      const kids = list.filter((a) => a.tab === c.id).flatMap((a) => this.tree(all, a.address).map((s) => this.subRow(t, s, shown)));
+      let panes;
+      if (tree && leafCount(tree) > 1) {
+        panes = this.paneTree(tree, ps, w.machine, t, paneHeight(tree), now, menu, true);
+      } else {
+        const pane = ps.find((p) => p.tab === c.id && p.focused) ?? ps.find((p) => p.tab === c.id);
+        panes = pane ? this.paneButton(pane, t, 24, now, c.named ? c.name : null, menu, false) : null;
+      }
+      return panes ? [div().w_full().pl(15).pr(8).pb(2).child(panes), ...kids] : kids;
     });
   }
 
   // A tab's panes as real buttons, laid out like its split tree. Clicking one
   // focuses that pane (and selects its tab/space).
-  paneTree(node, ps, machine, t, height = paneHeight(node)) {
+  paneTree(node, ps, machine, t, height = paneHeight(node), now = 0, menu = null, compact = false) {
     if (!node || node.hidden) return null;
     if (node.type === "stack") {
       const active = (node.children ?? []).find((c) => c.id === node.active) ?? node.children?.[0];
-      return this.paneTree(active, ps, machine, t, height);
+      return this.paneTree(active, ps, machine, t, height, now, menu, compact);
     }
     if (node.type === "row" || node.type === "column") {
       const row = node.type === "row";
       const kids = (node.children ?? []).map((c) => {
-        const kid = this.paneTree(c, ps, machine, t, row ? height : paneHeight(c));
+        const kid = this.paneTree(c, ps, machine, t, row ? height : paneHeight(c), now, menu, compact);
         if (!kid) return null;
         return div()
           .flex()
@@ -616,13 +578,16 @@ export default class Spaces extends View {
     }
     if (node.type !== "block") return null;
     const pane = ps.find((p) => p.pane === paneId(node.id, machine));
-    return pane ? this.paneButton(pane, t, height) : null;
+    return pane ? this.paneButton(pane, t, height, now, null, menu, compact) : null;
   }
 
-  paneButton(pane, t, height = 24) {
+  paneButton(pane, t, height = 24, now = 0, label = null, menu = null, compact = false) {
     const program = pane.program;
+    const agent = this.agentByPane?.get(pane.pane);
+    const status = agent?.status ?? pane.status;
+    const since = agent ? this.since(agent) : 0;
     const title = (pane.title ?? "").replace(/^[^\p{L}\p{N}]+/u, "").trim();
-    const name = (!program?.shell && program?.name) || cwdName(pane.cwd) || title || program?.name || "Terminal";
+    const name = label || (!program?.shell && program?.name) || cwdName(pane.cwd) || title || program?.name || "Terminal";
     return h_flex()
       .id(`pane-${pane.pane}`)
       .h(height)
@@ -637,10 +602,12 @@ export default class Spaces extends View {
       .when(pane.focused, (el) => el.bg(t.raised))
       .when(!pane.focused, (el) => el.hover((s) => s.bg(t.hover)))
       .on_click(() => run("pane.focus", { pane: pane.pane }))
+      .on_mouse_down("right", () => menu?.())
       .when(Boolean(program?.icon), (el) => el.child(agentIcon(program, 12, t.muted)))
       .when(!program?.icon, (el) => el.child(div().size(12).flex_none()))
       .child(div().flex_1().min_w(0).truncate().text_color(pane.focused ? t.foreground : t.muted).child(pane.zoomed ? `${name} Z` : name))
-      .when(Boolean(pane.status), (el) => el.child(this.status(t, { status: pane.status }, true)));
+      .when(Boolean(since), (el) => el.child(div().flex_none().text_size(11).text_color(t.dim).child(duration(now - since))))
+      .when(Boolean(status), (el) => el.child(this.status(t, { status }, compact)));
   }
 
   peek(address) {
