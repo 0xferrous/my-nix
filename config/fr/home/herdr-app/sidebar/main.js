@@ -451,7 +451,6 @@ export default class Spaces extends View {
     const at = tabs.indexOf(current);
     if (at < 0 || !tabs.length) return;
     run("tab.select", { id: tabs[(at + direction + tabs.length) % tabs.length] });
-    cx.notify();
   }
 
   toggleSpaceTabFold(id, cx) {
