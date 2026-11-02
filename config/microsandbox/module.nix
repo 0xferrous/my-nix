@@ -4,6 +4,12 @@
   # microsandbox supplies the kernel and boot-time network configuration.
   boot.isContainer = lib.mkDefault true;
 
+  # libkrunfw is built with CONFIG_BASE_SMALL=y, so its PID_MAX_LIMIT is
+  # PAGE_SIZE * 8 (32768 on 4 KiB pages). NixOS defaults kernel.pid_max to
+  # 4194304, which the guest kernel rejects with EINVAL and makes
+  # systemd-sysctl fail activation. Stay within the guest kernel's limit.
+  boot.kernel.sysctl."kernel.pid_max" = lib.mkOverride 500 32768;
+
   # These services target devices or host facilities that microsandbox does
   # not provide. Keep these as ordinary NixOS defaults so a consuming config
   # can intentionally override them instead of inheriting image-level masks.
