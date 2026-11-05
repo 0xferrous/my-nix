@@ -13,16 +13,16 @@
 }:
 let
   pname = "herdr-app";
-  version = "0.1.11";
+  version = "0.1.13";
   release =
     {
       x86_64-linux = {
         url = "https://releases.herdr.dev/app/${version}/herdr-app-linux-x86_64.tar.gz";
-        hash = "sha256-Ro/zFqJvxMLGOPEMWNLeNTyCXKxNhG+iVMYSlBQXRKM=";
+        hash = "sha256-d7C+cqRsoUuzZzZaBBZGQfkUs6aXErrDkdOcVqlZvvQ=";
       };
       aarch64-linux = {
         url = "https://releases.herdr.dev/app/${version}/herdr-app-linux-aarch64.tar.gz";
-        hash = "sha256-Bx/25znj5YGQw3hEFoQUXXIlRr+MrXBdRPBL871SAig=";
+        hash = "sha256-LluwXEfP+60BitNCF+pMgWR21+uEJpL3QHmMkCDwKB4=";
       };
     }
     .${stdenv.hostPlatform.system};
