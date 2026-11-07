@@ -18,7 +18,7 @@
 
 let
   pname = "bb";
-  version = "0.48.1";
+  version = "0.49.0";
   nodejs = nodejs_22;
   providerPath = lib.makeBinPath providerPkgs;
   packageRoot = "${patchedContents}/resources/app.asar.unpacked/node_modules/bb-app";
@@ -27,7 +27,7 @@ let
 
   src = fetchurl {
     url = "https://github.com/get-bb/bb/releases/download/desktop-v${version}/bb-${version}-x86_64.AppImage";
-    hash = "sha256-3wThTUc17QsJIrtrFqgzvs5fRTVqY959TYR797HSztE=";
+    hash = "sha256-g0mrdzcVYk/sUIJznIF9KhWAlQRpnTS0fT2d++YPx3A=";
   };
 
   appimageContents = appimageTools.extract { inherit pname version src; };
