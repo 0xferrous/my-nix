@@ -39,14 +39,14 @@ rustPlatform.buildRustPackage (finalAttrs: {
   doCheck = false;
 
   # Upstream's workspace Cargo version tracks the release tag; keep the
-  # package version in step and sanity-check the binary reports 0.2.5.
+  # package version in step and sanity-check the binary reports it.
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
     version=$(${placeholder "out"}/bin/obscura --version | awk '{print $2}')
     echo "obscura reports version $version"
-    if [ "$version" != "0.2.5" ]; then
-      echo "obscura --version did not report the upstream Cargo version 0.2.5" >&2
+    if [ "$version" != "${finalAttrs.version}" ]; then
+      echo "obscura --version did not report the upstream Cargo version ${finalAttrs.version}" >&2
       exit 1
     fi
     runHook postInstallCheck
