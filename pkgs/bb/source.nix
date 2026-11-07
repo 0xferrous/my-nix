@@ -32,7 +32,7 @@
 
 let
   pname = "bb-source";
-  version = "0.48.1";
+  version = "0.49.0";
   pnpm = pnpm_9;
   electronArch = if stdenv.hostPlatform.system == "aarch64-linux" then "arm64" else "x64";
   tsrsPlatform = "linux-${electronArch}-gnu";
@@ -65,7 +65,7 @@ let
         owner = "get-bb";
         repo = "bb";
         rev = "desktop-v${version}";
-        hash = "sha256-KQ8dZJXIc15lFXrvzAD/8ZPBuJJjkh0P1XXfIUv75bo=";
+        hash = "sha256-3ouk7Uk9PLzApWbODh7C820+GVDhNPdbDklNH/mIXHo=";
       }
     else
       sourceOverride;
@@ -94,7 +94,7 @@ stdenv.mkDerivation (finalAttrs: {
     fetcherVersion = 3;
     hash =
       if pnpmDepsHashOverride == null then
-        "sha256-sQ1iHUqCNoM07GiJmDXFIJZvPV10cnTxY7mi+QtdzFs="
+        "sha256-TS5HVqbd/+qul8C4PdK9mGqlBRoe1AVy6qWwxMWQyKg="
       else
         pnpmDepsHashOverride;
   };
