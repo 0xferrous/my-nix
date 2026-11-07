@@ -159,14 +159,14 @@ stdenv.mkDerivation (finalAttrs: {
 
     # The app preserves the Nix store's read-only modes when copying bundled
     # plugins into the codex home (resources/plugins -> ~/.codex/.tmp/...), so
-    # copy via the app's own promisified execFile helper (`nG`) with
+    # copy via the app's own promisified execFile helper (`nW`) with
     # --no-preserve=mode instead of fs.cp. @parcel/watcher's detect-libc also
     # calls process.report.getReport() from its Git worker; Electron's bundled
     # Node crashes there with a deliberate UD1 trap, so force detect-libc to
     # use its command-based fallback. Keep replacements the same length so the
     # asar's file offsets stay valid.
     perl -0777pi -e '
-      $pluginCopy = s/\Qif("win32"!==eq().platform)return void await ek().cp(e,t,{recursive:!0,verbatimSymlinks:!0});\E/if("win32"!==eq().platform)return void await nG("cp",["-r","--no-preserve=mode","--",e,t]  );/g;
+      $pluginCopy = s/\Qif("win32"!==eN().platform)return void await ey().cp(e,t,{recursive:!0,verbatimSymlinks:!0});\E/if("win32"!==eN().platform)return void await nW("cp",["-r","--no-preserve=mode","--",e,t]  );/g;
       $detectLibcReport = s/\QisLinux() && process.report\E/false                      /g;
       END {
         die "unexpected bundled plugin copy count: $pluginCopy\n" unless $pluginCopy == 1;
