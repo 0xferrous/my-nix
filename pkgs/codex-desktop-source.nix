@@ -9,9 +9,9 @@
 # versioned `sidekick` URL in nixpkgs
 # (`pkgs/by-name/ch/chatgpt`); the apt pool is the Linux equivalent.
 {
-  version = "26.1027.30824";
+  version = "26.1103.32239";
   src = {
-    url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_26.1027.30824_amd64.deb";
-    hash = "sha256-ThOaRPfJF6ZD8t0BStMimN0wrsbTJNMjUksZD3ZnaEw=";
+    url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_26.1103.32239_amd64.deb";
+    hash = "sha256-GMEIgI6ixS+42/ktM2LSd0HjOCxYkb1K6QOptXgTZO8=";
   };
 }
