@@ -16,18 +16,18 @@
 
 let
   pname = "vicu";
-  version = "2.6.1";
+  version = "2.6.3";
   releaseBase = "https://github.com/rendyhd/Vicu/releases/download/v${version}";
 
   platform =
     {
       "x86_64-linux" = {
         asset = "x86_64";
-        hash = "sha256-sCgjfK+hebgCYirxZOtzL8dx+Z6eSpYLBUYxTGf3/Xg=";
+        hash = "sha256-eFYgYYBT6liefcFT4w8xQ5uk4rb7rnppFSYQhhpDwvk=";
       };
       "aarch64-linux" = {
         asset = "arm64";
-        hash = "sha256-e2yHI6dAu9hQyPFm8hMEScDueJRBkPrJQ0OI36zfOBo=";
+        hash = "sha256-EY4yZn4eALntb4p/moqnuvp1nQGpP7dGfiF3vkcROHY=";
       };
     }
     .${stdenv.hostPlatform.system} or (throw "vicu is unsupported on ${stdenv.hostPlatform.system}");
