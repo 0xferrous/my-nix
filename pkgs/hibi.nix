@@ -14,17 +14,17 @@
 
 let
   pname = "hibi";
-  version = "0.2.8";
+  version = "0.3.0";
 
   platform =
     {
       "x86_64-linux" = {
         asset = "x64";
-        hash = "sha256-foLbtQ6Zypp7urdG6EFgKjERQlfzNvuYFz1BQoC4uzg=";
+        hash = "sha256-WibfigaI1cLB7+3sWQ3nyMqP2x08wNMmuvGK0cC/z0g=";
       };
       "aarch64-linux" = {
         asset = "arm64";
-        hash = "sha256-hR+jvs13f+54IMmxCoSTHKaQW8n5DhrT+yH8I+4LRsU=";
+        hash = "sha256-RCaPcb6wnvD8/2O5Cy+VNlA694g3CIZfthFMt67oiIM=";
       };
     }
     .${stdenv.hostPlatform.system} or (throw "hibi is unsupported on ${stdenv.hostPlatform.system}");
