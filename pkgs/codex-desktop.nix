@@ -166,7 +166,20 @@ stdenv.mkDerivation (finalAttrs: {
     # use its command-based fallback. Keep replacements the same length so the
     # asar's file offsets stay valid.
     perl -0777pi -e '
-      $pluginCopy = s/\Qif("win32"!==eq().platform)return void await ek().cp(e,t,{recursive:!0,verbatimSymlinks:!0});\E/if("win32"!==eq().platform)return void await nG("cp",["-r","--no-preserve=mode","--",e,t]  );/g;
+      $pluginCopy = s{if\("win32"!==(\w+)\(\)\.platform\)return void await (\w+)\(\)\.cp\(e,t,\{recursive:!0,verbatimSymlinks:!0\}\);}{
+        my $matched = $&;
+        my $start = $-[0];
+        my ($plat, $cp) = ($1, $2);
+        my $prefix = substr($_, 0, $start);
+        my @execFileHelpers = $prefix =~ /(\w+)=\(0,[\w\$]+\.promisify\)\([\w\$]+\.execFile\)/g;
+        my $execFile = $execFileHelpers[-1];
+        die "no promisified execFile helper found before bundled plugin copy\n" unless defined $execFile;
+        my $replacement = qq{if("win32"!==$plat().platform)return void await $execFile("cp",["-r","--no-preserve=mode","--",e,t]  );};
+        my $padding = length($matched) - length($replacement);
+        die "bundled plugin copy replacement is longer than the original\n" if $padding < 0;
+        $pluginCopy++;
+        $replacement . (" " x $padding);
+      }ge;
       $detectLibcReport = s/\QisLinux() && process.report\E/false                      /g;
       END {
         die "unexpected bundled plugin copy count: $pluginCopy\n" unless $pluginCopy == 1;
