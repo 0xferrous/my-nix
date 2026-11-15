@@ -14,13 +14,13 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "obscura";
-  version = "0.2.6";
+  version = "0.2.7";
 
   src = fetchFromGitHub {
     owner = "h4ckf0r0day";
     repo = "obscura";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-5zJ6if1DtNW9josrcA2G2o5x3w7BtJCz59TRJOqBGv4=";
+    hash = "sha256-LEfvnGOP8XpIeJEqC9Jn9IeFYFP/j0mFRlzGPDWilBw=";
   };
 
   # The v8 crate's build script downloads librusty_v8.a at build time; the Nix
