@@ -231,10 +231,10 @@ docs/
 - `pages.yml`: publishes `pages/` to GitHub Pages from `main`.
 - `update-llm-agents.yml`: weekly refresh of the `llm-agents` lock entry,
   committed straight to `main`.
-- `update-packages.yml`: weekly or manual refresh of every updatable package,
-  one pull request per package on the stable `update/<name>` branch, each
-  bumped package built before its PR is opened, with a failed build handed to
-  the repair agent described below.
+- `update-packages.yml`: weekly or manual refresh of every updatable package.
+  Each bumped package is built, and a bump that builds is pushed straight to
+  `main`; one that does not is handed to the repair agent described below and
+  then falls back to a pull request on the stable `update/<name>` branch.
 
 ### Self-healing package updates
 
@@ -251,9 +251,29 @@ longer changes anything under `pkgs/`, or after `AUTOFIX_ATTEMPTS` attempts
 Each attempt gets `AUTOFIX_TIMEOUT` seconds (default 45 minutes).
 
 The bump is committed first and a successful repair lands as its own
-`fix(<package>): repair build after update` commit on top of it, so the pull
-request shows what the agent changed. A repaired package gets a normal ready
-pull request with a note in the body naming the model and attempt.
+`fix(<package>): repair build after update` commit on top of it, so `main`
+shows what the agent changed. A repaired package is then pushed like any other
+bump that builds.
+
+### Landing a verified bump
+
+A bump that builds needs no review click, so the leg pushes it straight to
+`main` (`git push origin HEAD:main`) and closes any `update/<name>` pull request
+a previous run opened for that package. Two things are re-checked on the way,
+because several legs run at once and each one started from the `main` that
+existed when it checked out:
+
+- the leg rebases onto `origin/main` first, and a rebase that conflicts falls
+  back to a pull request instead of a force-push;
+- it rebuilds after the rebase. The store is warm from the build above, so this
+  only does real work when the rebase brought in a shared helper or overlay
+  edit that changes the package's derivation.
+
+The push itself is retried three times (fetch, rebase, rebuild, push) so a leg
+that loses a race with another leg's landing simply replays on top of it. If the
+push keeps being rejected — a protected `main`, or rival activity on every
+attempt — the leg leaves `landed` unset and the pull request steps run, so no
+bump is ever lost to a failed push.
 
 When the agent gives up, the leg does not fail: its changes are dropped, the
 branch keeps the plain bump, and the pull request opens as a **draft** titled
@@ -266,7 +286,12 @@ whoever finishes the fix. On a later run that succeeds, the step also runs
 The agent only runs in `update packages`, which is triggered by the schedule or
 by hand on `main`, never by a pull request or a fork.
 
-### Checks on update pull requests
+### Checks on fallback update pull requests
+
+This section applies to the pull requests `update packages` falls back to: a
+bump that does not build, or one that builds but could not be pushed to `main`.
+A landed bump needs no pull-request check, since the leg built it immediately
+before pushing.
 
 GitHub hard-codes how `GITHUB_TOKEN` interacts with workflow events: events it
 raises do not start new runs, with two exceptions — `workflow_dispatch` and

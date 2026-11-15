@@ -146,7 +146,8 @@ package file before changing anything.
 Context:
 - This is repair attempt $attempt of $attempts. If the build still fails when you
   stop, the workflow discards every change under \`pkgs/\` and opens a draft pull
-  request for a human, so keep going until the build passes.
+  request for a human; a repair that does build is pushed straight to \`main\`.
+  Keep going until the build passes, and make it a fix worth merging.
 - \`nix build\`, \`nix eval\`, \`nix log\` and \`nix store prefetch-file\` work here;
   the binary caches are configured and the store is warm.
 - A full Rust or Electron build takes minutes. Batch related edits, inspect
@@ -232,7 +233,8 @@ Automated repair by ${AUTOFIX_MODEL:-the configured agent} on attempt $attempt o
     pr_body_note "The bumped package did not build as-is; commit 2 repairs it.
 
 The repair was written by an automated agent (\`${AUTOFIX_MODEL:-configured model}\`)
-on attempt $attempt of $attempts. Review those package changes before merging."
+on attempt $attempt of $attempts. The workflow pushes a repair that builds, so
+this pull request only exists if that push did not go through."
     exit 0
   fi
 

@@ -1,10 +1,10 @@
 name: package builds
 
 # Build the packages a pull request changes, so package PRs (in particular the
-# ones `update packages` opens under `pkgs/`) carry a build check of their own.
-# The update workflow builds what it bumps before it opens a PR, but a PR
-# branch only gets that signal once; this workflow is what keeps a red/green
-# build visible on the PR itself.
+# ones `update packages` falls back to under `pkgs/`) carry a build check of
+# their own. The update workflow builds what it bumps before it lands or opens a
+# PR, but a PR branch only gets that signal once; this workflow is what keeps a
+# red/green build visible on the PR itself.
 #
 # The changed set comes from comparing `drvPath` for every package in
 # `packages.<system>` between the merge base and the PR head instead of mapping
