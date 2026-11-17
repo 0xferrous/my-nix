@@ -7,7 +7,7 @@
   stdenvNoCC,
 }:
 let
-  version = "18.14.1";
+  version = "18.22.0";
 in
 stdenvNoCC.mkDerivation {
   pname = "oh-my-pi";
@@ -17,7 +17,7 @@ stdenvNoCC.mkDerivation {
   # avoid rebuilding its TypeScript/Rust monorepo and vendoring both lockfiles.
   src = fetchurl {
     url = "https://github.com/can1357/oh-my-pi/releases/download/v${version}/omp-linux-x64";
-    hash = "sha256-AtdqDP7uRz/6OH9QzwN4sN4cRGhMg+Z8onuk1xfPsNA=";
+    hash = "sha256-9waye6hFg02Pg2BwWi6boVNPNZP6JEEdQTWCct4zZCs=";
   };
 
   nativeBuildInputs = [ autoPatchelfHook ];
