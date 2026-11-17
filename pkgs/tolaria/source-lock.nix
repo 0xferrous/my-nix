@@ -8,9 +8,9 @@
 # upstream Nix build support, so the release deb is the authoritative binary
 # distribution channel.
 {
-  version = "2026.10.30";
+  version = "2026.11.10";
   src = {
-    url = "https://github.com/refactoringhq/tolaria/releases/download/v2026-10-30/Tolaria_2026.10.30_amd64.deb";
-    hash = "sha256-WgYV3SJhNQXQjMRjbohjM1kReAi9Uk1B15BY51Grgtc=";
+    url = "https://github.com/refactoringhq/tolaria/releases/download/v2026-11-10/Tolaria_2026.11.10_amd64.deb";
+    hash = "sha256-7CESCaIubDB9LqquB1B0lVKvkKRxxRsbn1WjsD0E5iA=";
   };
 }
