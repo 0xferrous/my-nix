@@ -8,16 +8,16 @@
 }:
 let
   pname = "herdr-core";
-  version = "0.1.20";
+  version = "0.1.21";
   release =
     {
       x86_64-linux = {
         url = "https://releases.herdr.dev/core/${version}/herdr-core-linux-x86_64.tar.gz";
-        hash = "sha256-rGuGiQxFGjdYRiCqpDi3G8DQvUMKLnwdfglfBSxBTnQ=";
+        hash = "sha256-eEJHVcEKQN3jigvbVcIKwZcG6a4F7Wj8Ks8fz/DZQcE=";
       };
       aarch64-linux = {
         url = "https://releases.herdr.dev/core/${version}/herdr-core-linux-aarch64.tar.gz";
-        hash = "sha256-XzA3N50VzHbPxy0v0aQmLqHFsk3yeL98/Yrc/3uRSGI=";
+        hash = "sha256-6ESiv6tIoiYJdnnQdryDBC/lf8zvU4fvgC5bJOeLUpo=";
       };
     }
     .${stdenv.hostPlatform.system};
