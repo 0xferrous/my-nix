@@ -26,11 +26,11 @@ stdenv.mkDerivation (
       {
         "x86_64-linux" = {
           asset = "x86_64-linux";
-          hash = "sha256-fSJlESmQEgOr25XGT0kGnEnoj1IR9NjExoKMEjxK2rQ=";
+          hash = "sha256-DsIfpIZ6uegrNShf9KsOczbGwdifJv6ZHyfXPIpni9c=";
         };
         "aarch64-linux" = {
           asset = "aarch64-linux";
-          hash = "sha256-8CHUmgtm0HvyYz+OAIcLkHUpNRb4cmlbDKSutYSLbqg=";
+          hash = "sha256-dSc5HEefMj65ERuDSwEtkaiQV1KMKO8Cd0GyFzmxIpk=";
         };
       }
       .${stdenv.hostPlatform.system}
@@ -52,7 +52,7 @@ stdenv.mkDerivation (
   in
   {
     inherit pname;
-    version = "1.0.4";
+    version = "1.0.5";
     inherit src;
 
     nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
